@@ -1,176 +1,275 @@
-// app/page.js
-// ─────────────────────────────────────────────────────────
-// The main page that ties everything together
-// Handles state and calls the API
-// ─────────────────────────────────────────────────────────
-
 'use client'
-import { useState } from 'react'
-import AuditForm from '../components/AuditForm'
-import AuditReport from '../components/AuditReport'
-import ScoreCard from '../components/ScoreCard'
 
-export default function Home() {
-  // State variables - these store our data
-  const [isLoading, setIsLoading] = useState(false)    // Is scan running?
-  const [auditData, setAuditData] = useState(null)     // The results
-  const [error, setError] = useState('')               // Any errors
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabaseClient'
+import MainNavbar from '../components/layout/MainNavbar'
+import AccountPrompt from '../components/profile/AccountPrompt'
+import ProfileModal from '../components/profile/ProfileModal'
+import {
+  DEFAULT_PROFILE,
+  getStoredProfile,
+  saveStoredProfile,
+  UserProfile,
+} from '../lib/profileStorage'
 
-  // This runs when the user clicks Scan
-  const handleAudit = async (url) => {
-    // Reset everything first
-    setIsLoading(true)
-    setError('')
-    setAuditData(null)
+export default function HomePage() {
+  const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE)
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null)
+  const [sessionUserId, setSessionUserId] = useState<string | null>(null)
+  const [showProfileModal, setShowProfileModal] = useState(false)
 
-    try {
-      // Call our API route
-      const response = await fetch('/api/audit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url }),
-      })
+  useEffect(() => {
+    setProfile(getStoredProfile())
 
-      const data = await response.json()
+    let mounted = true
 
-      // Check if the API returned an error
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Scan failed. Please try again.')
-      }
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return
+      setSessionEmail(data.session?.user?.email || null)
+      setSessionUserId(data.session?.user?.id || null)
+    })
 
-      // All good! Save the results
-      setAuditData(data)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSessionEmail(session?.user?.email || null)
+      setSessionUserId(session?.user?.id || null)
+    })
 
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      // Always stop the loading spinner
-      setIsLoading(false)
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
     }
+  }, [])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+  }
+
+  const handleSaveProfile = (nextProfile: UserProfile) => {
+    setProfile(nextProfile)
+    saveStoredProfile(nextProfile)
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 to-blue-950">
-      
-      {/* Header */}
-      <header className="border-b border-white border-opacity-10 bg-white bg-opacity-5 backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-white">
-              🎯 Client Finder
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.13),transparent_55%),linear-gradient(160deg,#080e1f_0%,#0f1a38_50%,#080e1f_100%)]">
+      <MainNavbar
+        sessionEmail={sessionEmail}
+        isLoggedIn={!!sessionUserId}
+        profile={profile}
+        onOpenProfile={() => setShowProfileModal(true)}
+        onSignOut={handleSignOut}
+        appHref="/app"
+      />
+
+      <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 md:px-6 md:py-10">
+        <section
+          aria-labelledby="hero-heading"
+          className="relative overflow-hidden rounded-[28px] border border-white/[0.08] bg-white/[0.035] px-5 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.2)] backdrop-blur-sm sm:px-8 sm:py-10 md:px-12 md:py-12"
+        >
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-16 right-0 h-56 w-56 rounded-full bg-blue-500/[0.10] blur-3xl sm:h-72 sm:w-72"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:36px_36px]"
+          />
+
+          <div className="relative mx-auto max-w-3xl text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/[0.08] px-3.5 py-1.5 text-[11px] font-semibold tracking-wide text-blue-200 sm:text-xs">
+              <span aria-hidden="true">🚀</span>
+              <span>Built for Australian web developers &amp; digital agencies</span>
+            </div>
+
+            <h1
+              id="hero-heading"
+              className="text-[1.75rem] font-bold leading-[1.08] tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3rem]"
+            >
+              Turn underperforming websites
+              <span className="mt-1 block bg-gradient-to-r from-blue-300 via-cyan-300 to-blue-400 bg-clip-text pb-2 text-transparent sm:mt-1.5">
+                into paying clients
+              </span>
             </h1>
-            <p className="text-blue-300 text-xs">Website Audit Tool</p>
+
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-slate-300 sm:mt-5 sm:text-base">
+              Identify businesses running on slow, outdated, or poorly optimised websites.
+              Audit them in minutes, generate a professional pitch, and close the work —
+              all in one place.
+            </p>
+
+            <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:justify-center">
+              {sessionUserId ? (
+                <>
+                  <Link
+                    href="/app"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(37,99,235,0.26)] transition hover:-translate-y-0.5 hover:bg-blue-500 active:translate-y-0 sm:w-auto sm:px-7 sm:py-3.5"
+                  >
+                    <span aria-hidden="true">🎯</span>
+                    Open App
+                  </Link>
+
+                  <button
+                    onClick={() => setShowProfileModal(true)}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/[0.12] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/[0.10] active:translate-y-0 sm:w-auto sm:px-7 sm:py-3.5"
+                  >
+                    <span aria-hidden="true">✍️</span>
+                    Edit Profile
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/signup"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(37,99,235,0.26)] transition hover:-translate-y-0.5 hover:bg-blue-500 active:translate-y-0 sm:w-auto sm:px-7 sm:py-3.5"
+                  >
+                    <span aria-hidden="true">🎯</span>
+                    Start Free
+                  </Link>
+
+                  <Link
+                    href="/signin"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/[0.12] bg-white/[0.06] px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/[0.10] active:translate-y-0 sm:w-auto sm:px-7 sm:py-3.5"
+                  >
+                    <span aria-hidden="true">🔐</span>
+                    Sign In
+                  </Link>
+                </>
+              )}
+            </div>
+
+            <p className="mt-4 text-[11px] text-slate-500 sm:mt-5">
+              Trusted by web developers across Sydney, Melbourne, Brisbane &amp; beyond
+            </p>
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              {[
+                {
+                  icon: '⚡',
+                  title: 'Fast & Focused',
+                  body: 'Find leads, Audit Websites, and move from research to a client conversation — without the usual back-and-forth.',
+                },
+                {
+                  icon: '📈',
+                  title: 'Commercially Actionable',
+                  body: 'Every scan surfaces real issues and translates them into outreach that makes commercial sense to a business owner.',
+                },
+                {
+                  icon: '🏆',
+                  title: 'Agency-Grade Output',
+                  body: 'Present yourself like a premium studio. Deliver findings that look polished and justify a serious project fee.',
+                },
+              ].map((feature) => (
+                <div
+                  key={feature.title}
+                  className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4 text-left"
+                >
+                  <div className="mb-2 text-xl">{feature.icon}</div>
+                  <h3 className="text-sm font-semibold text-white">{feature.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-400">
+                    {feature.body}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-white text-sm font-medium">Your Name</p>
-            <p className="text-blue-300 text-xs">Web Developer</p>
-          </div>
-        </div>
-      </header>
+        </section>
 
-      <div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
-        
-        {/* Hero Text */}
-        <div className="text-center">
-          <h2 className="text-4xl font-bold text-white mb-3">
-            Website Audit Tool
-          </h2>
-          <p className="text-blue-300 text-lg max-w-xl mx-auto">
-            Get an instant audit of any website. 
-            Find performance issues, SEO problems and more in 60 seconds.
-          </p>
-        </div>
+        {!sessionUserId && <AccountPrompt />}
 
-        {/* The Form */}
-        <AuditForm onSubmit={handleAudit} isLoading={isLoading} />
-
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4 text-red-700">
-            <p className="font-bold">❌ Scan Failed</p>
-            <p className="text-sm mt-1">{error}</p>
-            <p className="text-xs mt-2 text-red-500">
-              Common causes: Website is down, blocks scanners, or the URL is incorrect.
+        <section className="rounded-[28px] border border-white/[0.08] bg-white/[0.035] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur-sm sm:p-8 md:p-10">
+          <div className="max-w-3xl">
+            <div className="mb-2 inline-flex items-center rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
+              How it works
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              A cleaner way to win web clients
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-400 sm:text-base">
+              sitesignal helps you move from research to outreach without juggling five
+              different tools. Search for weak local business websites, run a professional
+              audit, generate outreach, and keep track of every opportunity.
             </p>
           </div>
-        )}
 
-        {/* Results */}
-        {auditData && (
-          <div className="space-y-6">
-            
-            {/* Score Cards Row */}
-            <div className="bg-white bg-opacity-10 rounded-2xl p-6">
-              <h3 className="text-white font-bold mb-4 text-lg">
-                📊 Scores at a Glance — {auditData.url}
-              </h3>
-              
-              {/* Overall Score - big and prominent */}
-              <div className="text-center mb-6">
-                <div className={`
-                  inline-flex items-center justify-center w-28 h-28 rounded-full border-4 text-white
-                  ${auditData.scores.overallScore >= 70 ? 'border-green-400 bg-green-500 bg-opacity-30' :
-                    auditData.scores.overallScore >= 50 ? 'border-yellow-400 bg-yellow-500 bg-opacity-30' :
-                    'border-red-400 bg-red-500 bg-opacity-30'}
-                `}>
-                  <div>
-                    <div className="text-4xl font-bold">{auditData.scores.overallScore}</div>
-                    <div className="text-xs opacity-80">Overall</div>
-                  </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {[
+              {
+                step: '01',
+                title: 'Find weak websites',
+                body: 'Search by industry and location to surface local businesses with weak website fundamentals and strong opportunity potential.',
+              },
+              {
+                step: '02',
+                title: 'Run an instant audit',
+                body: 'Generate a fast, client-ready website audit with performance, SEO, accessibility, and best-practice findings.',
+              },
+              {
+                step: '03',
+                title: 'Generate outreach',
+                body: 'Turn your findings into commercially sensible outreach you can use in email, calls, follow-ups, and direct messages.',
+              },
+            ].map((item) => (
+              <div
+                key={item.step}
+                className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5"
+              >
+                <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-sm font-bold text-blue-300">
+                  {item.step}
                 </div>
-                <p className="text-white text-sm mt-2 opacity-70">
-                  Overall Score (average of all categories, mobile)
+                <h3 className="text-base font-semibold text-white">{item.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-400">{item.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href={sessionUserId ? '/app' : '/signup'}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(37,99,235,0.24)] transition hover:bg-blue-500"
+            >
+              {sessionUserId ? 'Open App' : 'Create Free Account'}
+            </Link>
+          </div>
+        </section>
+
+        <footer
+          role="contentinfo"
+          className="relative overflow-hidden rounded-[28px] border border-white/[0.08] bg-white/[0.035] backdrop-blur-sm"
+        >
+          <div className="relative flex flex-col items-center gap-4 px-6 py-8 text-center sm:flex-row sm:justify-between sm:px-10 sm:py-6 sm:text-left">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 text-base shadow-[0_6px_16px_rgba(37,99,235,0.25)]">
+                🎯
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold leading-none text-white">sitesignal</p>
+                <p className="mt-0.5 text-[11px] leading-none tracking-wide text-slate-500">
+                  Lead generation + website audits · Sydney, Australia
                 </p>
-              </div>
-
-              {/* Individual Score Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <ScoreCard label="Performance" score={auditData.scores.mobile.performance} />
-                <ScoreCard label="SEO" score={auditData.scores.mobile.seo} />
-                <ScoreCard label="Accessibility" score={auditData.scores.mobile.accessibility} />
-                <ScoreCard label="Best Practices" score={auditData.scores.mobile.bestPractices} />
-              </div>
-
-              {/* Mobile vs Desktop comparison */}
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="bg-white bg-opacity-10 rounded-xl p-3 text-center">
-                  <p className="text-blue-300 text-xs mb-1">📱 Mobile Performance</p>
-                  <p className={`text-2xl font-bold ${
-                    auditData.scores.mobile.performance >= 70 ? 'text-green-400' :
-                    auditData.scores.mobile.performance >= 50 ? 'text-yellow-400' : 'text-red-400'
-                  }`}>
-                    {auditData.scores.mobile.performance}/100
-                  </p>
-                </div>
-                <div className="bg-white bg-opacity-10 rounded-xl p-3 text-center">
-                  <p className="text-blue-300 text-xs mb-1">🖥️ Desktop Performance</p>
-                  <p className={`text-2xl font-bold ${
-                    auditData.scores.desktop.performance >= 70 ? 'text-green-400' :
-                    auditData.scores.desktop.performance >= 50 ? 'text-yellow-400' : 'text-red-400'
-                  }`}>
-                    {auditData.scores.desktop.performance}/100
-                  </p>
-                </div>
               </div>
             </div>
 
-            {/* The Full AI Report */}
-            <AuditReport 
-              report={auditData.aiReport}
-              url={auditData.url}
-              scores={auditData.scores}
-            />
+            <p className="hidden text-sm text-slate-500 md:block">
+              Built for web developers who want to{' '}
+              <span className="text-slate-300">win better client work</span> 🚀
+            </p>
 
+            <p className="text-[11px] text-slate-600">
+              © {new Date().getFullYear()} sitesignal. All rights reserved.
+            </p>
           </div>
-        )}
-
-        {/* Footer */}
-        <footer className="text-center text-blue-400 text-xs pb-6">
-          <p>Client Finder — Built for finding clients & winning work 🚀</p>
         </footer>
       </div>
+
+      <ProfileModal
+        open={showProfileModal}
+        initialProfile={profile}
+        sessionEmail={sessionEmail}
+        onClose={() => setShowProfileModal(false)}
+        onSave={handleSaveProfile}
+      />
     </main>
   )
 }

@@ -1,26 +1,297 @@
+/* ✅ Tailwind v4 syntax */
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
+/* ─────────────────────────────────────────────
+   ROOT TOKENS
+───────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0b1020;
+  --foreground: #f8fafc;
+
+  --card-dark: rgba(255, 255, 255, 0.04);
+  --card-dark-border: rgba(255, 255, 255, 0.08);
+
+  --card-light: #ffffff;
+  --card-light-border: rgba(148, 163, 184, 0.18);
+
+  --muted: #94a3b8;
+  --muted-strong: #cbd5e1;
+
+  --brand: #2563eb;
+  --brand-hover: #3b82f6;
+  --brand-soft: rgba(37, 99, 235, 0.12);
+
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #fb7185;
+
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─────────────────────────────────────────────
+   BASE
+───────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-feature-settings: 'rlig' 1, 'calt' 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* Better media defaults */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* Better form defaults */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Prevent long text blowing out layouts */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+span,
+a,
+button,
+input,
+textarea,
+select {
+  word-wrap: break-word;
+}
+
+/* ─────────────────────────────────────────────
+   TYPOGRAPHY
+───────────────────────────────────────────── */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Slightly cleaner default links */
+a {
+  text-decoration: none;
+}
+
+/* Code styling */
+code,
+pre,
+kbd,
+samp {
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    'Liberation Mono',
+    'Courier New',
+    monospace;
+}
+
+/* ─────────────────────────────────────────────
+   SELECTION
+───────────────────────────────────────────── */
+::selection {
+  background: rgba(59, 130, 246, 0.28);
+  color: #eff6ff;
+}
+
+/* ─────────────────────────────────────────────
+   FOCUS STATES
+───────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(96, 165, 250, 0.9);
+  outline-offset: 2px;
+}
+
+/* Remove ugly browser tap highlight on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ─────────────────────────────────────────────
+   SCROLLBAR
+───────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.42);
+  background-clip: padding-box;
+}
+
+/* ─────────────────────────────────────────────
+   UTILITIES / REUSABLE SURFACES
+───────────────────────────────────────────── */
+@layer utilities {
+  .text-muted {
+    color: var(--muted);
+  }
+
+  .text-muted-strong {
+    color: var(--muted-strong);
+  }
+
+  .bg-glass-dark {
+    background: var(--card-dark);
+    border: 1px solid var(--card-dark-border);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .bg-glass-light {
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid var(--card-light-border);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .card-dark {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-lg);
+  }
+
+  .card-light {
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: var(--radius-lg);
+  }
+
+  .soft-shadow {
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+  }
+
+  .soft-shadow-dark {
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+  }
+
+  .ring-brand-soft {
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  }
+}
+
+/* ─────────────────────────────────────────────
+   PROSE OVERRIDES
+───────────────────────────────────────────── */
+.prose {
+  max-width: 65ch;
+}
+
+.prose p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.prose strong {
+  color: #ffffff;
+}
+
+.prose ul {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Dark prose tuning */
+.prose-invert {
+  color: #cbd5e1;
+}
+
+.prose-invert strong {
+  color: #ffffff;
+}
+
+/* ─────────────────────────────────────────────
+   MOBILE TUNING
+───────────────────────────────────────────── */
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   MOTION PREFERENCES
+───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

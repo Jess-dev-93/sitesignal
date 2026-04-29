@@ -1,60 +1,44 @@
-// components/ScoreCard.js
-// ─────────────────────────────────────────────────────────
-// Displays a single score as a coloured circle
-// Green = good, Yellow = ok, Red = bad
-// ─────────────────────────────────────────────────────────
+import { getScoreStyles } from '../lib/scoreColors'
 
 export default function ScoreCard({ label, score }) {
-  
-  // Figure out what color to show based on the score
-  const getColor = (score) => {
-    if (score >= 70) return {
-      bg: 'bg-green-100',
-      text: 'text-green-700',
-      border: 'border-green-400',
-      label: '✅ Good'
-    }
-    if (score >= 50) return {
-      bg: 'bg-yellow-100',
-      text: 'text-yellow-700',
-      border: 'border-yellow-400',
-      label: '⚠️ Needs Work'
-    }
-    return {
-      bg: 'bg-red-100',
-      text: 'text-red-700',
-      border: 'border-red-400',
-      label: '❌ Poor'
-    }
-  }
-
-  const colors = getColor(score)
+  const styles = getScoreStyles(score)
+  const safeScore = styles.score
 
   return (
-    <div className={`
-      flex flex-col items-center justify-center 
-      p-4 rounded-xl border-2 ${colors.border} ${colors.bg}
-      min-w-[120px]
-    `}>
-      {/* The big score number */}
-      <span className={`text-4xl font-bold ${colors.text}`}>
-        {score}
-      </span>
-      
-      {/* Out of 100 */}
-      <span className={`text-sm ${colors.text} font-medium`}>
-        / 100
-      </span>
-      
-      {/* Category name */}
-      <span className="text-gray-600 text-sm mt-1 text-center font-medium">
-        {label}
-      </span>
-      
-      {/* Good/Needs Work/Poor label */}
-      <span className={`text-xs mt-1 ${colors.text}`}>
-        {colors.label}
-      </span>
+    <div
+      className={`relative overflow-hidden rounded-2xl border bg-white/[0.03] p-4 transition-all duration-200 hover:bg-white/[0.05] sm:p-5 ${styles.ring} ${styles.glow}`}
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white to-transparent opacity-[0.03]"
+      />
+
+      <div className="relative">
+        <div className="mb-3 flex items-start justify-between gap-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            {label}
+          </p>
+          <span
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${styles.badge}`}
+          >
+            {styles.icon} {styles.label}
+          </span>
+        </div>
+
+        <div className="flex items-end gap-1.5">
+          <span className={`text-4xl font-bold leading-none tabular-nums ${styles.text}`}>
+            {safeScore}
+          </span>
+          <span className="mb-1 text-xs font-medium text-slate-500">/100</span>
+        </div>
+
+        <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+          <div
+            className={`h-1.5 rounded-full transition-all duration-700 ${styles.bar}`}
+            style={{ width: `${safeScore}%` }}
+          />
+        </div>
+      </div>
     </div>
   )
 }

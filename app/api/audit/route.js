@@ -1,228 +1,345 @@
-// app/api/audit/route.js
-// UPDATED TO USE GEMINI INSTEAD OF OPENAI
-// ─────────────────────────────────────────────────────────
-
 import { NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenAI } from '@google/genai'
+import { getUserIdFromRequest } from '../../../lib/getUserId'
+import { getUserPlan, incrementUsage } from '../../../lib/getUserPlan'
 
-// Set up Gemini with our API key
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
-// ─────────────────────────────────────────────────────────
-// HELPER FUNCTION 1
-// Calls Google PageSpeed Insights API
-// Returns scores for performance, SEO, accessibility etc
-// ─────────────────────────────────────────────────────────
+function readCategoryScore(categories, key, fallback = 0) {
+  const raw = categories?.[key]?.score
+
+  if (raw === null || raw === undefined) {
+    return fallback
+  }
+
+  return Math.round(raw * 100)
+}
+
 async function getLighthouseScores(url) {
   try {
     const apiKey = process.env.PAGESPEED_API_KEY
-    
-    // We run TWO scans - one for mobile, one for desktop
-    const mobileUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=mobile&key=${apiKey}`
-    const desktopUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=desktop&key=${apiKey}`
 
-    // Run both at the same time to save time
+    if (!apiKey) {
+      throw new Error('Missing PAGESPEED_API_KEY')
+    }
+
+    const categories =
+      '&category=performance' +
+      '&category=seo' +
+      '&category=accessibility' +
+      '&category=best-practices'
+
+    const mobileUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(
+      url
+    )}&strategy=mobile${categories}&key=${apiKey}`
+
+    const desktopUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(
+      url
+    )}&strategy=desktop${categories}&key=${apiKey}`
+
     const [mobileRes, desktopRes] = await Promise.all([
-      fetch(mobileUrl),
-      fetch(desktopUrl)
+      fetch(mobileUrl, { cache: 'no-store' }),
+      fetch(desktopUrl, { cache: 'no-store' }),
     ])
 
     const mobileData = await mobileRes.json()
     const desktopData = await desktopRes.json()
 
-    // Check if Google returned an error
-    if (mobileData.error) {
-      throw new Error(mobileData.error.message)
+    if (!mobileRes.ok || mobileData.error) {
+      throw new Error(mobileData?.error?.message || 'Mobile PageSpeed request failed')
     }
 
-    // Pull out the scores we care about
-    // Google gives scores as 0-1 decimals, we x100 to make them percentages
+    if (!desktopRes.ok || desktopData.error) {
+      throw new Error(desktopData?.error?.message || 'Desktop PageSpeed request failed')
+    }
+
+    const mobileCategories = mobileData.lighthouseResult?.categories || {}
+    const desktopCategories = desktopData.lighthouseResult?.categories || {}
+
+    console.log('📱 Mobile categories:', mobileCategories)
+    console.log('🖥️ Desktop categories:', desktopCategories)
+
     const mobileScores = {
-      performance: Math.round((mobileData.lighthouseResult?.categories?.performance?.score || 0) * 100),
-      seo: Math.round((mobileData.lighthouseResult?.categories?.seo?.score || 0) * 100),
-      accessibility: Math.round((mobileData.lighthouseResult?.categories?.accessibility?.score || 0) * 100),
-      bestPractices: Math.round((mobileData.lighthouseResult?.categories?.['best-practices']?.score || 0) * 100),
+      performance: readCategoryScore(mobileCategories, 'performance', 0),
+      seo: readCategoryScore(mobileCategories, 'seo', 0),
+      accessibility: readCategoryScore(mobileCategories, 'accessibility', 0),
+      bestPractices: readCategoryScore(mobileCategories, 'best-practices', 0),
     }
 
     const desktopScores = {
-      performance: Math.round((desktopData.lighthouseResult?.categories?.performance?.score || 0) * 100),
-      seo: Math.round((desktopData.lighthouseResult?.categories?.seo?.score || 0) * 100),
-      accessibility: Math.round((desktopData.lighthouseResult?.categories?.accessibility?.score || 0) * 100),
-      bestPractices: Math.round((desktopData.lighthouseResult?.categories?.['best-practices']?.score || 0) * 100),
+      performance: readCategoryScore(
+        desktopCategories,
+        'performance',
+        mobileScores.performance
+      ),
+      seo: readCategoryScore(
+        desktopCategories,
+        'seo',
+        mobileScores.seo
+      ),
+      accessibility: readCategoryScore(
+        desktopCategories,
+        'accessibility',
+        mobileScores.accessibility
+      ),
+      bestPractices: readCategoryScore(
+        desktopCategories,
+        'best-practices',
+        mobileScores.bestPractices
+      ),
     }
 
-    // Pull out specific audit details (the individual issues Google found)
     const audits = mobileData.lighthouseResult?.audits || {}
-    
+
     const details = {
-      // Page load time
       loadTime: audits['interactive']?.displayValue || 'Unknown',
-      
-      // First thing the user sees loads by this time
       firstContentfulPaint: audits['first-contentful-paint']?.displayValue || 'Unknown',
-      
-      // Does the page have a meta description?
       hasMetaDescription: audits['meta-description']?.score === 1,
-      
-      // Are images the right size?
       imageOptimization: audits['uses-optimized-images']?.score === 1,
-      
-      // Does it use HTTPS?
       isHttps: url.startsWith('https'),
-      
-      // Is the text readable on mobile?
       fontSizeOk: audits['font-size']?.score === 1,
-      
-      // Does the page have a proper title tag?
       hasTitle: audits['document-title']?.score === 1,
-      
-      // Are tap targets (buttons etc) big enough on mobile?
       tapTargetsOk: audits['tap-targets']?.score === 1,
-      
-      // Page size
       totalByteWeight: audits['total-byte-weight']?.displayValue || 'Unknown',
     }
 
-    // Calculate one overall score (average of all 4 categories)
-    const overallMobile = Math.round(
-      (mobileScores.performance + mobileScores.seo + 
-       mobileScores.accessibility + mobileScores.bestPractices) / 4
+    const overallScore = Math.round(
+      (mobileScores.performance +
+        mobileScores.seo +
+        mobileScores.accessibility +
+        mobileScores.bestPractices) /
+        4
     )
 
     return {
       mobile: mobileScores,
       desktop: desktopScores,
       details,
-      overallScore: overallMobile,
+      overallScore,
     }
-
   } catch (error) {
     console.error('Lighthouse error:', error)
     throw new Error(`Could not scan website: ${error.message}`)
   }
 }
 
-// ─────────────────────────────────────────────────────────
-// HELPER FUNCTION 2
-// Takes all the scores and asks GPT-4 to write a
-// professional audit report in plain English
-// ─────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────
-// HELPER FUNCTION 2 (GEMINI VERSION)
-// Takes all the scores and asks Gemini to write a
-// professional audit report in plain English
-// ─────────────────────────────────────────────────────────
-async function generateAIReport(url, scores) {
-  
-  // Build list of issues found
-  const issuesList = []
-  
-  if (scores.mobile.performance < 50) issuesList.push(`Very poor mobile performance score (${scores.mobile.performance}/100)`)
-  if (scores.mobile.performance >= 50 && scores.mobile.performance < 70) issuesList.push(`Below average mobile performance (${scores.mobile.performance}/100)`)
-  if (scores.mobile.seo < 70) issuesList.push(`Weak SEO score (${scores.mobile.seo}/100) - hard to find on Google`)
-  if (scores.mobile.accessibility < 70) issuesList.push(`Poor accessibility score (${scores.mobile.accessibility}/100)`)
-  if (scores.mobile.bestPractices < 70) issuesList.push(`Poor best practices score (${scores.mobile.bestPractices}/100)`)
-  if (!scores.details.isHttps) issuesList.push('No SSL certificate (uses HTTP not HTTPS - unsafe for visitors)')
-  if (!scores.details.hasMetaDescription) issuesList.push('Missing meta description (hurts Google rankings)')
-  if (!scores.details.hasTitle) issuesList.push('Missing or poor page title tag')
-  if (!scores.details.imageOptimization) issuesList.push('Images are not optimized (slowing the site down)')
-  if (!scores.details.fontSizeOk) issuesList.push('Text too small to read on mobile')
-  if (!scores.details.tapTargetsOk) issuesList.push('Buttons/links too small for mobile users')
+function generateFallbackReport(url, scores, issuesList) {
+  return {
+    executiveSummary: `This website scored ${scores.overallScore}/100 overall. ${
+      scores.overallScore < 50
+        ? 'The site has significant issues that are likely hurting user trust, conversion, and Google visibility.'
+        : 'The site has some areas that could be improved to better attract and convert visitors.'
+    } A professional refresh would likely improve both user experience and business results.`,
 
-  // The prompt we send to Gemini
-  const prompt = `
-You are a professional web developer writing a website audit report for a potential client.
-Your goal is to clearly explain problems with their website in simple terms, make them feel 
-the urgency of fixing these issues, and end with encouragement to get help.
+    keyIssues:
+      issuesList.length > 0
+        ? issuesList
+        : [
+            'No critical issues were detected, but there are still opportunities to improve performance and visibility.',
+            'The website appears functional overall, though some refinements could strengthen conversion and search performance.',
+          ],
 
-WEBSITE AUDITED: ${url}
+    businessImpact: [
+      scores.mobile.performance < 50
+        ? 'Slow load times can cause visitors to leave before the page fully loads, reducing enquiries and sales opportunities.'
+        : 'Performance can still be improved to keep more visitors engaged and reduce drop-off.',
+      scores.mobile.seo < 70
+        ? `An SEO score of ${scores.mobile.seo}/100 suggests the site may be missing visibility opportunities on Google.`
+        : 'SEO fundamentals are partly in place, though stronger optimisation could improve rankings further.',
+      'A weak mobile experience can frustrate users and reduce trust, especially when most local visitors browse on their phones.',
+    ],
 
-SCORES:
-- Overall Score: ${scores.overallScore}/100
-- Mobile Performance: ${scores.mobile.performance}/100
-- Desktop Performance: ${scores.desktop.performance}/100  
-- SEO Score: ${scores.mobile.seo}/100
-- Accessibility: ${scores.mobile.accessibility}/100
-- Best Practices: ${scores.mobile.bestPractices}/100
-
-TECHNICAL DETAILS:
-- Page Load Time: ${scores.details.loadTime}
-- First Content Visible: ${scores.details.firstContentfulPaint}
-- Has SSL (HTTPS): ${scores.details.isHttps ? 'Yes ✅' : 'No ❌'}
-- Has Meta Description: ${scores.details.hasMetaDescription ? 'Yes ✅' : 'No ❌'}
-- Has Proper Title Tag: ${scores.details.hasTitle ? 'Yes ✅' : 'No ❌'}
-- Images Optimized: ${scores.details.imageOptimization ? 'Yes ✅' : 'No ❌'}
-- Mobile Text Readable: ${scores.details.fontSizeOk ? 'Yes ✅' : 'No ❌'}
-- Total Page Size: ${scores.details.totalByteWeight}
-
-ISSUES FOUND:
-${issuesList.length > 0 ? issuesList.map(i => `- ${i}`).join('\n') : '- No major issues found - great website!'}
-
-Write a professional audit report with these exact sections:
-
-**SUMMARY**
-2-3 sentences explaining the overall health of the website honestly but kindly.
-
-**CRITICAL ISSUES**
-List the most urgent problems only if score is under 50 or major issues exist.
-Explain WHY each one is costing them customers or money in plain language.
-Use real statistics where helpful (e.g. "53% of users leave if a page takes over 3 seconds to load").
-
-**AREAS TO IMPROVE**
-Medium priority items (scores between 50-70). Explain impact in simple terms.
-
-**WHAT IS WORKING**
-Be positive about what they have done right. Everyone likes hearing good news.
-
-**THE BOTTOM LINE**
-1 paragraph explaining these issues are likely costing them real customers every day.
-Be honest and urgent but friendly - not pushy.
-
-Rules:
-- Write like you are talking to a business owner NOT a developer
-- No technical jargon - if you must use a term, explain it in simple words
-- Keep it friendly and professional
-- Maximum 600 words total
-`
-
-  // Get the Gemini model
-  // gemini-1.5-flash is FREE and very fast and smart
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-  
-  // Send the prompt and get the response
-  const result = await model.generateContent(prompt)
-  const response = await result.response
-  
-  return response.text()
+    recommendations: [
+      scores.mobile.performance < 70
+        ? 'Improve page speed by compressing assets, reducing unnecessary scripts, and improving loading efficiency.'
+        : 'Fine-tune performance further to maintain a fast and responsive user experience.',
+      scores.mobile.seo < 70
+        ? 'Strengthen SEO fundamentals by improving title tags, meta descriptions, page structure, and on-page clarity.'
+        : 'Build on the existing SEO foundation with stronger local search optimisation and more targeted content.',
+      'Improve mobile usability so text is easy to read, buttons are easy to tap, and the layout works well on smaller screens.',
+      'Review accessibility and best-practice issues so the site feels more polished, credible, and usable for all visitors.',
+    ],
+  }
 }
 
-// ─────────────────────────────────────────────────────────
-// MAIN API HANDLER
-// This runs when the frontend calls /api/audit
-// ─────────────────────────────────────────────────────────
+async function generateAIReport(url, scores) {
+  const issuesList = []
+
+  if (scores.mobile.performance < 50) {
+    issuesList.push(`Very poor mobile performance (${scores.mobile.performance}/100)`)
+  }
+  if (scores.mobile.performance >= 50 && scores.mobile.performance < 70) {
+    issuesList.push(`Below average mobile performance (${scores.mobile.performance}/100)`)
+  }
+  if (scores.mobile.seo < 70) {
+    issuesList.push(`Weak SEO score (${scores.mobile.seo}/100)`)
+  }
+  if (scores.mobile.accessibility < 70) {
+    issuesList.push(`Poor accessibility (${scores.mobile.accessibility}/100)`)
+  }
+  if (scores.mobile.bestPractices < 70) {
+    issuesList.push(`Poor best practices (${scores.mobile.bestPractices}/100)`)
+  }
+  if (!scores.details.isHttps) {
+    issuesList.push('No SSL certificate — site is not secure for visitors')
+  }
+  if (!scores.details.hasMetaDescription) {
+    issuesList.push('Missing meta description — hurts Google rankings')
+  }
+  if (!scores.details.hasTitle) {
+    issuesList.push('Missing page title tag — critical for SEO')
+  }
+  if (!scores.details.imageOptimization) {
+    issuesList.push('Images not optimised — slowing the site down')
+  }
+  if (!scores.details.fontSizeOk) {
+    issuesList.push('Text too small on mobile — poor user experience')
+  }
+  if (!scores.details.tapTargetsOk) {
+    issuesList.push('Buttons too small for mobile users — causes frustration')
+  }
+
+  const prompt = `
+You are a professional web developer writing a website audit report for a potential client.
+
+WEBSITE: ${url}
+OVERALL SCORE: ${scores.overallScore}/100
+MOBILE PERFORMANCE: ${scores.mobile.performance}/100
+DESKTOP PERFORMANCE: ${scores.desktop.performance}/100
+SEO: ${scores.mobile.seo}/100
+ACCESSIBILITY: ${scores.mobile.accessibility}/100
+BEST PRACTICES: ${scores.mobile.bestPractices}/100
+LOAD TIME: ${scores.details.loadTime}
+FIRST CONTENTFUL PAINT: ${scores.details.firstContentfulPaint}
+SSL CERTIFICATE: ${scores.details.isHttps ? 'Yes' : 'No'}
+META DESCRIPTION: ${scores.details.hasMetaDescription ? 'Present' : 'Missing'}
+PAGE TITLE: ${scores.details.hasTitle ? 'Present' : 'Missing'}
+IMAGES OPTIMISED: ${scores.details.imageOptimization ? 'Yes' : 'No'}
+FONT SIZE OK: ${scores.details.fontSizeOk ? 'Yes' : 'No'}
+TAP TARGETS OK: ${scores.details.tapTargetsOk ? 'Yes' : 'No'}
+
+ISSUES FOUND:
+${issuesList.length > 0 ? issuesList.map((i) => `- ${i}`).join('\n') : '- No major issues found'}
+
+You MUST respond with ONLY valid JSON. No markdown. No code blocks. No explanation. Just the raw JSON object.
+
+Return exactly this structure:
+{
+  "executiveSummary": "2-3 sentences summarising the overall health of the website in plain English.",
+  "keyIssues": ["issue 1", "issue 2", "issue 3"],
+  "businessImpact": ["impact 1", "impact 2", "impact 3"],
+  "recommendations": ["rec 1", "rec 2", "rec 3"]
+}
+
+Rules:
+- Write for a business owner, no technical jargon
+- keyIssues: 3 to 5 items
+- businessImpact: 2 to 4 items
+- recommendations: 3 to 5 items ordered by priority
+- Every item must be a plain string
+- Return ONLY the JSON object
+`
+
+  const models = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.5-flash-lite']
+
+  for (const model of models) {
+    try {
+      console.log(`🤖 Trying model: ${model}`)
+
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+      })
+
+      console.log(`✅ Success with model: ${model}`)
+
+      const text = response.text.trim()
+      const cleaned = text
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/\s*```$/i, '')
+        .trim()
+
+      let parsed
+      try {
+        parsed = JSON.parse(cleaned)
+      } catch (parseErr) {
+        console.warn(`⚠️ JSON parse failed for ${model}:`, parseErr.message)
+        if (model !== models[models.length - 1]) {
+          await new Promise((r) => setTimeout(r, 2000))
+          continue
+        }
+        return generateFallbackReport(url, scores, issuesList)
+      }
+
+      const requiredKeys = ['executiveSummary', 'keyIssues', 'businessImpact', 'recommendations']
+      const missingKeys = requiredKeys.filter((k) => !parsed[k])
+
+      if (missingKeys.length > 0) {
+        console.warn(`⚠️ Missing keys: ${missingKeys.join(', ')}`)
+        return generateFallbackReport(url, scores, issuesList)
+      }
+
+      if (
+        !Array.isArray(parsed.keyIssues) ||
+        !Array.isArray(parsed.businessImpact) ||
+        !Array.isArray(parsed.recommendations)
+      ) {
+        console.warn('⚠️ Wrong field types')
+        return generateFallbackReport(url, scores, issuesList)
+      }
+
+      return parsed
+    } catch (error) {
+      console.log(`⚠️ Model ${model} failed:`, error.message)
+      if (model === models[models.length - 1]) {
+        return generateFallbackReport(url, scores, issuesList)
+      }
+      await new Promise((r) => setTimeout(r, 2000))
+    }
+  }
+
+  return generateFallbackReport(url, scores, issuesList)
+}
+
 export async function POST(request) {
   try {
-    // Get the URL from the request body
     const body = await request.json()
     const { url } = body
 
-    // ── Validation ──────────────────────────────────────
-    // Make sure a URL was actually provided
     if (!url) {
-      return NextResponse.json(
-        { error: 'Please provide a URL' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Please provide a URL' }, { status: 400 })
     }
 
-    // Make sure it looks like a real URL
-    // Add https:// if they forgot it
+    const userId = getUserIdFromRequest(request)
+
+    if (userId) {
+      const planData = await getUserPlan(userId)
+
+      if (planData.auditLimitReached) {
+        console.log(
+          `🚫 Audit limit reached for userId: ${userId} (${planData.auditCount}/${planData.auditLimit})`
+        )
+        return NextResponse.json(
+          {
+            error: `You have used all ${planData.auditLimit} free audits this month. Upgrade to Pro for unlimited audits.`,
+            limitReached: true,
+            limitType: 'audit',
+            used: planData.auditCount,
+            limit: planData.auditLimit,
+            plan: planData.plan,
+          },
+          { status: 403 }
+        )
+      }
+    }
+
     let cleanUrl = url.trim()
+
     if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
       cleanUrl = 'https://' + cleanUrl
     }
 
-    // Quick URL validity check
     try {
       new URL(cleanUrl)
     } catch {
@@ -232,20 +349,18 @@ export async function POST(request) {
       )
     }
 
-    // ── Run The Scan ─────────────────────────────────────
     console.log(`🔍 Starting audit for: ${cleanUrl}`)
-    
-    // Step 1: Get Lighthouse scores from Google
-    console.log('📊 Getting Lighthouse scores...')
+
     const scores = await getLighthouseScores(cleanUrl)
-    
-    // Step 2: Generate AI report using the scores
-    console.log('🤖 Generating AI report...')
     const aiReport = await generateAIReport(cleanUrl, scores)
 
-    // Step 3: Send everything back to the frontend
-    console.log(`✅ Audit complete! Score: ${scores.overallScore}/100`)
-    
+    if (userId) {
+      await incrementUsage(userId, 'audit')
+      console.log(`📊 Audit usage incremented for userId: ${userId}`)
+    }
+
+    console.log(`✅ Audit complete! Overall score: ${scores.overallScore}/100`)
+
     return NextResponse.json({
       success: true,
       url: cleanUrl,
@@ -253,9 +368,7 @@ export async function POST(request) {
       aiReport,
       scannedAt: new Date().toISOString(),
     })
-
   } catch (error) {
-    // If anything goes wrong, return a clean error message
     console.error('Audit error:', error)
     return NextResponse.json(
       { error: error.message || 'Something went wrong. Please try again.' },

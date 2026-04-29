@@ -1,109 +1,208 @@
-// components/AuditForm.js
-// ─────────────────────────────────────────────────────────
-// Simple URL input form with loading state
-// ─────────────────────────────────────────────────────────
-
 'use client'
-import { useState } from 'react'
 
-export default function AuditForm({ onSubmit, isLoading }) {
-  const [url, setUrl] = useState('')
-  const [inputError, setInputError] = useState('')
+import { useEffect, useMemo, useState } from 'react'
+
+const EXAMPLE_URLS = [
+  'https://examplebusiness.com.au',
+  'https://plumbingwebsite.com.au',
+  'https://dentistsite.com.au',
+]
+
+function normaliseUrl(value) {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed
+  }
+
+  return `https://${trimmed}`
+}
+
+function isLikelyValidUrl(value) {
+  try {
+    const url = new URL(normaliseUrl(value))
+    return !!url.hostname && url.hostname.includes('.')
+  } catch {
+    return false
+  }
+}
+
+export default function AuditForm({ onSubmit, isLoading, initialUrl = '' }) {
+  const [inputValue, setInputValue] = useState(initialUrl || '')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    setInputValue(initialUrl || '')
+    setError('')
+  }, [initialUrl])
+
+  const canSubmit = useMemo(() => {
+    return inputValue.trim().length > 0 && isLikelyValidUrl(inputValue)
+  }, [inputValue])
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    setInputError('')
 
-    // Basic check before sending
-    if (!url.trim()) {
-      setInputError('Please enter a website URL')
+    const finalUrl = normaliseUrl(inputValue)
+
+    if (!finalUrl) {
+      setError('Please enter a website URL.')
       return
     }
 
-    // Pass the URL up to the parent component
-    onSubmit(url.trim())
+    if (!isLikelyValidUrl(finalUrl)) {
+      setError('Please enter a valid URL like business.com.au')
+      return
+    }
+
+    setError('')
+    setInputValue(finalUrl)
+    onSubmit(finalUrl)
+  }
+
+  const handleBlur = () => {
+    if (!inputValue.trim()) {
+      setError('')
+      return
+    }
+
+    const finalUrl = normaliseUrl(inputValue)
+    setInputValue(finalUrl)
+
+    if (!isLikelyValidUrl(finalUrl)) {
+      setError('Please enter a valid URL like business.com.au')
+    } else {
+      setError('')
+    }
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
-      <h2 className="text-xl font-bold text-gray-800 mb-2">
-        🔍 Scan a Website
-      </h2>
-      <p className="text-gray-500 text-sm mb-6">
-        Enter any website URL to get a full audit report with scores and AI analysis
-      </p>
+    <form onSubmit={handleSubmit} className="w-full">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <label
+          htmlFor="audit-url"
+          className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400"
+        >
+          Website URL
+        </label>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Website URL
-          </label>
-          <div className="flex gap-3">
-            <input
-              type="text"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="e.g. bobsplumbing.com.au"
-              disabled={isLoading}
-              className="
-                flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl
-                focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200
-                disabled:bg-gray-100 disabled:cursor-not-allowed
-                text-gray-800 text-sm
-              "
-            />
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="
-                bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400
-                text-white font-medium px-6 py-3 rounded-xl
-                transition-colors disabled:cursor-not-allowed
-                whitespace-nowrap
-              "
-            >
-              {isLoading ? '⏳ Scanning...' : '🚀 Scan Site'}
-            </button>
-          </div>
-          
-          {/* Error message */}
-          {inputError && (
-            <p className="text-red-500 text-sm mt-2">{inputError}</p>
-          )}
+        {inputValue && !isLoading && (
+          <button
+            type="button"
+            onClick={() => {
+              setInputValue('')
+              setError('')
+            }}
+            className="text-xs font-medium text-slate-500 transition hover:text-slate-300"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-3 lg:flex-row">
+        <div className="relative flex-1">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+          >
+            🌐
+          </span>
+
+          <input
+            id="audit-url"
+            type="text"
+            inputMode="url"
+            autoComplete="off"
+            spellCheck="false"
+            autoFocus={!initialUrl}
+            value={inputValue}
+            onChange={(e) => {
+              setInputValue(e.target.value)
+              if (error) setError('')
+            }}
+            onBlur={handleBlur}
+            placeholder="Enter a website URL, e.g. business.com.au"
+            disabled={isLoading}
+            className={`w-full rounded-2xl border bg-slate-950/50 py-3.5 pl-12 pr-4 text-sm text-white shadow-sm outline-none transition placeholder:text-slate-500 focus:ring-4 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base ${
+              error
+                ? 'border-rose-400/40 focus:border-rose-400 focus:ring-rose-500/10'
+                : 'border-white/[0.10] focus:border-blue-400 focus:ring-blue-500/10'
+            }`}
+          />
         </div>
 
-        {/* Examples to help the user */}
-        <div className="text-xs text-gray-400">
-          <span className="font-medium">Examples:</span>{' '}
-          {['bobsplumbing.com.au', 'localcafe.com.au', 'sydneydentist.com.au'].map((example) => (
+        <button
+          type="submit"
+          disabled={isLoading || !inputValue.trim()}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(37,99,235,0.24)] transition hover:-translate-y-0.5 hover:bg-blue-500 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 lg:w-auto"
+        >
+          {isLoading ? (
+            <>
+              <svg
+                aria-hidden="true"
+                className="h-4 w-4 animate-spin"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8z"
+                />
+              </svg>
+              Running full audit...
+            </>
+          ) : (
+            <>
+              <span aria-hidden="true">📊</span>
+              Run Full Audit
+            </>
+          )}
+        </button>
+      </div>
+
+      <div className="mt-2 flex flex-col gap-1">
+        {error ? (
+          <p className="text-xs text-rose-300">{error}</p>
+        ) : (
+          <p className="text-xs text-slate-500">
+            We’ll check both mobile and desktop performance, then generate an AI report.
+          </p>
+        )}
+      </div>
+
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:flex-shrink-0">
+          Try an example
+        </p>
+
+        <div className="flex flex-wrap gap-1.5">
+          {EXAMPLE_URLS.map((url) => (
             <button
-              key={example}
+              key={url}
               type="button"
-              onClick={() => setUrl(example)}
-              className="text-blue-500 hover:text-blue-700 mr-2 underline"
+              onClick={() => {
+                setInputValue(url)
+                setError('')
+              }}
+              disabled={isLoading}
+              className="rounded-full border border-white/[0.10] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-300 transition hover:border-blue-400/30 hover:bg-blue-500/10 hover:text-blue-200 disabled:opacity-40"
             >
-              {example}
+              {url.replace('https://', '')}
             </button>
           ))}
         </div>
-      </form>
-
-      {/* Loading state with steps so user knows whats happening */}
-      {isLoading && (
-        <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
-          <p className="text-blue-700 font-medium text-sm mb-3">
-            ⏳ Scanning in progress...
-          </p>
-          <div className="space-y-2 text-xs text-blue-600">
-            <p>📊 Running Google Lighthouse tests (mobile + desktop)...</p>
-            <p>🔍 Checking SEO, performance and accessibility...</p>
-            <p>🤖 Generating AI report...</p>
-            <p className="text-blue-400 italic mt-2">
-              This takes about 30-60 seconds. Google needs to fully scan the site!
-            </p>
-          </div>
-        </div>
-      )}
-    </div>
+      </div>
+    </form>
   )
 }
