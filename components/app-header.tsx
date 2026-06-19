@@ -199,6 +199,7 @@ export function AppHeader({
         sessionEmail={sessionEmail}
         sessionUserId={sessionUserId}
         variant={isMarketing && !sessionUserId ? 'marketing' : 'app'}
+        drawerBreakpoint={isMarketing ? 'lg' : 'md'}
         onOpenSettings={() => {
           setMobileMenuOpen(false)
           setShowProfile(true)

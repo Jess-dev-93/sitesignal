@@ -15,6 +15,8 @@ type Props = {
   sessionEmail: string | null
   sessionUserId: string | null
   variant?: 'app' | 'marketing'
+  /** Hide drawer above this breakpoint — must match header menu button visibility */
+  drawerBreakpoint?: 'md' | 'lg'
   onOpenSettings: () => void
   onSignOut: () => void
 }
@@ -102,11 +104,13 @@ export default function MobileSidebarDrawer({
   sessionEmail,
   sessionUserId,
   variant = 'app',
+  drawerBreakpoint = 'md',
   onOpenSettings,
   onSignOut,
 }: Props) {
   const pathname = usePathname()
   const navLinks = variant === 'marketing' ? PUBLIC_LINKS : MAIN_LINKS
+  const drawerVisibilityClass = drawerBreakpoint === 'lg' ? 'lg:hidden' : 'md:hidden'
 
   const initials = useMemo(
     () => getInitials(profile.yourName, sessionEmail),
@@ -129,7 +133,7 @@ export default function MobileSidebarDrawer({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[60] md:hidden">
+    <div className={`fixed inset-0 z-[60] ${drawerVisibilityClass}`}>
       <button
         aria-label="Close menu"
         onClick={onClose}

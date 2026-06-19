@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '../lib/supabaseClient'
+import { supabase, supabaseConfigError } from '../lib/supabaseClient'
+import SupabaseConfigNotice from './SupabaseConfigNotice'
 
 type AuthMode = 'sign-in' | 'sign-up'
 
@@ -44,6 +45,14 @@ function normaliseAuthError(err: any, mode: AuthMode) {
 
   if (/rate limit/i.test(msg)) {
     return 'Too many attempts. Please wait a moment and try again.'
+  }
+
+  if (/supabase is not configured/i.test(msg)) {
+    return msg
+  }
+
+  if (/supabaseurl is required/i.test(msg)) {
+    return 'Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY, then redeploy.'
   }
 
   return msg
@@ -191,6 +200,9 @@ export default function AuthForm({
   }
 
   return (
+    <>
+      <SupabaseConfigNotice />
+      {supabaseConfigError ? null : (
     <section className="rounded-[24px] border border-white/[0.08] bg-white/[0.035] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur-sm">
       <div className="mb-4">
         <div className="mb-2 inline-flex items-center rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
@@ -360,5 +372,7 @@ export default function AuthForm({
         )}
       </form>
     </section>
+      )}
+    </>
   )
 }

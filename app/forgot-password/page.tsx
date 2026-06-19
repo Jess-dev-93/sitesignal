@@ -5,7 +5,8 @@ import Link from 'next/link'
 import MarketingShell from '../../components/layout/MarketingShell'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent } from '../../components/ui/card'
-import { supabase } from '../../lib/supabaseClient'
+import SupabaseConfigNotice from '../../components/SupabaseConfigNotice'
+import { supabase, supabaseConfigError } from '../../lib/supabaseClient'
 import { NextPageProps, useUnwrapNextPageProps } from '../../lib/nextPageProps'
 
 const LAST_EMAIL_KEY = 'clientFinderLastAuthEmail'
@@ -27,11 +28,16 @@ export default function ForgotPasswordPage(props: NextPageProps) {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (supabaseConfigError) {
+      setError(supabaseConfigError)
+      return
+    }
+
     setLoading(true)
     setMessage('')
     setError('')
     try {
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+      const siteUrl = window.location.origin
       const redirectTo = `${siteUrl}/auth/callback?next=${encodeURIComponent('/reset-password')}`
 
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
@@ -61,6 +67,7 @@ export default function ForgotPasswordPage(props: NextPageProps) {
 
       <Card className="border-border bg-card">
         <CardContent className="p-5">
+          <SupabaseConfigNotice />
           <form onSubmit={handleSend} className="space-y-4">
             <div>
               <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -89,7 +96,7 @@ export default function ForgotPasswordPage(props: NextPageProps) {
               </div>
             ) : null}
 
-            <Button type="submit" disabled={loading} className="w-full">
+            <Button type="submit" disabled={loading || Boolean(supabaseConfigError)} className="w-full">
               {loading ? 'Sending…' : 'Send reset link'}
             </Button>
 
