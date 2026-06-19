@@ -732,34 +732,36 @@ async function importLeadSearchHistory(e: React.ChangeEvent<HTMLInputElement>) {
       setSavingLeadDomain(null)
     }
   }
-async function filterOutWorkedLeads(sites) {
+async function filterOutWorkedLeads(sites: Array<{ domain: string }>) {
   if (!sites.length) return []
 
   const domains = sites.map((site) => site.domain)
+  try {
+    const res = await fetch('/api/leads-by-domains', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domains }),
+    })
+    const json = await res.json()
+    const data = json?.leads || []
 
-  const { data, error } = await supabaseAdmin
-    .from('leads')
-    .select('domain, lead_status')
-    .in('domain', domains)
+    const skipStatuses = new Set(['Contacted', 'Won', 'Lost'])
+    const workedDomains = new Set(
+      (data || [])
+        .filter((row: any) => skipStatuses.has(row.lead_status))
+        .map((row: any) => row.domain)
+    )
 
-  if (error) {
-    console.error('❌ Supabase filter error:', error)
+    const filteredSites = sites.filter((site) => !workedDomains.has(site.domain))
+
+    console.log(`🚫 Skipped worked leads: ${sites.length - filteredSites.length}`)
+    console.log(`✅ Remaining candidates: ${filteredSites.length}`)
+
+    return filteredSites
+  } catch (error) {
+    console.error('❌ leads-by-domains filter error:', error)
     return sites
   }
-
-  const skipStatuses = new Set(['Contacted', 'Won', 'Lost'])
-  const workedDomains = new Set(
-    (data || [])
-      .filter((row) => skipStatuses.has(row.lead_status))
-      .map((row) => row.domain)
-  )
-
-  const filteredSites = sites.filter((site) => !workedDomains.has(site.domain))
-
-  console.log(`🚫 Skipped worked leads: ${sites.length - filteredSites.length}`)
-  console.log(`✅ Remaining candidates: ${filteredSites.length}`)
-
-  return filteredSites
 }
   async function addToCallList(lead: Lead) {
     try {
@@ -876,22 +878,22 @@ async function filterOutWorkedLeads(sites) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[28px] border border-white/[0.08] bg-[#1b2545]/90 shadow-[0_20px_80px_rgba(2,6,23,0.35)] backdrop-blur">
-        <div className="flex flex-col gap-4 border-b border-white/[0.06] px-6 py-5 lg:flex-row lg:items-start lg:justify-between">
+      <section className="rounded-2xl border border-border bg-card shadow-sm">
+        <div className="flex flex-col gap-4 border-b border-border px-6 py-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-3xl">
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               <span>🎯</span>
               Lead Finder
             </div>
-            <h2 className="text-2xl font-semibold text-white">
+            <h2 className="text-2xl font-semibold text-foreground">
               Find the weakest websites in your market
             </h2>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-muted-foreground">
               Search by industry and location, then move into audit, outreach or your call list.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm text-slate-300">
+          <div className="rounded-xl border border-border bg-secondary/20 px-4 py-3 text-sm text-foreground">
             {results.length} opportunities found
           </div>
         </div>
@@ -905,20 +907,20 @@ async function filterOutWorkedLeads(sites) {
           />
 
           {isLoading && (
-            <div className="mt-5 rounded-2xl border border-blue-500/20 bg-blue-500/[0.06] p-5 sm:p-7">
+            <div className="mt-5 rounded-xl border border-border bg-secondary/10 p-5 sm:p-7">
               <div className="mx-auto max-w-md text-center">
                 <div className="mb-3 animate-bounce text-4xl">
                   {LOADING_STEPS[loadingStep].icon}
                 </div>
-                <p className="mb-1 text-base font-bold text-blue-300 sm:text-lg">
+                <p className="mb-1 text-base font-bold text-foreground sm:text-lg">
                   {LOADING_STEPS[loadingStep].text}
                 </p>
-                <p className="mb-4 text-sm text-blue-400">
+                <p className="mb-4 text-sm text-muted-foreground">
                   ⏱ {elapsedTime}s elapsed — typically takes 45–60 seconds
                 </p>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.08]">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-secondary/30">
                   <div
-                    className="h-2 rounded-full bg-blue-500 transition-all duration-1000"
+                    className="h-2 rounded-full bg-primary transition-all duration-1000"
                     style={{ width: `${Math.min((elapsedTime / 60) * 100, 95)}%` }}
                   />
                 </div>
@@ -927,32 +929,32 @@ async function filterOutWorkedLeads(sites) {
           )}
 
           {!isLoading && leadSearchHistory.length > 0 && (
-            <div className="mt-5 overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.04]">
+            <div className="mt-5 overflow-hidden rounded-2xl border border-border bg-card">
               <button
                 type="button"
                 onClick={() => setShowLeadSearchHistory((prev) => !prev)}
-                className="flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-white/[0.03]"
+                className="flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-secondary/20"
               >
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     Past Searches
                   </p>
-                  <p className="mt-1 text-sm text-slate-300">
+                  <p className="mt-1 text-sm text-foreground">
                     Reopen a previous lead search without searching again
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="rounded-full border border-white/[0.10] bg-white/[0.04] px-2.5 py-1 text-xs font-semibold text-slate-300">
+                  <span className="rounded-full border border-border bg-secondary/30 px-2.5 py-1 text-xs font-semibold text-muted-foreground">
                     {leadSearchHistory.length}
                   </span>
-                  <span className="text-slate-400">{showLeadSearchHistory ? '▲' : '▼'}</span>
+                  <span className="text-muted-foreground">{showLeadSearchHistory ? '▲' : '▼'}</span>
                 </div>
               </button>
 
               {showLeadSearchHistory && (
-                <div className="border-t border-white/[0.07] px-4 py-4">
+                <div className="border-t border-border px-4 py-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <p className="text-xs text-slate-500">Your most recent lead finder runs</p>
+                    <p className="text-xs text-muted-foreground">Your most recent lead finder runs</p>
                     <button
                       onClick={handleClearLeadSearchHistory}
                       className="text-xs font-semibold text-rose-300 transition hover:text-rose-200"
@@ -961,29 +963,34 @@ async function filterOutWorkedLeads(sites) {
                     </button>
                   </div>
                   <button
-  onClick={exportLeadSearchHistory}
-  className="text-xs font-semibold text-blue-300 transition hover:text-blue-200"
->
-  Export
-</button>
+                    onClick={exportLeadSearchHistory}
+                    className="text-xs font-semibold text-muted-foreground transition hover:text-foreground"
+                  >
+                    Export
+                  </button>
 
-<label className="text-xs font-semibold text-blue-300 transition hover:text-blue-200 cursor-pointer">
-  Import
-  <input type="file" accept="application/json" className="hidden" onChange={importLeadSearchHistory} />
-</label>
+                  <label className="cursor-pointer text-xs font-semibold text-muted-foreground transition hover:text-foreground">
+                    Import
+                    <input
+                      type="file"
+                      accept="application/json"
+                      className="hidden"
+                      onChange={importLeadSearchHistory}
+                    />
+                  </label>
 
                   <div className="space-y-2">
                     {leadSearchHistory.map((entry) => (
                       <div
                         key={entry.id}
-                        className="rounded-xl border border-white/[0.08] bg-slate-950/30 p-3"
+                        className="rounded-xl border border-border bg-secondary/20 p-3"
                       >
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-white">
+                            <p className="truncate text-sm font-semibold text-foreground">
                               {entry.query}
                             </p>
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="mt-1 text-xs text-muted-foreground">
                               {new Date(entry.searchedAt).toLocaleString()}
                             </p>
                             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -1000,7 +1007,7 @@ async function filterOutWorkedLeads(sites) {
                           </div>
                           <button
                             onClick={() => reopenLeadSearch(entry)}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.05] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary/30 px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-secondary/50"
                           >
                             <span>📂</span>
                             Reopen Search
@@ -1018,16 +1025,16 @@ async function filterOutWorkedLeads(sites) {
 
       {summary && !isLoading && (
         <>
-          <section className="rounded-[24px] border border-white/[0.08] bg-[#1b2545]/90 p-5">
+          <section className="rounded-2xl border border-border bg-card p-5">
             <div className="grid gap-4 md:grid-cols-4">
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <div className="rounded-2xl border border-border bg-secondary/20 p-4">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   Search Summary
                 </div>
-                <div className="mt-2 text-sm text-white">
+                <div className="mt-2 text-sm text-foreground">
                   {summary.location || 'Search complete'}
                 </div>
-                <div className="mt-1 text-xs text-slate-400">{summary.query}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{summary.query}</div>
               </div>
 
               <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-4">
@@ -1060,13 +1067,13 @@ async function filterOutWorkedLeads(sites) {
 
             {summary.stats && (
               <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                <span className="rounded-full bg-white/[0.05] px-3 py-1 text-slate-300">
+                <span className="rounded-full bg-secondary/30 px-3 py-1 text-muted-foreground">
                   Found {summary.stats?.candidatesFound || 0}
                 </span>
-                <span className="rounded-full bg-white/[0.05] px-3 py-1 text-slate-300">
+                <span className="rounded-full bg-secondary/30 px-3 py-1 text-muted-foreground">
                   Tried {summary.stats?.candidatesTried || 0}
                 </span>
-                <span className="rounded-full bg-white/[0.05] px-3 py-1 text-slate-300">
+                <span className="rounded-full bg-secondary/30 px-3 py-1 text-muted-foreground">
                   Scanned {summary.stats?.scannedCount || 0}
                 </span>
                 <span className="rounded-full bg-amber-500/10 px-3 py-1 text-amber-200">
@@ -1079,13 +1086,13 @@ async function filterOutWorkedLeads(sites) {
             )}
 
             {summary.message && (
-              <p className="mt-4 text-sm text-slate-400">{summary.message}</p>
+              <p className="mt-4 text-sm text-muted-foreground">{summary.message}</p>
             )}
           </section>
 
-          <section className="rounded-[24px] border border-white/[0.08] bg-[#1b2545]/90 p-5">
+          <section className="rounded-2xl border border-border bg-card p-5">
             <div className="mb-5 flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-white/[0.05] px-3 py-1 text-xs text-white/80">
+              <span className="rounded-full bg-secondary/30 px-3 py-1 text-xs text-foreground">
                 Total: {results.length}
               </span>
               <span className="rounded-full bg-red-500/15 px-3 py-1 text-xs text-red-200">
@@ -1109,7 +1116,7 @@ async function filterOutWorkedLeads(sites) {
                 return (
                   <article
                     key={getLeadId(lead)}
-                    className="rounded-[24px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.02))] p-5 shadow-[0_18px_50px_rgba(2,6,23,0.18)]"
+                    className="rounded-2xl border border-border bg-card p-5"
                   >
                     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_260px]">
                       <div className="min-w-0">
@@ -1127,13 +1134,13 @@ async function filterOutWorkedLeads(sites) {
                           </span>
 
                           {lead.location && (
-                            <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-300">
+                            <span className="rounded-full border border-border bg-secondary/30 px-3 py-1 text-xs font-medium text-muted-foreground">
                               {lead.location}
                             </span>
                           )}
                         </div>
 
-                        <h3 className="text-[30px] font-semibold leading-tight text-white">
+                        <h3 className="text-[30px] font-semibold leading-tight text-foreground">
                           {lead.title}
                         </h3>
 
@@ -1159,18 +1166,18 @@ async function filterOutWorkedLeads(sites) {
                           </div>
                         )}
 
-                        <div className="mt-4 rounded-2xl border border-white/[0.08] bg-[#223157]/55 p-4">
-                          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        <div className="mt-4 rounded-2xl border border-border bg-secondary/20 p-4">
+                          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                             Why this is a lead
                           </p>
-                          <p className="text-sm leading-6 text-slate-300">
+                          <p className="text-sm leading-6 text-foreground">
                             Possible website issues: {getWhyLeadText(lead)}
                           </p>
                         </div>
 
                         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
                           <div>
-                            <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                            <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                               Notes
                             </label>
                             <textarea
@@ -1183,13 +1190,13 @@ async function filterOutWorkedLeads(sites) {
                                 })
                               }
                               onBlur={() => saveLeadToSupabase(lead)}
-                              className="min-h-[140px] w-full rounded-2xl border border-white/[0.08] bg-slate-950/50 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
+                              className="min-h-[140px] w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
                               placeholder="Add notes here..."
                             />
                           </div>
 
-                          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
-                            <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          <div className="rounded-2xl border border-border bg-secondary/20 p-4">
+                            <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                               Lead Status
                             </label>
 
@@ -1202,7 +1209,7 @@ async function filterOutWorkedLeads(sites) {
                                 })
                                 setTimeout(() => saveLeadToSupabase(lead), 0)
                               }}
-                              className="w-full rounded-xl border border-white/[0.08] bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
+                              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
                             >
                               {LEAD_STATUSES.map((status) => (
                                 <option key={status} value={status}>
@@ -1305,7 +1312,7 @@ async function filterOutWorkedLeads(sites) {
                             </p>
                           </div>
 
-                          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+                          <div className="rounded-2xl border border-border bg-secondary/20 p-4">
                             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                               Estimated Value
                             </p>
@@ -1314,7 +1321,7 @@ async function filterOutWorkedLeads(sites) {
                             </p>
                           </div>
 
-                          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+                          <div className="rounded-2xl border border-border bg-secondary/20 p-4">
                             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                               Signals
                             </p>

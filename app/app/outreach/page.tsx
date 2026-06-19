@@ -1,11 +1,14 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabaseClient'
-import MainNavbar from '../../../components/layout/MainNavbar'
+import { useSupabaseSession } from '../../../lib/useSupabaseSession'
+import { NextPageProps, useUnwrapNextPageProps } from '../../../lib/nextPageProps'
 import ProfileModal from '../../../components/profile/ProfileModal'
 import OutreachTabs from '../../../components/OutreachTabs'
+import { AppHeader } from '../../../components/app-header'
+import { Card, CardContent } from '../../../components/ui/card'
 import {
   getStoredProfile,
   saveStoredProfile,
@@ -104,13 +107,32 @@ function TempBadge({ temp }: { temp: string }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function OutreachPage() {
+export default function OutreachPage(props: NextPageProps) {
+  useUnwrapNextPageProps(props)
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[60vh] items-center justify-center p-6">
+          <Card className="max-w-md border-border bg-card">
+            <CardContent className="p-6 text-sm text-muted-foreground">
+              Loading outreach…
+            </CardContent>
+          </Card>
+        </div>
+      }
+    >
+      <OutreachPageInner />
+    </Suspense>
+  )
+}
+
+function OutreachPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { email: sessionEmail, userId: sessionUserId, loading: authLoading } =
+    useSupabaseSession()
+  const authReady = !authLoading
 
-  const [sessionUserId, setSessionUserId] = useState<string | null>(null)
-  const [sessionEmail, setSessionEmail] = useState<string | null>(null)
-  const [authReady, setAuthReady] = useState(false)
   const [showProfileModal, setShowProfileModal] = useState(false)
 
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE)
@@ -145,23 +167,9 @@ export default function OutreachPage() {
 
   // ─── Auth ─────────────────────────────────────────────────────────────────
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) { router.replace('/signin'); return }
-      setSessionUserId(data.session.user.id)
-      setSessionEmail(data.session.user.email ?? null)
-      setAuthReady(true)
-    })
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (!session) router.replace('/signin')
-      else {
-        setSessionUserId(session.user.id)
-        setSessionEmail(session.user.email ?? null)
-      }
-    })
-
-    return () => listener.subscription.unsubscribe()
-  }, [router])
+    if (!authReady) return
+    if (!sessionUserId) router.replace('/signin')
+  }, [authReady, router, sessionUserId])
 
   // ─── Profile ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -341,45 +349,42 @@ export default function OutreachPage() {
   // ─── Auth guard ───────────────────────────────────────────────────────────
   if (!authReady) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#080e1f]">
-        <div className="flex items-center gap-3 text-slate-400">
-          <svg aria-hidden="true" className="h-5 w-5 animate-spin text-blue-400" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-          </svg>
-          Loading...
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center p-6">
+        <Card className="max-w-md border-border bg-card">
+          <CardContent className="flex items-center gap-3 p-6 text-sm text-muted-foreground">
+            <span className="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
+            Loading…
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.13),transparent_55%),linear-gradient(160deg,#080e1f_0%,#0f1a38_50%,#080e1f_100%)]">
-      <MainNavbar
-        sessionEmail={sessionEmail}
-        isLoggedIn={!!sessionUserId}
-        profile={profile}
-        onOpenProfile={() => setShowProfileModal(true)}
-        onSignOut={handleSignOut}
+    <div className="flex min-h-screen flex-col">
+      <AppHeader
+        variant="app"
+        eyebrow="Workspace"
+        title="Outreach"
+        description={mode === 'audited' ? 'Audit-backed outreach scripts' : 'Manual outreach workspace'}
       />
 
-      <div className="mx-auto max-w-5xl px-4 pb-24 pt-24 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-6xl space-y-6 p-4 pb-16 sm:p-6">
 
         {/* Page header */}
-        <div className="mb-8">
-          <div className="mb-2 inline-flex items-center rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
-            {mode === 'audited' ? '🎯 Audit-Backed Outreach' : '✉️ Outreach Workspace'}
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            {mode === 'audited' ? 'Audit-backed outreach' : 'Manual outreach'}
-          </h1>
-          <p className="mt-2 text-base text-slate-400">
-            {mode === 'audited'
-              ? 'Your call script and emails are generated from real audit findings — specific, credible, and ready to use.'
-              : 'Generate a client-ready call script and emails using the lead details below.'}
-          </p>
-        </div>
+        <Card className="border-border bg-gradient-to-br from-card to-secondary/30">
+          <CardContent className="p-4 sm:p-6">
+            <h2 className="mb-1 text-lg font-semibold text-foreground sm:text-xl">
+              {mode === 'audited' ? 'Audit-backed outreach' : 'Manual outreach'}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {mode === 'audited'
+                ? 'Your call script and emails are generated from real audit findings — specific, credible, and ready to use.'
+                : 'Generate a client-ready call script and emails using the lead details below.'}
+            </p>
+          </CardContent>
+        </Card>
 
         <div className="space-y-8">
 
@@ -409,7 +414,7 @@ export default function OutreachPage() {
                   <dt className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Website</dt>
                   <dd className="text-sm font-medium text-slate-200">
                     {websiteUrl ? (
-                      <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="truncate text-blue-400 underline-offset-2 hover:underline">
+                      <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="truncate text-slate-200 underline-offset-2 hover:underline">
                         {websiteUrl}
                       </a>
                     ) : <span className="text-slate-500">—</span>}
@@ -668,7 +673,7 @@ export default function OutreachPage() {
             isLoading={outreachLoading}
             error={outreachError}
             usedFormats={usedFormats}
-            onMarkUsed={(format) =>
+            onMarkUsed={(format: string) =>
               setUsedFormats((prev) => ({ ...prev, [format]: true }))
             }
           />
@@ -760,7 +765,7 @@ export default function OutreachPage() {
                 {/* Phone number quick reference */}
                 {clientContact.contactPhone && (
                   <div className="mb-5 flex items-center gap-3 rounded-2xl border border-blue-500/20 bg-blue-500/[0.06] px-4 py-3">
-                    <span className="text-blue-400">📞</span>
+                    <span className="text-slate-300">📞</span>
                     <div>
                       <p className="text-xs font-semibold text-blue-300">Ready to call</p>
                       <p className="text-sm font-bold text-white">{clientContact.contactPhone}</p>
@@ -820,7 +825,8 @@ export default function OutreachPage() {
           )}
 
         </div>
-      </div>
+
+      </main>
 
       <ProfileModal
         open={showProfileModal}
@@ -832,4 +838,3 @@ export default function OutreachPage() {
     </div>
   )
 }
-                

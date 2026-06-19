@@ -1,14 +1,17 @@
 'use client'
 
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { Suspense, useEffect, useState, useCallback, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabaseClient'
-import MainNavbar from '../../../components/layout/MainNavbar'
+import { useSupabaseSession } from '../../../lib/useSupabaseSession'
+import { NextPageProps, useUnwrapNextPageProps } from '../../../lib/nextPageProps'
 import ProfileModal from '../../../components/profile/ProfileModal'
 import AuditForm from '../../../components/AuditForm'
 import AuditReport from '../../../components/AuditReport'
 import AuditHistory from '../../../components/AuditHistory'
 import UsageLimitBanner from '../../../components/UsageLimitBanner'
+import { AppHeader } from '../../../components/app-header'
+import { Card, CardContent } from '../../../components/ui/card'
 import {
   getStoredProfile,
   saveStoredProfile,
@@ -251,13 +254,29 @@ function mapStoredHistoryToHistoryEntry(entry: any): HistoryEntry {
   }
 }
 
-export default function AuditPage() {
+export default function AuditPage(props: NextPageProps) {
+  useUnwrapNextPageProps(props)
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[60vh] items-center justify-center p-6">
+          <Card className="max-w-md border-border bg-card">
+            <CardContent className="p-6 text-sm text-muted-foreground">Loading audit…</CardContent>
+          </Card>
+        </div>
+      }
+    >
+      <AuditPageInner />
+    </Suspense>
+  )
+}
+
+function AuditPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
-
-  const [sessionUserId, setSessionUserId] = useState<string | null>(null)
-  const [sessionEmail, setSessionEmail] = useState<string | null>(null)
-  const [authReady, setAuthReady] = useState(false)
+  const { email: sessionEmail, userId: sessionUserId, loading: authLoading } =
+    useSupabaseSession()
+  const authReady = !authLoading
 
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE)
   const [showProfileModal, setShowProfileModal] = useState(false)
@@ -281,31 +300,9 @@ export default function AuditPage() {
   const queryNext = searchParams.get('next') || ''
 
   useEffect(() => {
-    const init = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!session) {
-        router.push('/signin')
-        return
-      }
-
-      setSessionUserId(session.user.id)
-      setSessionEmail(session.user.email ?? null)
-      setAuthReady(true)
-    }
-
-    init()
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) router.push('/signin')
-    })
-
-    return () => subscription.unsubscribe()
-  }, [router])
+    if (!authReady) return
+    if (!sessionUserId) router.push('/signin')
+  }, [authReady, router, sessionUserId])
 
   useEffect(() => {
     if (!authReady) return
@@ -581,81 +578,75 @@ export default function AuditPage() {
 
   if (!authReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[linear-gradient(160deg,#080e1f_0%,#0f1a38_50%,#080e1f_100%)]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-full border-2 border-blue-500/40 border-t-blue-400 animate-spin" />
-          <p className="text-slate-400 text-sm">Loading audit tool…</p>
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center p-6">
+        <Card className="max-w-md border-border bg-card">
+          <CardContent className="flex items-center gap-3 p-6 text-sm text-muted-foreground">
+            <span className="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
+            Loading audit tool…
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.13),transparent_55%),linear-gradient(160deg,#080e1f_0%,#0f1a38_50%,#080e1f_100%)]">
-      <MainNavbar
-        sessionEmail={sessionEmail}
-        isLoggedIn={!!sessionUserId}
-        profile={profile}
-        onOpenProfile={() => setShowProfileModal(true)}
-        onSignOut={handleSignOut}
+    <div className="flex min-h-screen flex-col">
+      <AppHeader
+        variant="app"
+        eyebrow="Workspace"
+        title="Website Audit"
+        description="Run a PageSpeed + AI analysis"
       />
 
-      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full bg-blue-500/[0.07] blur-3xl" />
-        <div className="absolute top-1/3 -right-40 w-[400px] h-[400px] rounded-full bg-violet-500/[0.05] blur-3xl" />
-      </div>
-
-      <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
-        <div className="mb-8">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-400">
-            Website Audit
-          </p>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
-            Audit any website
-          </h1>
-          <p className="mt-2 max-w-xl text-base text-slate-400">
-            Run a full PageSpeed + AI analysis. Review mobile or desktop results, then
-            move into outreach when you&apos;re ready.
-          </p>
-        </div>
+      <main className="mx-auto w-full max-w-6xl space-y-6 p-4 pb-16 sm:p-6">
+        <Card className="border-border bg-gradient-to-br from-card to-secondary/30">
+          <CardContent className="p-4 sm:p-6">
+            <h2 className="mb-1 text-lg font-semibold text-foreground sm:text-xl">
+              Audit any website
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Review mobile or desktop results, then continue to outreach when you&apos;re ready.
+            </p>
+          </CardContent>
+        </Card>
 
         {arrivedForOutreach && !auditResult && !isRunning && (
-          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-violet-500/30 bg-violet-500/[0.06] px-5 py-4">
-            <span className="mt-0.5 flex-shrink-0 text-lg text-violet-300">✉️</span>
-            <div>
-              <p className="text-sm font-semibold text-violet-200">
-                Audit first, then continue to outreach
-              </p>
-              <p className="mt-1 text-xs text-slate-400">
-                Run the audit below — once it completes, click{' '}
-                <span className="font-medium text-violet-300">Continue to Outreach →</span> to
-                prepare your pitch using the real findings.
-              </p>
-            </div>
-          </div>
+          <Card className="border-violet-500/30 bg-violet-500/[0.06]">
+            <CardContent className="flex items-start gap-3 p-4 sm:p-6">
+              <span className="mt-0.5 flex-shrink-0 text-lg text-violet-300">✉️</span>
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  Audit first, then continue to outreach
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Run the audit below — once it completes, click{' '}
+                  <span className="font-medium text-violet-300">Continue to Outreach →</span> to
+                  prepare your pitch using the real findings.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
-        <div className="mb-6">
-          <UsageLimitBanner userId={sessionUserId} />
-        </div>
+        <UsageLimitBanner userId={sessionUserId} />
 
-        <div className="mb-8 flex w-fit items-center gap-1 rounded-xl border border-white/[0.08] bg-white/[0.04] p-1">
+        <div className="flex w-fit items-center gap-1 rounded-lg border border-border bg-card p-1 shadow-sm">
           <button
             onClick={() => setActiveView('tool')}
-            className={`rounded-lg px-5 py-2 text-sm font-medium transition-all duration-200 ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
               activeView === 'tool'
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40'
-                : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200'
+                ? 'bg-secondary text-foreground'
+                : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
             }`}
           >
             Audit Website
           </button>
           <button
             onClick={() => setActiveView('history')}
-            className={`flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium transition-all duration-200 ${
+            className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition ${
               activeView === 'history'
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40'
-                : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200'
+                ? 'bg-secondary text-foreground'
+                : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
             }`}
           >
             History
@@ -663,8 +654,8 @@ export default function AuditPage() {
               <span
                 className={`rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
                   activeView === 'history'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-white/[0.08] text-slate-300'
+                    ? 'bg-foreground/15 text-foreground'
+                    : 'bg-foreground/10 text-muted-foreground'
                 }`}
               >
                 {auditHistory.length}
@@ -689,7 +680,7 @@ export default function AuditPage() {
                   for this month. Upgrade to run unlimited audits.
                 </p>
                 <a
-                  href="/pricing"
+                  href="/app/pricing"
                   className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
                 >
                   View plans →
@@ -699,7 +690,7 @@ export default function AuditPage() {
               <div className="overflow-hidden rounded-[28px] border border-white/[0.08] bg-white/[0.035] shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur-sm">
                 <div className="border-b border-white/[0.06] p-6 sm:p-8">
                   <div className="mb-1 flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20 text-sm text-blue-400">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-sm text-slate-200">
                       📊
                     </div>
                     <h2 className="text-lg font-semibold text-white">Enter a website URL</h2>
@@ -737,8 +728,8 @@ export default function AuditPage() {
                   <p className="text-sm font-medium text-rose-300">{errorMsg}</p>
                   {errorMsg.includes('limit') && (
                     <a
-                      href="/pricing"
-                      className="mt-1 inline-block text-xs text-blue-400 underline underline-offset-2 hover:text-blue-300"
+                      href="/app/pricing"
+                      className="mt-1 inline-block text-xs text-slate-300 underline underline-offset-2 hover:text-white"
                     >
                       View upgrade options →
                     </a>
@@ -937,7 +928,7 @@ export default function AuditPage() {
                 {auditHistory.length > 0 && (
                   <button
                     onClick={() => setActiveView('history')}
-                    className="mt-3 text-sm font-medium text-blue-400 underline underline-offset-4 transition-colors hover:text-blue-300"
+                    className="mt-3 text-sm font-medium text-slate-200 underline underline-offset-4 transition-colors hover:text-white"
                   >
                     Or reopen a previous audit →
                   </button>

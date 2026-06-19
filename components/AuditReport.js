@@ -675,6 +675,43 @@ export default function AuditReport({
   const profileValues = getProfileFallbacks(profile)
   const scoreItems = buildScoreItems(scores, auditMode)
   const modeLabel = getModeLabel(auditMode)
+  const overallScore = scores?.overallScore ?? 0
+  const mobilePerf = scores?.mobile?.performance ?? 0
+
+  const techOptions = [
+    {
+      tier: 'Option 1 — Upgrade (keep the current platform)',
+      badge: 'Fastest',
+      accent: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300',
+      items: [
+        'Fix the biggest Lighthouse blockers (image compression, unused JS/CSS, caching).',
+        'Tighten mobile UX: tap targets, sticky CTA, clearer contact paths.',
+        'Add basic technical SEO: metadata, headings, indexation checks, sitemap/robots.',
+      ],
+    },
+    {
+      tier: 'Option 2 — Modernise (move to a better stack)',
+      badge: 'Best value',
+      accent: 'border-blue-500/20 bg-blue-500/10 text-blue-300',
+      items: [
+        'Migrate to a faster hosting/CDN setup (and reduce third‑party script bloat).',
+        'If currently on Webflow: optimise + reduce heavy interactions, or consider Framer for simpler sites.',
+        'If currently on WordPress: consider a lightweight theme + performance plugin stack, or a headless setup.',
+      ],
+    },
+    {
+      tier: 'Option 3 — Full rebuild (highest outcome)',
+      badge: 'Premium',
+      accent: 'border-violet-500/20 bg-violet-500/10 text-violet-300',
+      items: [
+        'Rebuild on a modern framework (Next.js / Astro) for speed, SEO and maintainability.',
+        'Design system + components for consistent UX and easier iteration.',
+        'Analytics + conversion tracking baked in (forms, calls, booking, funnels).',
+      ],
+    },
+  ]
+
+  const shouldNudgeRebuild = overallScore < 50 || mobilePerf < 50
 
   const sections = [
     { title: 'Executive Summary', content: hydratedReport.executiveSummary },
@@ -900,6 +937,64 @@ export default function AuditReport({
           </div>
         </div>
       )}
+
+      <div
+        className={`rounded-2xl border p-5 sm:p-6 ${
+          shouldNudgeRebuild
+            ? 'border-violet-500/25 bg-violet-500/[0.06]'
+            : 'border-white/[0.08] bg-white/[0.03]'
+        }`}
+      >
+        <div className="mb-4 flex items-start gap-4">
+          <div
+            className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-lg ${
+              shouldNudgeRebuild ? 'bg-violet-500/10 text-violet-300' : 'bg-white/[0.07] text-slate-300'
+            }`}
+          >
+            🧱
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+              Tech options
+            </p>
+            <h4 className="mt-1 text-base font-bold text-white">
+              Could this site run on better tech?
+            </h4>
+            <p className="mt-1 text-sm leading-relaxed text-slate-400">
+              Depending on budget and urgency, there are usually three sensible paths: improve the existing setup,
+              modernise the platform, or rebuild for maximum performance and long‑term ROI.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          {techOptions.map((opt) => (
+            <div key={opt.tier} className="rounded-xl border border-white/[0.08] bg-black/30 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold text-white">{opt.tier}</p>
+                <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${opt.accent}`}>
+                  {opt.badge}
+                </span>
+              </div>
+              <ul className="mt-3 space-y-2">
+                {opt.items.map((t) => (
+                  <li key={t} className="flex items-start gap-2 text-sm text-slate-300">
+                    <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-slate-500" />
+                    <span className="leading-relaxed">{t}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {shouldNudgeRebuild && (
+          <p className="mt-4 rounded-xl border border-violet-500/20 bg-violet-500/10 px-4 py-3 text-xs leading-relaxed text-violet-200">
+            This site is scoring poorly on mobile/overall. In these cases, a “fix-it” approach can still help — but a
+            modern rebuild often delivers the fastest, most reliable improvement.
+          </p>
+        )}
+      </div>
 
       <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.04] p-5 sm:p-6">
         <div className="flex items-start gap-4">

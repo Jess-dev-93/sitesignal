@@ -2,6 +2,13 @@
 
 import { useState } from 'react'
 
+export type LeadPreferences = {
+  preferLowReview: boolean
+  preferOuterMetro: boolean
+  excludePolishedSites: boolean
+  prioritizeContactMobileIssues: boolean
+}
+
 const EXAMPLE_SEARCHES = [
   'Plumbers Sydney',
   'Dentists Melbourne',
@@ -12,17 +19,31 @@ const EXAMPLE_SEARCHES = [
 ]
 
 interface Props {
-  onSubmit: (query: string) => void
+  onSubmit: (query: string, preferences: LeadPreferences) => void
   isLoading: boolean
   initialQuery?: string
+  initialPreferences?: LeadPreferences
 }
 
-export default function LeadFinderForm({ onSubmit, isLoading, initialQuery = '' }: Props) {
+export default function LeadFinderForm({
+  onSubmit,
+  isLoading,
+  initialQuery = '',
+  initialPreferences,
+}: Props) {
   const [query, setQuery] = useState(initialQuery)
+  const [preferences, setPreferences] = useState<LeadPreferences>(
+    initialPreferences || {
+      preferLowReview: true,
+      preferOuterMetro: false,
+      excludePolishedSites: true,
+      prioritizeContactMobileIssues: true,
+    }
+  )
 
   const handleSubmit = () => {
     if (!query.trim()) return
-    onSubmit(query)
+    onSubmit(query, preferences)
   }
 
   return (
@@ -79,6 +100,53 @@ export default function LeadFinderForm({ onSubmit, isLoading, initialQuery = '' 
             </>
           )}
         </button>
+      </div>
+
+      {/* Preferences */}
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        {(
+          [
+            {
+              key: 'preferLowReview',
+              label: 'Prefer low-review businesses',
+              help: 'Surfaces businesses with weaker online proof (often easier wins).',
+            },
+            {
+              key: 'excludePolishedSites',
+              label: 'Exclude polished websites',
+              help: 'Focus on underperforming sites (better opportunity).',
+            },
+            {
+              key: 'prioritizeContactMobileIssues',
+              label: 'Prioritise contact + mobile issues',
+              help: 'Weight leads with conversion blockers higher.',
+            },
+            {
+              key: 'preferOuterMetro',
+              label: 'Prefer outer-metro / regional',
+              help: 'Often less competition and older tech stacks.',
+            },
+          ] as const
+        ).map((pref) => (
+          <label
+            key={pref.key}
+            className="flex items-start gap-3 rounded-xl border border-white/[0.10] bg-white/[0.03] px-4 py-3 text-left text-sm text-slate-300 transition hover:bg-white/[0.05]"
+          >
+            <input
+              type="checkbox"
+              checked={preferences[pref.key]}
+              onChange={(e) =>
+                setPreferences((prev) => ({ ...prev, [pref.key]: e.target.checked }))
+              }
+              disabled={isLoading}
+              className="mt-1 h-4 w-4 accent-blue-500"
+            />
+            <span className="min-w-0">
+              <span className="block font-semibold text-white">{pref.label}</span>
+              <span className="mt-0.5 block text-xs text-slate-400">{pref.help}</span>
+            </span>
+          </label>
+        ))}
       </div>
 
       {/* Try a search — properly left aligned, matches "TRY AN EXAMPLE" */}

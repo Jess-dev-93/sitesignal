@@ -1,20 +1,21 @@
 export type UserProfile = {
-  name: string
-  title: string
-  company: string
-  location: string
-  specialty: string
+  yourName: string
+  yourTitle: string
+  yourCompany: string
+  yourLocation: string
+  yourSpecialty: string
 }
 
 export const DEFAULT_PROFILE: UserProfile = {
-  name: '',
-  title: '',
-  company: '',
-  location: '',
-  specialty: '',
+  yourName: '',
+  yourTitle: '',
+  yourCompany: '',
+  yourLocation: '',
+  yourSpecialty: '',
 }
 
-const STORAGE_KEY = 'siteSignalUserProfile'
+// NOTE: Still using old "clientFinder" keys until rebrand pass.
+const STORAGE_KEY = 'clientFinderProfile'
 
 export function getStoredProfile(): UserProfile {
   if (typeof window === 'undefined') return DEFAULT_PROFILE
@@ -26,11 +27,11 @@ export function getStoredProfile(): UserProfile {
     const parsed = JSON.parse(raw)
 
     return {
-      name: parsed?.name || '',
-      title: parsed?.title || '',
-      company: parsed?.company || '',
-      location: parsed?.location || '',
-      specialty: parsed?.specialty || '',
+      yourName: parsed?.yourName || '',
+      yourTitle: parsed?.yourTitle || '',
+      yourCompany: parsed?.yourCompany || '',
+      yourLocation: parsed?.yourLocation || '',
+      yourSpecialty: parsed?.yourSpecialty || '',
     }
   } catch {
     return DEFAULT_PROFILE
@@ -43,5 +44,5 @@ export function saveStoredProfile(profile: UserProfile) {
 }
 
 export function hasCompletedProfile(profile: UserProfile) {
-  return Boolean(profile.name && profile.company)
+  return Boolean(profile.yourName && profile.yourCompany)
 }

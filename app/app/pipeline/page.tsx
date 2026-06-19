@@ -3,9 +3,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabaseClient'
-import MainNavbar from '../../../components/layout/MainNavbar'
+import { useSupabaseSession } from '../../../lib/useSupabaseSession'
+import { NextPageProps, useUnwrapNextPageProps } from '../../../lib/nextPageProps'
 import ProfileModal from '../../../components/profile/ProfileModal'
 import CallListPanel from '../../../components/CallListPanel'
+import { AppHeader } from '../../../components/app-header'
+import { Card, CardContent } from '../../../components/ui/card'
 import {
   getStoredProfile,
   saveStoredProfile,
@@ -141,13 +144,12 @@ function StatPill({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function PipelinePage() {
+export default function PipelinePage(props: NextPageProps) {
+  useUnwrapNextPageProps(props)
   const router = useRouter()
-
-  // ── Auth ──────────────────────────────────────────────────────────────────
-  const [sessionUserId, setSessionUserId] = useState<string | null>(null)
-  const [sessionEmail, setSessionEmail] = useState<string | null>(null)
-  const [authReady, setAuthReady] = useState(false)
+  const { email: sessionEmail, userId: sessionUserId, loading: authLoading } =
+    useSupabaseSession()
+  const authReady = !authLoading
 
   // ── Profile ───────────────────────────────────────────────────────────────
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE)
@@ -169,27 +171,9 @@ export default function PipelinePage() {
 
   // ─── Auth ─────────────────────────────────────────────────────────────────
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        router.replace('/signin')
-        return
-      }
-      setSessionUserId(data.session.user.id)
-      setSessionEmail(data.session.user.email ?? null)
-      setAuthReady(true)
-    })
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (!session) {
-        router.replace('/signin')
-      } else {
-        setSessionUserId(session.user.id)
-        setSessionEmail(session.user.email ?? null)
-      }
-    })
-
-    return () => listener.subscription.unsubscribe()
-  }, [router])
+    if (!authReady) return
+    if (!sessionUserId) router.replace('/signin')
+  }, [authReady, router, sessionUserId])
 
   // ─── Profile ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -432,30 +416,13 @@ export default function PipelinePage() {
   // ─── Auth guard ───────────────────────────────────────────────────────────
   if (!authReady) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#080e1f]">
-        <div className="flex items-center gap-3 text-slate-400">
-          <svg
-            aria-hidden="true"
-            className="h-5 w-5 animate-spin text-blue-400"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v8z"
-            />
-          </svg>
-          Loading...
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center p-6">
+        <Card className="max-w-md border-border bg-card">
+          <CardContent className="flex items-center gap-3 p-6 text-sm text-muted-foreground">
+            <span className="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
+            Loading…
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -463,36 +430,25 @@ export default function PipelinePage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.13),transparent_55%),linear-gradient(160deg,#080e1f_0%,#0f1a38_50%,#080e1f_100%)]">
-
-      <MainNavbar
-        sessionEmail={sessionEmail}
-        isLoggedIn={!!sessionUserId}
-        profile={profile}
-        onOpenProfile={() => setShowProfileModal(true)}
-        onSignOut={handleSignOut}
+    <div className="flex min-h-screen flex-col">
+      <AppHeader
+        variant="app"
+        eyebrow="Workspace"
+        title="Pipeline"
+        description="Manage your call queue and follow-ups"
       />
 
-      {/* Background glows */}
-      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full bg-blue-500/[0.07] blur-3xl" />
-        <div className="absolute top-1/3 -right-40 w-[400px] h-[400px] rounded-full bg-violet-500/[0.05] blur-3xl" />
-      </div>
-
-      <main className="relative z-10 mx-auto max-w-5xl px-4 pb-24 pt-28 sm:px-6 lg:px-8">
-
-        {/* Page header */}
-        <div className="mb-8">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-400">
-            Pipeline
-          </p>
-          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Call queue
-          </h1>
-          <p className="mt-2 text-base text-slate-400">
-            Manage your leads, track call outcomes, and schedule follow-ups.
-          </p>
-        </div>
+      <main className="mx-auto w-full max-w-6xl space-y-6 p-4 pb-16 sm:p-6">
+        <Card className="border-border bg-gradient-to-br from-card to-secondary/30">
+          <CardContent className="p-4 sm:p-6">
+            <h2 className="mb-1 text-lg font-semibold text-foreground sm:text-xl">
+              Call queue
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Manage your leads, track call outcomes, and schedule follow-ups.
+            </p>
+          </CardContent>
+        </Card>
 
         <div className="space-y-8">
 
@@ -570,8 +526,8 @@ export default function PipelinePage() {
               onClick={() => setActiveFilter('all')}
               className={`rounded-xl border px-4 py-2 text-sm font-semibold transition ${
                 activeFilter === 'all'
-                  ? 'border-blue-500/40 bg-blue-500/10 text-blue-300'
-                  : 'border-white/[0.08] bg-white/[0.03] text-slate-400 hover:text-slate-200'
+                  ? 'border-primary/40 bg-primary/10 text-primary'
+                  : 'border-border bg-secondary/30 text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
               }`}
             >
               All ({callList.length})
@@ -588,7 +544,7 @@ export default function PipelinePage() {
                   className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-semibold transition ${
                     activeFilter === key
                       ? `${cfg.border} ${cfg.bg} ${cfg.color}`
-                      : 'border-white/[0.08] bg-white/[0.03] text-slate-400 hover:text-slate-200'
+                      : 'border-border bg-secondary/30 text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
                   }`}
                 >
                   {cfg.icon} {cfg.label} ({count})
@@ -612,24 +568,24 @@ export default function PipelinePage() {
           {/* ── Quick add card ────────────────────────────────────────────── */}
           <section
             aria-labelledby="quick-add-heading"
-            className="overflow-hidden rounded-[28px] border border-white/[0.08] bg-white/[0.035] shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur-sm"
+            className="overflow-hidden rounded-2xl border border-border bg-card"
           >
-            <div className="relative overflow-hidden border-b border-white/[0.07] bg-white/[0.03] px-6 py-5 sm:px-10">
+            <div className="relative overflow-hidden border-b border-border bg-secondary/20 px-6 py-5 sm:px-10">
               <div
                 aria-hidden="true"
                 className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-emerald-500/[0.08] blur-3xl"
               />
               <div className="relative flex items-center gap-3">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl border border-white/[0.10] bg-white/[0.07] text-lg">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl border border-border bg-secondary text-lg">
                   ➕
                 </div>
                 <div>
-                  <p className="mb-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  <p className="mb-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     Quick Add
                   </p>
                   <h2
                     id="quick-add-heading"
-                    className="text-lg font-bold text-white"
+                    className="text-lg font-bold text-foreground"
                   >
                     Add a business manually
                   </h2>
@@ -643,7 +599,7 @@ export default function PipelinePage() {
                   <div>
                     <label
                       htmlFor="quick-add-name"
-                      className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400"
+                      className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
                     >
                       Business name <span className="text-rose-400">*</span>
                     </label>
@@ -654,17 +610,17 @@ export default function PipelinePage() {
                       value={quickAddName}
                       onChange={(e) => setQuickAddName(e.target.value)}
                       placeholder="e.g. Smith Plumbing"
-                      className="w-full rounded-xl border border-white/[0.10] bg-slate-950/50 px-3 py-2.5 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
+                      className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
                     />
                   </div>
 
                   <div>
                     <label
                       htmlFor="quick-add-url"
-                      className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400"
+                      className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
                     >
                       Website URL{' '}
-                      <span className="font-normal normal-case tracking-normal text-slate-600">
+                      <span className="font-normal normal-case tracking-normal text-muted-foreground/70">
                         (optional)
                       </span>
                     </label>
@@ -674,7 +630,7 @@ export default function PipelinePage() {
                       value={quickAddUrl}
                       onChange={(e) => setQuickAddUrl(e.target.value)}
                       placeholder="e.g. smithplumbing.com.au"
-                      className="w-full rounded-xl border border-white/[0.10] bg-slate-950/50 px-3 py-2.5 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
+                      className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
                     />
                   </div>
                 </div>
@@ -735,7 +691,7 @@ export default function PipelinePage() {
             <button
               type="button"
               onClick={() => router.push('/app/leads')}
-              className="inline-flex items-center gap-1.5 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.07] hover:text-white"
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-border bg-secondary/30 px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-secondary/50 hover:text-foreground"
             >
               🎯 Find More Leads
             </button>
@@ -743,7 +699,7 @@ export default function PipelinePage() {
             <button
               type="button"
               onClick={() => router.push('/app/audit')}
-              className="inline-flex items-center gap-1.5 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.07] hover:text-white"
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-border bg-secondary/30 px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-secondary/50 hover:text-foreground"
             >
               📊 Run an Audit
             </button>
@@ -751,24 +707,22 @@ export default function PipelinePage() {
             <button
               type="button"
               onClick={() => router.push('/app/outreach')}
-              className="inline-flex items-center gap-1.5 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.07] hover:text-white"
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-border bg-secondary/30 px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-secondary/50 hover:text-foreground"
             >
               ✉️ Outreach Workspace
             </button>
           </div>
 
         </div>
+
+        <ProfileModal
+          open={showProfileModal}
+          initialProfile={profile}
+          sessionEmail={sessionEmail}
+          onClose={() => setShowProfileModal(false)}
+          onSave={handleSaveProfile}
+        />
       </main>
-
-      {/* Profile modal */}
-      <ProfileModal
-        open={showProfileModal}
-        initialProfile={profile}
-        sessionEmail={sessionEmail}
-        onClose={() => setShowProfileModal(false)}
-        onSave={handleSaveProfile}
-      />
-
     </div>
   )
 }

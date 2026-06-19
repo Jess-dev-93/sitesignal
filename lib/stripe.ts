@@ -9,7 +9,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 // Update this string if you upgrade the stripe package.
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16' as Stripe.LatestApiVersion,
+  apiVersion: '2023-10-16' as any,
 })
 
 // ── Plan definitions ──────────────────────────────────────────────────────────

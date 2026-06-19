@@ -3,11 +3,14 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabaseClient'
-import MainNavbar from '../../../components/layout/MainNavbar'
+import { useSupabaseSession } from '../../../lib/useSupabaseSession'
+import { NextPageProps, useUnwrapNextPageProps } from '../../../lib/nextPageProps'
 import ProfileModal from '../../../components/profile/ProfileModal'
 import OnboardingModal from '../../../components/OnboardingModal'
 import UsageLimitBanner from '../../../components/UsageLimitBanner'
 import LeadFinderWorkspace from '../../../components/LeadFinderWorkspace'
+import { AppHeader } from '../../../components/app-header'
+import { Card, CardContent } from '../../../components/ui/card'
 import {
   DEFAULT_PROFILE,
   getStoredProfile,
@@ -15,7 +18,7 @@ import {
   UserProfile,
 } from '../../../lib/profileStorage'
 
-const ONBOARDING_KEY = 'siteSignalOnboardingComplete'
+const ONBOARDING_KEY = 'clientFinderOnboardingComplete'
 
 type WorkspaceLead = {
   title?: string
@@ -46,12 +49,11 @@ function normaliseLeadUrl(lead: WorkspaceLead) {
   return `https://${raw}`
 }
 
-export default function LeadsPage() {
+export default function LeadsPage(props: NextPageProps) {
+  useUnwrapNextPageProps(props)
   const router = useRouter()
-
-  const [sessionEmail, setSessionEmail]   = useState<string | null>(null)
-  const [sessionUserId, setSessionUserId] = useState<string | null>(null)
-  const [authChecked, setAuthChecked]     = useState(false)
+  const { email: sessionEmail, userId: sessionUserId, loading: authChecked } =
+    useSupabaseSession()
 
   const [profile, setProfile]               = useState<UserProfile>(DEFAULT_PROFILE)
   const [showProfileModal, setShowProfileModal] = useState(false)
@@ -69,37 +71,9 @@ export default function LeadsPage() {
 
   // ── Auth ───────────────────────────────────────────────────────────────────
   useEffect(() => {
-    let mounted = true
-
-    const syncSession = async () => {
-      const { data } = await supabase.auth.getSession()
-      if (!mounted) return
-      const email  = data.session?.user?.email || null
-      const userId = data.session?.user?.id    || null
-      setSessionEmail(email)
-      setSessionUserId(userId)
-      setAuthChecked(true)
-      if (!userId) router.replace('/signin')
-    }
-
-    syncSession()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        const email  = session?.user?.email || null
-        const userId = session?.user?.id    || null
-        setSessionEmail(email)
-        setSessionUserId(userId)
-        setAuthChecked(true)
-        if (!userId) router.replace('/signin')
-      }
-    )
-
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
-    }
-  }, [router])
+    if (!authChecked) return
+    if (!sessionUserId) router.replace('/signin')
+  }, [authChecked, router, sessionUserId])
 
   // ── Onboarding — show once only ────────────────────────────────────────────
   useEffect(() => {
@@ -187,63 +161,52 @@ export default function LeadsPage() {
 
   if (!authChecked || !sessionUserId) {
     return (
-      <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.13),transparent_55%),linear-gradient(160deg,#080e1f_0%,#0f1a38_50%,#080e1f_100%)]">
-        <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-6">
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.035] px-6 py-5 text-sm text-slate-300 shadow-[0_24px_60px_rgba(0,0,0,0.18)]">
-            Loading...
-          </div>
-        </div>
-      </main>
+      <div className="flex min-h-[60vh] items-center justify-center p-6">
+        <Card className="max-w-md border-border bg-card">
+          <CardContent className="p-6 text-sm text-muted-foreground">Loading…</CardContent>
+        </Card>
+      </div>
     )
   }
 
   // ── Page ───────────────────────────────────────────────────────────────────
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.13),transparent_55%),linear-gradient(160deg,#080e1f_0%,#0f1a38_50%,#080e1f_100%)]">
-      <MainNavbar
-        sessionEmail={sessionEmail}
-        isLoggedIn={!!sessionUserId}
-        profile={profile}
-        onOpenProfile={() => setShowProfileModal(true)}
-        onSignOut={handleSignOut}
+    <div className="flex min-h-screen flex-col">
+      <AppHeader
+        variant="app"
+        eyebrow="Workspace"
+        title="Leads"
+        description="Find weak websites in your market"
       />
 
-      <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 md:px-6 md:py-10">
-
-        {/* ── Page header ── */}
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+      <main className="mx-auto w-full max-w-6xl space-y-6 p-4 pb-16 sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="mb-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-              <span>🎯</span>
+            <h2 className="text-lg font-semibold text-foreground sm:text-xl">
               Lead Finder
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-              Find weak websites in your market
-            </h1>
-            <p className="mt-1 text-sm text-slate-400">
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Search by industry and location — surface the best opportunities, then audit and pitch.
             </p>
           </div>
 
           <div className="self-start sm:self-center">
-            <UsageLimitBanner
-              userId={sessionUserId}
-              refreshKey={usageBannerKey}
-              compact
-            />
+            <UsageLimitBanner userId={sessionUserId} refreshKey={usageBannerKey} compact />
           </div>
         </div>
-        
-        {/* ── Lead finder workspace ── */}
-        <LeadFinderWorkspace
-          userId={sessionUserId}
-          onRunFullAudit={handleRunFullAudit}
-          onStartAuditedOutreach={handleStartAuditedOutreach}
-          onOpenManualOutreach={handleOpenManualOutreach}
-        />
 
-      </div>
+        <Card className="border-border bg-card">
+          <CardContent className="p-4 sm:p-6">
+            <LeadFinderWorkspace
+              userId={sessionUserId}
+              onRunFullAudit={handleRunFullAudit}
+              onStartAuditedOutreach={handleStartAuditedOutreach}
+              onOpenManualOutreach={handleOpenManualOutreach}
+            />
+          </CardContent>
+        </Card>
+      </main>
 
       <ProfileModal
         open={showProfileModal}
@@ -256,6 +219,6 @@ export default function LeadsPage() {
       {showOnboarding && (
         <OnboardingModal onComplete={handleOnboardingComplete} />
       )}
-    </main>
+    </div>
   )
 }

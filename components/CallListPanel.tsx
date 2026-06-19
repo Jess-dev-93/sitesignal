@@ -54,6 +54,7 @@ interface Props {
   loading?: boolean
   onRemove: (id: string) => void
   onStatusChange: (id: string, status: string) => void
+  onGeneratePitch?: (lead: CallListLead) => void
 
   onRunFullAudit?: (lead: WorkspaceLead) => void
   onOpenManualOutreach?: (lead: WorkspaceLead) => void
@@ -112,31 +113,31 @@ export default function CallListPanel({
   onUpdateReminder,
 }: Props) {
   return (
-    <section className="rounded-[26px] border border-white/[0.08] bg-[#1b2545]/90 shadow-[0_18px_60px_rgba(2,6,23,0.22)] backdrop-blur">
-      <div className="flex flex-col gap-4 border-b border-white/[0.06] px-6 py-5 lg:flex-row lg:items-start lg:justify-between">
+    <section className="rounded-2xl border border-border bg-card shadow-sm">
+      <div className="flex flex-col gap-4 border-b border-border px-6 py-5 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             <span>📞</span>
             Call Queue
           </div>
-          <h3 className="text-2xl font-semibold text-white">Today’s Call List</h3>
-          <p className="mt-1 text-sm text-slate-400">
+          <h3 className="text-2xl font-semibold text-foreground">Today’s Call List</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
             The leads you want to contact today and follow up with next.
           </p>
         </div>
 
-        <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 px-4 py-3 text-sm text-blue-200">
+        <div className="rounded-xl border border-border bg-secondary/30 px-4 py-3 text-sm text-foreground">
           {items.length} queued
         </div>
       </div>
 
       <div className="px-6 py-5">
         {loading ? (
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 text-sm text-slate-400">
+          <div className="rounded-xl border border-border bg-secondary/10 p-5 text-sm text-muted-foreground">
             Loading call list...
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/[0.10] bg-white/[0.02] p-5 text-sm text-slate-500">
+          <div className="rounded-xl border border-dashed border-border bg-secondary/10 p-5 text-sm text-muted-foreground">
             No leads queued yet. Add leads from the search results above.
           </div>
         ) : (
@@ -150,7 +151,7 @@ export default function CallListPanel({
               return (
                 <article
                   key={item.id}
-                  className="rounded-[22px] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.02))] p-4 shadow-[0_16px_40px_rgba(2,6,23,0.14)]"
+                  className="rounded-xl border border-border bg-card p-4 shadow-sm"
                 >
                   <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_260px]">
                     <div className="min-w-0">
@@ -180,7 +181,7 @@ export default function CallListPanel({
                         )}
                       </div>
 
-                      <h4 className="text-lg font-semibold text-white">
+                      <h4 className="text-lg font-semibold text-foreground">
                         {lead.business_name}
                       </h4>
 
@@ -188,7 +189,7 @@ export default function CallListPanel({
                         href={lead.website_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="mt-1 inline-block break-all text-sm text-blue-300 transition hover:text-blue-200"
+                        className="mt-1 inline-block break-all text-sm text-muted-foreground transition hover:text-foreground"
                       >
                         {lead.website_url}
                       </a>
@@ -216,10 +217,10 @@ export default function CallListPanel({
                       )}
 
                       {onUpdateReminder && (
-                        <div className="mt-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+                        <div className="mt-4 rounded-xl border border-border bg-secondary/10 p-4">
                           <div className="grid gap-3 md:grid-cols-2">
                             <div>
-                              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                                 Follow-up date
                               </label>
                               <input
@@ -232,12 +233,12 @@ export default function CallListPanel({
                                     item.reminder_note || ''
                                   )
                                 }
-                                className="w-full rounded-xl border border-white/[0.10] bg-slate-950/50 px-3 py-2.5 text-xs text-white outline-none focus:border-blue-400"
+                                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-xs text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               />
                             </div>
 
                             <div>
-                              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                                 Reminder note
                               </label>
                               <textarea
@@ -250,7 +251,7 @@ export default function CallListPanel({
                                     e.target.value
                                   )
                                 }
-                                className="w-full rounded-xl border border-white/[0.10] bg-slate-950/50 px-3 py-2.5 text-xs text-white outline-none focus:border-blue-400"
+                                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-xs text-foreground outline-none placeholder:text-muted-foreground/70 focus-visible:ring-2 focus-visible:ring-ring"
                                 placeholder="Call again Tuesday morning..."
                               />
                             </div>
@@ -260,14 +261,14 @@ export default function CallListPanel({
                     </div>
 
                     <div className="flex w-full flex-col gap-2.5">
-                      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3">
-                        <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      <div className="rounded-xl border border-border bg-secondary/10 p-3">
+                        <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                           Queue status
                         </label>
                         <select
                           value={item.status}
                           onChange={(e) => onStatusChange(item.id, e.target.value)}
-                          className="w-full rounded-xl border border-white/[0.10] bg-slate-950/50 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
+                          className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           <option value="queued">Queued</option>
                           <option value="calling_now">Calling now</option>
@@ -280,7 +281,7 @@ export default function CallListPanel({
                       {onRunFullAudit && (
                         <button
                           onClick={() => onRunFullAudit(workspaceLead)}
-                          className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
+                          className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
                         >
                           Audit Website
                         </button>
@@ -289,7 +290,7 @@ export default function CallListPanel({
                       {onOpenManualOutreach && (
                         <button
                           onClick={() => onOpenManualOutreach(workspaceLead)}
-                          className="rounded-xl border border-white/[0.10] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/[0.08]"
+                          className="rounded-xl border border-border bg-secondary/10 px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-secondary/20"
                         >
                           Manual Outreach
                         </button>
@@ -299,7 +300,7 @@ export default function CallListPanel({
                         href={lead.website_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/[0.08]"
+                        className="inline-flex items-center justify-center rounded-xl border border-border bg-secondary/10 px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-secondary/20"
                       >
                         Visit Website
                       </a>

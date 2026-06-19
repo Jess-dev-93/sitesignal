@@ -9,7 +9,7 @@ import {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const ONBOARDING_KEY = 'siteSignalOnboardingComplete'
+const ONBOARDING_KEY = 'clientFinderOnboardingComplete'
 
 const SPECIALTIES = [
   'Web Design',

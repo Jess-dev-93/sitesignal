@@ -45,7 +45,6 @@ function getNameFromEmail(email: string | null): string {
 }
 
 function getDisplayName(profile: UserProfile, sessionEmail: string | null): string {
-  // yourName is the correct field — profile.name was the old/wrong field
   if (profile.yourName?.trim()) return profile.yourName.trim().split(' ')[0]
   return getNameFromEmail(sessionEmail)
 }

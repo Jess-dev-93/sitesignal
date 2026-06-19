@@ -107,8 +107,8 @@ export default function ProfileModal({
               </label>
               <input
                 type="text"
-                value={form.name}
-                onChange={(e) => updateField('name', e.target.value)}
+                value={form.yourName}
+                onChange={(e) => updateField('yourName', e.target.value)}
                 className="w-full rounded-xl border border-white/[0.10] bg-slate-950/50 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
                 placeholder="Jessica Manning"
               />
@@ -120,8 +120,8 @@ export default function ProfileModal({
               </label>
               <input
                 type="text"
-                value={form.title}
-                onChange={(e) => updateField('title', e.target.value)}
+                value={form.yourTitle}
+                onChange={(e) => updateField('yourTitle', e.target.value)}
                 className="w-full rounded-xl border border-white/[0.10] bg-slate-950/50 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
                 placeholder="Founder / Web Developer"
               />
@@ -133,8 +133,8 @@ export default function ProfileModal({
               </label>
               <input
                 type="text"
-                value={form.company}
-                onChange={(e) => updateField('company', e.target.value)}
+                value={form.yourCompany}
+                onChange={(e) => updateField('yourCompany', e.target.value)}
                 className="w-full rounded-xl border border-white/[0.10] bg-slate-950/50 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
                 placeholder="Manning Web Studio"
               />
@@ -146,8 +146,8 @@ export default function ProfileModal({
               </label>
               <input
                 type="text"
-                value={form.location}
-                onChange={(e) => updateField('location', e.target.value)}
+                value={form.yourLocation}
+                onChange={(e) => updateField('yourLocation', e.target.value)}
                 className="w-full rounded-xl border border-white/[0.10] bg-slate-950/50 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
                 placeholder="Sydney"
               />
@@ -159,8 +159,8 @@ export default function ProfileModal({
               Specialty
             </label>
             <select
-              value={form.specialty}
-              onChange={(e) => updateField('specialty', e.target.value)}
+              value={form.yourSpecialty}
+              onChange={(e) => updateField('yourSpecialty', e.target.value)}
               className="w-full rounded-xl border border-white/[0.10] bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
             >
               <option value="">Select your specialty</option>

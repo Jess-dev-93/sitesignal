@@ -1,0 +1,7 @@
+{
+  "workbench.externalBrowser": "chrome",
+  "terminal.integrated.openLinks": "external",
+  "workbench.editor.openLinks": "external",
+  "workbench.editor.customEditor.openLinks": "external",
+  "simpleBrowser.focusLockIndicator.enabled": false
+}

@@ -2,11 +2,11 @@ import { UserProfile } from './profileStorage'
 
 export function getProfileFallbacks(profile?: Partial<UserProfile>) {
   return {
-    yourName:      profile?.name      || 'Your Name',
-    yourTitle:     profile?.title     || 'Web Developer',
-    yourCompany:   profile?.company   || 'Your Company',
-    yourLocation:  profile?.location  || 'Sydney',
-    yourSpecialty: profile?.specialty || 'Web Developer',
+    yourName:      profile?.yourName      || 'Your Name',
+    yourTitle:     profile?.yourTitle     || 'Web Developer',
+    yourCompany:   profile?.yourCompany   || 'Your Company',
+    yourLocation:  profile?.yourLocation  || 'Sydney',
+    yourSpecialty: profile?.yourSpecialty || 'Web Developer',
   }
 }
 

@@ -70,7 +70,7 @@ export default function UsageLimitBanner({
   if (compact) {
     return (
       <Link
-        href="/pricing"
+        href="/app/pricing"
         className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition hover:opacity-80 ${
           bothLimitsReached
             ? 'border-rose-500/30 bg-rose-500/[0.08] text-rose-300'
@@ -195,7 +195,7 @@ export default function UsageLimitBanner({
         {/* ── Upgrade CTA ── */}
         <div className="flex flex-shrink-0 flex-col gap-2 sm:ml-6 sm:items-end">
           <Link
-            href="/pricing"
+            href="/app/pricing"
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(37,99,235,0.26)] transition hover:-translate-y-0.5 hover:bg-blue-500 active:translate-y-0"
           >
             <span>🚀</span>

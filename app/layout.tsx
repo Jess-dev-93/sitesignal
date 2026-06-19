@@ -1,12 +1,9 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
-})
+const geist = Geist({ subsets: ['latin'], display: 'swap', variable: '--font-sans' })
+const geistMono = Geist_Mono({ subsets: ['latin'], display: 'swap', variable: '--font-mono' })
 
 /* ─────────────────────────────────────────────
    SITE-WIDE SEO & SOCIAL META
@@ -131,7 +128,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en-AU" className={inter.variable} suppressHydrationWarning>
+    <html
+      lang="en-AU"
+      className={`${geist.variable} ${geistMono.variable} dark bg-background`}
+      suppressHydrationWarning
+    >
       <head>
         {/* ── Structured Data (JSON-LD) ── */}
         <script
@@ -185,13 +186,11 @@ export default function RootLayout({
 
       <body
         className={`
-          ${inter.className}
+          ${geist.className}
           antialiased
           min-h-screen
-          bg-[#0b1020]
-          text-slate-100
-          selection:bg-blue-500/30
-          selection:text-blue-100
+          bg-background
+          text-foreground
         `}
       >
         {children}

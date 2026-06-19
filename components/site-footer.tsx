@@ -1,0 +1,164 @@
+'use client'
+
+import type { ReactNode } from 'react'
+import Link from 'next/link'
+
+/** Logo lockup: squircle gradient + single-line heartbeat + wordmark only */
+function SiteSignalLogoLink() {
+  return (
+    <Link
+      href="/"
+      className="group inline-flex max-w-full items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-500 to-pink-400 shadow-[0_8px_24px_rgba(139,92,246,0.35)] transition group-hover:shadow-[0_10px_28px_rgba(192,38,211,0.35)]">
+        <svg
+          viewBox="0 0 24 24"
+          className="h-[22px] w-[22px] text-white"
+          fill="none"
+          aria-hidden="true"
+        >
+          {/* Single heartbeat on one horizontal baseline */}
+          <path
+            d="M5 12H9L10.5 7L12 17L13.5 12H19"
+            stroke="currentColor"
+            strokeWidth="1.9"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+      <span className="text-base font-medium tracking-tight text-foreground">Sitesignal</span>
+    </Link>
+  )
+}
+
+const APP_LINKS = [
+  { href: '/app', label: 'Dashboard' },
+  { href: '/app/leads', label: 'Leads' },
+  { href: '/app/audit', label: 'Audit' },
+  { href: '/app/outreach', label: 'Outreach' },
+  { href: '/app/pipeline', label: 'Pipeline' },
+] as const
+
+const SITE_LINKS = [
+  { href: '/', label: 'Home' },
+  { href: '/pricing', label: 'Pricing' },
+] as const
+
+const ACCOUNT_LINKS = [
+  { href: '/signin', label: 'Sign in' },
+  { href: '/signup', label: 'Sign up' },
+] as const
+
+const SUPPORT_LINKS = [
+  {
+    href: 'mailto:hello@sitesignal.com.au?subject=SiteSignal%20Help',
+    label: 'Help',
+  },
+  {
+    href: 'mailto:hello@sitesignal.com.au?subject=SiteSignal%20—%20Contact',
+    label: 'Contact',
+  },
+] as const
+
+function FooterColumn({
+  title,
+  children,
+  className = '',
+}: {
+  title: string
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <div className={`min-w-0 md:col-span-1 ${className}`.trim()}>
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <div className="mt-3 flex flex-col gap-2.5">{children}</div>
+    </div>
+  )
+}
+
+type SiteFooterProps = {
+  className?: string
+}
+
+export default function SiteFooter({ className = '' }: SiteFooterProps) {
+  const year = new Date().getFullYear()
+
+  return (
+    <footer
+      role="contentinfo"
+      className={`border-t border-border bg-background ${className}`.trim()}
+    >
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-11">
+        <div
+          className="grid grid-cols-1 gap-8 md:grid-cols-6 md:gap-x-6 md:gap-y-0 lg:gap-x-10"
+          aria-label="Footer"
+        >
+          <div className="min-w-0 md:col-span-2 md:pr-4 lg:pr-6">
+            <SiteSignalLogoLink />
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
+              Lead generation and website audits built for web developers who want to win better
+              client work.
+            </p>
+          </div>
+
+          <FooterColumn title="App">
+            {APP_LINKS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </FooterColumn>
+
+          <FooterColumn title="Site">
+            {SITE_LINKS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </FooterColumn>
+
+          <FooterColumn title="Account">
+            {ACCOUNT_LINKS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </FooterColumn>
+
+          <FooterColumn title="Support">
+            {SUPPORT_LINKS.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {item.label}
+              </a>
+            ))}
+          </FooterColumn>
+        </div>
+
+        <div className="mt-8 w-full border-t border-border pt-5 md:mt-9">
+          <div className="flex w-full flex-col items-center justify-between gap-2 text-xs leading-relaxed text-muted-foreground sm:flex-row sm:items-center sm:gap-0 sm:text-sm">
+            <p className="w-full text-center sm:w-auto sm:text-left">© {year} sitesignal. All rights reserved.</p>
+            <p className="w-full text-center sm:w-auto sm:text-right">Made with ♥ in Australia</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+  )
+}
