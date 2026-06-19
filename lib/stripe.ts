@@ -1,15 +1,33 @@
 import Stripe from 'stripe'
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing STRIPE_SECRET_KEY environment variable')
+// ── Stripe singleton (lazy — avoids build-time env requirement) ───────────────
+
+let stripeInstance: Stripe | null = null
+
+function initStripe(): Stripe {
+  const key = process.env.STRIPE_SECRET_KEY
+  if (!key) {
+    throw new Error('Missing STRIPE_SECRET_KEY environment variable')
+  }
+
+  return new Stripe(key, {
+    apiVersion: '2023-10-16' as any,
+  })
 }
 
-// ── Stripe singleton ──────────────────────────────────────────────────────────
-// apiVersion is cast to satisfy the strict Stripe SDK union type.
-// Update this string if you upgrade the stripe package.
+export function getStripe(): Stripe {
+  if (!stripeInstance) {
+    stripeInstance = initStripe()
+  }
+  return stripeInstance
+}
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16' as any,
+export const stripe = new Proxy({} as Stripe, {
+  get(_target, prop) {
+    const client = getStripe()
+    const value = (client as unknown as Record<string | symbol, unknown>)[prop]
+    return typeof value === 'function' ? (value as (...args: unknown[]) => unknown).bind(client) : value
+  },
 })
 
 // ── Plan definitions ──────────────────────────────────────────────────────────
