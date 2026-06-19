@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Settings } from 'lucide-react'
 import { getInitials } from '../../lib/displayName'
+import { BRAND_NAME } from '../../lib/brand'
 import type { UserProfile } from '../../lib/profileStorage'
 
 type Props = {
@@ -13,6 +14,7 @@ type Props = {
   profile: UserProfile
   sessionEmail: string | null
   sessionUserId: string | null
+  variant?: 'app' | 'marketing'
   onOpenSettings: () => void
   onSignOut: () => void
 }
@@ -86,16 +88,25 @@ const MAIN_LINKS = [
   { href: '/app/pipeline', label: 'Pipeline', icon: 'branch' as const },
 ]
 
+const PUBLIC_LINKS = [
+  { href: '/', label: 'Home', icon: 'grid' as const },
+  { href: '/pricing', label: 'Pricing', icon: 'card' as const },
+  { href: '/signin', label: 'Sign in', icon: 'help' as const },
+  { href: '/signup', label: 'Start Free', icon: 'send' as const },
+]
+
 export default function MobileSidebarDrawer({
   open,
   onClose,
   profile,
   sessionEmail,
   sessionUserId,
+  variant = 'app',
   onOpenSettings,
   onSignOut,
 }: Props) {
   const pathname = usePathname()
+  const navLinks = variant === 'marketing' ? PUBLIC_LINKS : MAIN_LINKS
 
   const initials = useMemo(
     () => getInitials(profile.yourName, sessionEmail),
@@ -140,7 +151,7 @@ export default function MobileSidebarDrawer({
               </svg>
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold leading-none text-white">sitesignal</p>
+              <p className="truncate text-sm font-bold leading-none text-white">{BRAND_NAME}</p>
               <p className="mt-1 truncate text-[11px] leading-none text-slate-500">
                 Lead Generation + Website Audits
               </p>
@@ -163,8 +174,11 @@ export default function MobileSidebarDrawer({
             Main menu
           </p>
           <nav className="flex flex-col gap-1">
-            {MAIN_LINKS.map((l) => {
-              const active = l.href === '/app' ? pathname === '/app' : pathname.startsWith(l.href)
+            {navLinks.map((l) => {
+              const active =
+                l.href === '/app' || l.href === '/'
+                  ? pathname === l.href
+                  : pathname.startsWith(l.href)
               return (
                 <Link
                   key={l.href}
@@ -191,27 +205,31 @@ export default function MobileSidebarDrawer({
             Support
           </p>
           <nav className="flex flex-col gap-1">
-            <Link
-              href="/app/pricing"
-              onClick={onClose}
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.05] hover:text-white"
-            >
-              <span className="text-slate-200" aria-hidden="true">
-                <Icon name="card" />
-              </span>
-              Pricing
-            </Link>
-            <button
-              type="button"
-              onClick={() => {
-                onClose()
-                onOpenSettings()
-              }}
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.05] hover:text-white"
-            >
-              <Settings className="h-5 w-5 text-slate-200" />
-              Settings
-            </button>
+            {variant !== 'marketing' ? (
+              <Link
+                href="/app/pricing"
+                onClick={onClose}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.05] hover:text-white"
+              >
+                <span className="text-slate-200" aria-hidden="true">
+                  <Icon name="card" />
+                </span>
+                Pricing
+              </Link>
+            ) : null}
+            {sessionUserId ? (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose()
+                  onOpenSettings()
+                }}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/[0.05] hover:text-white"
+              >
+                <Settings className="h-5 w-5 text-slate-200" />
+                Settings
+              </button>
+            ) : null}
             <a
               href="mailto:hello@sitesignal.com.au?subject=SiteSignal%20Help"
               className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.05] hover:text-white"

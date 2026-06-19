@@ -162,7 +162,7 @@ export default function OnboardingModal({ onComplete }: OnboardingModalProps) {
           {step === 'name' && (
             <StepWrapper
               emoji="👋"
-              heading="Welcome to sitesignal"
+              heading="Welcome to SiteSignal"
               sub="Let's personalise your workspace. What's your name?"
             >
               <label className="block text-sm text-white/50 mb-1.5">Your name</label>

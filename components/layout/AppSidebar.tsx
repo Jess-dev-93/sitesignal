@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { supabase } from '../../lib/supabaseClient'
+import { BRAND_NAME } from '../../lib/brand'
 import { useSupabaseSession } from '../../lib/useSupabaseSession'
 import ProfileModal from '../profile/ProfileModal'
 import {
@@ -160,7 +161,7 @@ export default function AppSidebar() {
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold leading-none text-white">sitesignal</p>
+              <p className="truncate text-sm font-bold leading-none text-white">{BRAND_NAME}</p>
               <p className="mt-1 truncate text-[11px] leading-none text-slate-500">
                 Lead Generation + Website Audits
               </p>

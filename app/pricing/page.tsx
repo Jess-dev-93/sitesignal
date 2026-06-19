@@ -32,7 +32,11 @@ export default function PricingPage(props: NextPageProps) {
         <div className="absolute top-[35%] right-[-200px] h-[520px] w-[520px] rounded-full bg-indigo-500/10 blur-3xl" />
       </div>
 
-      <AppHeader title="Pricing" description="Choose a plan that fits your workflow" />
+      <AppHeader
+        variant="marketing"
+        title="Pricing"
+        description="Choose a plan that fits your workflow"
+      />
 
       <main className="relative mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 md:py-16">
         <PricingContent sessionUserId={sessionUserId} variant="marketing" />

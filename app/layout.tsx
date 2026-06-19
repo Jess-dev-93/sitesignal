@@ -9,7 +9,9 @@ const geistMono = Geist_Mono({ subsets: ['latin'], display: 'swap', variable: '-
    SITE-WIDE SEO & SOCIAL META
    Update businessCity / businessRegion if needed
 ───────────────────────────────────────────── */
-const siteName = 'sitesignal'
+import { BRAND_NAME } from '../lib/brand'
+
+const siteName = BRAND_NAME
 const siteUrl = 'https://siteSignal.com.au' // ← update to your live domain
 const siteDescription =
   'Find underperforming business websites in your local market, run a professional audit in minutes, and turn the findings into paying clients. Built for Australian web developers and digital agencies.'
@@ -30,16 +32,16 @@ export const metadata: Metadata = {
     'website performance audit',
     'SEO audit tool',
     'freelance web developer tools',
-    'sitesignal',
+    'SiteSignal',
     'bad website finder',
     'web development leads Australia',
     'local business website audit',
     'cold outreach web design',
     'Australian web developer',
   ],
-  authors: [{ name: 'sitesignal', url: siteUrl }],
-  creator: 'sitesignal',
-  publisher: 'sitesignal',
+  authors: [{ name: BRAND_NAME, url: siteUrl }],
+  creator: BRAND_NAME,
+  publisher: BRAND_NAME,
   category: 'Technology',
   applicationName: siteName,
 
@@ -74,7 +76,7 @@ export const metadata: Metadata = {
         url: '/og-image.png', // ← add a 1200×630 image to /public
         width: 1200,
         height: 630,
-        alt: 'sitesignal — Lead generation and website audit tool for web developers',
+        alt: `${BRAND_NAME} — Lead generation and website audit tool for web developers`,
         type: 'image/png',
       },
     ],

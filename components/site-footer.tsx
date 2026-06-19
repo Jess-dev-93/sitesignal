@@ -2,6 +2,8 @@
 
 import type { ReactNode } from 'react'
 import Link from 'next/link'
+import { BRAND_NAME } from '../lib/brand'
+import { useSupabaseSession } from '../lib/useSupabaseSession'
 
 /** Logo lockup: squircle gradient + single-line heartbeat + wordmark only */
 function SiteSignalLogoLink() {
@@ -17,7 +19,6 @@ function SiteSignalLogoLink() {
           fill="none"
           aria-hidden="true"
         >
-          {/* Single heartbeat on one horizontal baseline */}
           <path
             d="M5 12H9L10.5 7L12 17L13.5 12H19"
             stroke="currentColor"
@@ -27,7 +28,7 @@ function SiteSignalLogoLink() {
           />
         </svg>
       </div>
-      <span className="text-base font-medium tracking-tight text-foreground">Sitesignal</span>
+      <span className="text-base font-medium tracking-tight text-foreground">{BRAND_NAME}</span>
     </Link>
   )
 }
@@ -45,9 +46,14 @@ const SITE_LINKS = [
   { href: '/pricing', label: 'Pricing' },
 ] as const
 
-const ACCOUNT_LINKS = [
+const PUBLIC_ACCOUNT_LINKS = [
   { href: '/signin', label: 'Sign in' },
-  { href: '/signup', label: 'Sign up' },
+  { href: '/signup', label: 'Start Free' },
+] as const
+
+const SIGNED_IN_ACCOUNT_LINKS = [
+  { href: '/app', label: 'Dashboard' },
+  { href: '/signin', label: 'Sign in' },
 ] as const
 
 const SUPPORT_LINKS = [
@@ -84,6 +90,8 @@ type SiteFooterProps = {
 
 export default function SiteFooter({ className = '' }: SiteFooterProps) {
   const year = new Date().getFullYear()
+  const { userId: sessionUserId } = useSupabaseSession()
+  const isLoggedIn = Boolean(sessionUserId)
 
   return (
     <footer
@@ -103,17 +111,19 @@ export default function SiteFooter({ className = '' }: SiteFooterProps) {
             </p>
           </div>
 
-          <FooterColumn title="App">
-            {APP_LINKS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </FooterColumn>
+          {isLoggedIn ? (
+            <FooterColumn title="App">
+              {APP_LINKS.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </FooterColumn>
+          ) : null}
 
           <FooterColumn title="Site">
             {SITE_LINKS.map((item) => (
@@ -128,7 +138,7 @@ export default function SiteFooter({ className = '' }: SiteFooterProps) {
           </FooterColumn>
 
           <FooterColumn title="Account">
-            {ACCOUNT_LINKS.map((item) => (
+            {(isLoggedIn ? SIGNED_IN_ACCOUNT_LINKS : PUBLIC_ACCOUNT_LINKS).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -154,7 +164,9 @@ export default function SiteFooter({ className = '' }: SiteFooterProps) {
 
         <div className="mt-8 w-full border-t border-border pt-5 md:mt-9">
           <div className="flex w-full flex-col items-center justify-between gap-2 text-xs leading-relaxed text-muted-foreground sm:flex-row sm:items-center sm:gap-0 sm:text-sm">
-            <p className="w-full text-center sm:w-auto sm:text-left">© {year} sitesignal. All rights reserved.</p>
+            <p className="w-full text-center sm:w-auto sm:text-left">
+              © {year} {BRAND_NAME}. All rights reserved.
+            </p>
             <p className="w-full text-center sm:w-auto sm:text-right">Made with ♥ in Australia</p>
           </div>
         </div>

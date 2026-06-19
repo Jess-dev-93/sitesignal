@@ -89,7 +89,7 @@ export const FAQS = [
   },
   {
     q: 'What is white-label PDF?',
-    a: 'Agency plan users can upload their own logo and remove sitesignal branding from exported PDF reports — so the report looks like it came from your studio.',
+    a: 'Agency plan users can upload their own logo and remove SiteSignal branding from exported PDF reports — so the report looks like it came from your studio.',
   },
   {
     q: 'Can I upgrade or downgrade later?',

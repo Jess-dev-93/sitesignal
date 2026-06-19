@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { UserProfile, hasCompletedProfile } from '../../lib/profileStorage'
+import { BRAND_NAME } from '../../lib/brand'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -119,14 +120,14 @@ export default function MainNavbar({
           <Link
             href="/"
             className="flex min-w-0 items-center gap-3"
-            aria-label="sitesignal home"
+            aria-label={`${BRAND_NAME} home`}
           >
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 text-lg shadow-[0_8px_24px_rgba(37,99,235,0.28)] md:h-11 md:w-11 md:text-xl">
               🎯
             </div>
             <div className="min-w-0">
               <p className="truncate text-[15px] font-semibold leading-none tracking-tight text-white md:text-base">
-                sitesignal
+                {BRAND_NAME}
               </p>
               <p className="mt-1 truncate text-[11px] leading-none text-slate-400">
                 Lead Generation + Website Audits

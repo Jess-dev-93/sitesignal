@@ -6,15 +6,39 @@ import { useRouter } from 'next/navigation'
 import { ArrowRight, FileSearch, GitBranch, Send, Users } from 'lucide-react'
 import { useSupabaseSession } from '../lib/useSupabaseSession'
 import { NextPageProps, useUnwrapNextPageProps } from '../lib/nextPageProps'
+import { BRAND_NAME } from '../lib/brand'
 import { AppHeader } from '../components/app-header'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import SiteFooter from '../components/site-footer'
 
+const BENEFITS = [
+  {
+    title: 'Find weak websites',
+    description: 'Discover underperforming businesses in your local market',
+    icon: Users,
+  },
+  {
+    title: 'Run client-ready audits',
+    description: 'Lighthouse scores and AI recommendations you can share',
+    icon: FileSearch,
+  },
+  {
+    title: 'Generate personalised outreach',
+    description: 'Professional pitch scripts tailored to each prospect',
+    icon: Send,
+  },
+  {
+    title: 'Track follow-ups',
+    description: 'Keep your pipeline organised from first contact to close',
+    icon: GitBranch,
+  },
+] as const
+
 export default function HomePage(props: NextPageProps) {
   useUnwrapNextPageProps(props)
   const router = useRouter()
-  const { email: sessionEmail, userId: sessionUserId, loading } = useSupabaseSession()
+  const { userId: sessionUserId, loading } = useSupabaseSession()
 
   useEffect(() => {
     if (!loading && sessionUserId) {
@@ -35,93 +59,58 @@ export default function HomePage(props: NextPageProps) {
       </div>
 
       <AppHeader
-        title="sitesignal"
-        description={sessionUserId ? 'Welcome back — jump into your workspace.' : 'Lead generation + website audits'}
+        variant="marketing"
+        title={BRAND_NAME}
+        description="Lead generation + website audits"
       />
 
       <main className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
         <Card className="border-border bg-gradient-to-br from-card to-secondary/30">
           <CardContent className="p-4 sm:p-6">
             <h2 className="mb-1 text-lg font-semibold text-foreground sm:text-xl">
-              Turn underperforming websites into paying clients
+              Find weak websites. Turn them into paying clients.
             </h2>
             <p className="mb-4 text-sm text-muted-foreground">
-              Find leads, run audits, generate outreach, and track your pipeline — all in one place.
+              Find leads, run audits, generate outreach, and track your pipeline — all in one
+              place.
             </p>
 
             <div className="flex flex-col gap-2 sm:flex-row">
-              {sessionUserId ? (
-                <Button asChild size="sm" className="gap-2">
-                  <Link href="/app">
-                    Open App
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              ) : (
-                <>
-                  <Button asChild size="sm" className="gap-2">
-                    <Link href="/signup">
-                      Start Free
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button
-                    asChild
-                    size="sm"
-                    className="gap-2 bg-secondary text-secondary-foreground hover:opacity-90"
-                  >
-                    <Link href="/signin">Sign in</Link>
-                  </Button>
-                </>
-              )}
+              <Button asChild size="sm" className="gap-2">
+                <Link href="/signup">
+                  Start Free
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                className="gap-2 bg-secondary text-secondary-foreground hover:opacity-90"
+              >
+                <Link href="/signin">Sign in</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
 
         <div>
           <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
-            Quick Actions
+            What you can do
           </h3>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            {[
-              {
-                title: 'Find Leads',
-                description: 'Search for weak websites in your market',
-                href: '/app/leads',
-                icon: Users,
-              },
-              {
-                title: 'Run Audit',
-                description: 'Analyze a website for opportunities',
-                href: '/app/audit',
-                icon: FileSearch,
-              },
-              {
-                title: 'Create Outreach',
-                description: 'Generate professional pitch scripts',
-                href: '/app/outreach',
-                icon: Send,
-              },
-              {
-                title: 'View Pipeline',
-                description: 'Track your deals and prospects',
-                href: '/app/pipeline',
-                icon: GitBranch,
-              },
-            ].map((action) => (
-              <Link key={action.title} href={sessionUserId ? action.href : '/signup'}>
-                <Card className="group h-full cursor-pointer border-border bg-card transition-all hover:border-muted-foreground/30 hover:bg-secondary/20">
-                  <CardContent className="p-4 sm:p-5">
-                    <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-secondary transition-colors group-hover:bg-secondary/80 sm:h-10 sm:w-10">
-                      <action.icon className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
-                    </div>
-                    <h4 className="mb-1 text-sm font-semibold text-foreground">{action.title}</h4>
-                    <p className="line-clamp-2 text-xs text-muted-foreground">
-                      {action.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
+            {BENEFITS.map((benefit) => (
+              <Card
+                key={benefit.title}
+                className="h-full border-border bg-card"
+              >
+                <CardContent className="p-4 sm:p-5">
+                  <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-secondary sm:h-10 sm:w-10">
+                    <benefit.icon className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
+                  </div>
+                  <h4 className="mb-1 text-sm font-semibold text-foreground">{benefit.title}</h4>
+                  <p className="line-clamp-3 text-xs text-muted-foreground">{benefit.description}</p>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
@@ -129,7 +118,48 @@ export default function HomePage(props: NextPageProps) {
         <Card className="border-border bg-card">
           <CardHeader className="p-4 pb-3 sm:p-6 sm:pb-4">
             <CardTitle className="text-base font-semibold text-foreground">
-              Why agencies use sitesignal
+              Example audit result
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              See what a prospect looks like before you reach out
+            </p>
+          </CardHeader>
+          <CardContent className="p-4 pt-0 sm:p-6">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-xl border border-border bg-secondary/20 p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Performance
+                </p>
+                <p className="mt-2 text-3xl font-bold tabular-nums text-rose-400">42</p>
+              </div>
+              <div className="rounded-xl border border-border bg-secondary/20 p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  SEO
+                </p>
+                <p className="mt-2 text-3xl font-bold tabular-nums text-amber-300">68</p>
+              </div>
+              <div className="rounded-xl border border-border bg-secondary/20 p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Opportunity
+                </p>
+                <p className="mt-2 text-lg font-bold text-emerald-300">High</p>
+              </div>
+              <div className="rounded-xl border border-border bg-secondary/20 p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Recommended action
+                </p>
+                <p className="mt-2 text-sm font-semibold leading-snug text-foreground">
+                  Rebuild or optimise
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border bg-card">
+          <CardHeader className="p-4 pb-3 sm:p-6 sm:pb-4">
+            <CardTitle className="text-base font-semibold text-foreground">
+              Why agencies use {BRAND_NAME}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0 sm:p-6">
@@ -150,10 +180,6 @@ export default function HomePage(props: NextPageProps) {
             </div>
           </CardContent>
         </Card>
-
-        <div className="pb-6 pt-2 text-xs text-muted-foreground">
-          Signed in as <span className="font-medium text-foreground">{sessionEmail || '—'}</span>
-        </div>
       </main>
 
       <SiteFooter />

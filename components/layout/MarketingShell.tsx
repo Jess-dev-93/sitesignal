@@ -1,12 +1,13 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { BRAND_NAME } from '../../lib/brand'
 import { AppHeader } from '../app-header'
 import SiteFooter from '../site-footer'
 
 export default function MarketingShell({
   children,
-  headerTitle = 'sitesignal',
+  headerTitle = BRAND_NAME,
   headerDescription,
 }: {
   children: ReactNode
@@ -21,7 +22,7 @@ export default function MarketingShell({
         <div className="absolute top-[35%] right-[-200px] h-[520px] w-[520px] rounded-full bg-indigo-500/10 blur-3xl" />
       </div>
 
-      <AppHeader title={headerTitle} description={headerDescription} />
+      <AppHeader variant="marketing" title={headerTitle} description={headerDescription} />
       <main className="relative mx-auto w-full max-w-xl px-4 py-10 sm:px-6 md:py-16">{children}</main>
       <SiteFooter />
     </div>
