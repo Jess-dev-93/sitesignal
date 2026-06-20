@@ -4,11 +4,21 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowDown, ArrowRight, FileSearch, Search, Send, Sparkles, X } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowRight,
+  FileSearch,
+  HelpCircle,
+  Search,
+  Send,
+  Sparkles,
+  X,
+} from 'lucide-react'
 import { useSupabaseSession } from '../lib/useSupabaseSession'
 import { NextPageProps, useUnwrapNextPageProps } from '../lib/nextPageProps'
 import { BRAND_NAME } from '../lib/brand'
 import { AppHeader } from '../components/app-header'
+import ProductPreviewMock from '../components/marketing/ProductPreviewMock'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import SiteFooter from '../components/site-footer'
@@ -16,21 +26,23 @@ import SiteFooter from '../components/site-footer'
 const HOW_IT_WORKS = [
   {
     step: 1,
-    title: 'Find weak websites',
-    description: 'Search by industry and location.',
+    title: 'Find businesses ready to hire you',
+    description:
+      'Search by industry and location to find businesses that already have a reason to need help.',
     icon: Search,
   },
   {
     step: 2,
     title: 'Uncover real issues',
     description:
-      'Find real website issues you can use as a reason to start the conversation.',
+      'Find website issues you can use as a reason to start the conversation — not vague guesses.',
     icon: FileSearch,
   },
   {
     step: 3,
-    title: 'Send better outreach',
-    description: 'Generate emails, call scripts and follow-ups based on what you found.',
+    title: 'Start evidence-based conversations',
+    description:
+      'Generate outreach based on what you found — not generic cold pitching.',
     icon: Send,
   },
 ] as const
@@ -63,13 +75,50 @@ const LEAD_JOURNEY = [
 ] as const
 
 const WHY_BENEFITS = [
-  { title: 'Find prospects faster', description: 'Discover local businesses with real website gaps.' },
-  { title: 'Pitch with evidence', description: 'Lead with specific issues, not guesswork.' },
-  { title: 'Sound professional', description: 'Outreach that references what you actually found.' },
-  { title: 'Track every follow-up', description: 'Keep calls, emails and pipeline in one place.' },
+  {
+    title: 'Find prospects faster',
+    description: 'Discover businesses with real website gaps — not random names on a list.',
+  },
+  {
+    title: 'Pitch with evidence',
+    description: 'Lead with specific issues you can point to, not guesswork.',
+  },
+  {
+    title: 'Sound professional',
+    description: 'Outreach that references what you actually audited.',
+  },
+  {
+    title: 'Track every follow-up',
+    description: 'Keep calls, emails and pipeline in one place.',
+  },
 ] as const
 
-function SectionLabel({ id, children }: { id: string; children: React.ReactNode }) {
+const OBJECTIONS = [
+  {
+    question: "Can't I just use Google?",
+    answer:
+      'Yes — but Google shows you businesses, not which ones have weak websites, what is broken, or what to say when you reach out. SiteSignal connects search → issues → outreach in one flow.',
+  },
+  {
+    question: "Can't I run Lighthouse myself?",
+    answer:
+      'Absolutely. But you still need to find the prospect, interpret the scores, write the pitch, and track follow-ups. SiteSignal wraps that entire workflow — not just a single audit.',
+  },
+  {
+    question: "Can't ChatGPT write outreach?",
+    answer:
+      'It can write generic emails. SiteSignal generates outreach tied to real audit findings on a specific business — so your message sounds researched, not templated.',
+  },
+] as const
+
+const COMING_SOON = [
+  'Technology recommendations',
+  'Historical website snapshots',
+  'Advanced outreach workflows',
+  'Agency collaboration tools',
+] as const
+
+function SectionLabel({ id, children }: { id: string; children: ReactNode }) {
   return (
     <h3
       id={id}
@@ -110,10 +159,10 @@ export default function HomePage(props: NextPageProps) {
       />
 
       <main className="mx-auto w-full max-w-6xl space-y-14 p-4 pb-12 sm:space-y-16 sm:p-6 sm:pb-16">
-        {/* Hero — larger, who-it's-for woven in */}
-        <section aria-labelledby="hero-heading">
+        {/* Hero + product preview */}
+        <section aria-labelledby="hero-heading" className="space-y-6 sm:space-y-8">
           <Card className="overflow-hidden border-border bg-gradient-to-br from-card via-card to-violet-500/10 shadow-lg shadow-violet-500/5">
-            <CardContent className="p-8 sm:p-12 md:p-14 lg:p-16">
+            <CardContent className="p-8 sm:p-12 md:p-14 lg:px-16 lg:pt-16 lg:pb-10">
               <div className="mb-6 flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-violet-200">
                   <Sparkles className="h-3.5 w-3.5" />
@@ -129,7 +178,7 @@ export default function HomePage(props: NextPageProps) {
               </h2>
               <p className="mb-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
                 Find local businesses with underperforming websites, uncover issues you can pitch
-                on, and generate personalised outreach so you can start better conversations.
+                on, and start conversations based on evidence — not cold guessing.
               </p>
               <p className="mb-8 max-w-2xl text-sm leading-relaxed text-muted-foreground/90 sm:text-base">
                 Built for freelancers, web designers, developers and small agencies who want a
@@ -147,12 +196,19 @@ export default function HomePage(props: NextPageProps) {
                   <Link href="/signin">Sign in</Link>
                 </Button>
               </div>
-
-              <p className="mt-8 text-sm text-muted-foreground">
-                Built by a freelance web developer for real client outreach.
-              </p>
             </CardContent>
           </Card>
+
+          {/* Product screenshot — immediately below hero */}
+          <div>
+            <p className="mb-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground sm:text-sm">
+              See the product
+            </p>
+            <ProductPreviewMock />
+            <p className="mt-3 text-center text-xs text-muted-foreground sm:text-sm">
+              Lead finder, audit insights and outreach — in one workspace
+            </p>
+          </div>
         </section>
 
         {/* How it works */}
@@ -176,6 +232,40 @@ export default function HomePage(props: NextPageProps) {
               </Card>
             ))}
           </div>
+        </section>
+
+        {/* Why this works */}
+        <section aria-labelledby="why-this-works-heading">
+          <SectionLabel id="why-this-works-heading">Why {BRAND_NAME} works</SectionLabel>
+          <Card className="border-border bg-card">
+            <CardContent className="space-y-6 p-6 sm:p-8">
+              <div>
+                <p className="mb-3 text-sm font-semibold text-foreground">
+                  Most freelancers do outreach like this:
+                </p>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <span className="text-muted-foreground/60">•</span>
+                    Buy a lead list
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-muted-foreground/60">•</span>
+                    Send generic emails
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-muted-foreground/60">•</span>
+                    Hope for replies
+                  </li>
+                </ul>
+              </div>
+              <div className="h-px bg-border" />
+              <p className="text-base leading-relaxed text-foreground sm:text-lg">
+                {BRAND_NAME} starts with a{' '}
+                <span className="font-semibold text-violet-300">real website issue</span> first.
+                That means every conversation begins with evidence, not guesswork.
+              </p>
+            </CardContent>
+          </Card>
         </section>
 
         {/* The transformation */}
@@ -284,6 +374,33 @@ export default function HomePage(props: NextPageProps) {
           </Card>
         </section>
 
+        {/* Objection handling */}
+        <section aria-labelledby="objections-heading">
+          <SectionLabel id="objections-heading">Why not use separate tools?</SectionLabel>
+          <Card className="border-border bg-card">
+            <CardContent className="space-y-6 p-6 sm:p-8">
+              <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
+                You could search manually, run audits manually, write outreach manually and track
+                prospects manually. {BRAND_NAME} combines the entire workflow into one process.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-3">
+                {OBJECTIONS.map((item) => (
+                  <div
+                    key={item.question}
+                    className="rounded-xl border border-border bg-secondary/20 p-4 sm:p-5"
+                  >
+                    <div className="mb-2 flex items-start gap-2">
+                      <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-violet-400" />
+                      <p className="text-sm font-semibold text-foreground">{item.question}</p>
+                    </div>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{item.answer}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
         {/* Benefits */}
         <section aria-labelledby="why-use-heading">
           <SectionLabel id="why-use-heading">Why use {BRAND_NAME}</SectionLabel>
@@ -303,19 +420,50 @@ export default function HomePage(props: NextPageProps) {
           </div>
         </section>
 
-        {/* Why I built SiteSignal */}
+        {/* Founder story — expanded */}
         <section aria-labelledby="founder-story-heading">
           <SectionLabel id="founder-story-heading">Why I built {BRAND_NAME}</SectionLabel>
-          <Card className="border-border bg-gradient-to-br from-card to-secondary/20">
-            <CardContent className="p-6 sm:p-8 md:p-10">
-              <blockquote className="max-w-3xl text-base leading-relaxed text-foreground sm:text-lg sm:leading-relaxed">
-                I built {BRAND_NAME} after spending years manually finding prospects, running
-                audits and writing outreach. I wanted a faster, more structured way to identify
-                opportunities and start better conversations.
-              </blockquote>
-              <p className="mt-4 text-sm text-muted-foreground">
-                — Built for freelancers who do the work, not just talk about it.
+          <Card className="overflow-hidden border-border bg-gradient-to-br from-card via-violet-500/5 to-secondary/20">
+            <CardContent className="p-8 sm:p-10 md:p-12">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-violet-300/80">
+                Founder story
               </p>
+              <blockquote className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-xl sm:leading-relaxed">
+                I&apos;m a freelance developer. I built {BRAND_NAME} because I needed it — after
+                years of manually finding prospects, running audits and writing outreach one by
+                one.
+              </blockquote>
+              <p className="mt-5 max-w-3xl text-base leading-relaxed text-muted-foreground">
+                I wanted a faster, more structured way to identify opportunities and start better
+                conversations. Not another growth-hack tool — something I&apos;d actually use on
+                real client work.
+              </p>
+              <p className="mt-6 border-t border-border pt-6 text-base font-semibold text-foreground">
+                Built for freelancers who do the work, not just talk about it.
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Coming soon */}
+        <section aria-labelledby="coming-soon-heading">
+          <SectionLabel id="coming-soon-heading">Coming soon</SectionLabel>
+          <Card className="border-dashed border-border bg-card/50">
+            <CardContent className="p-6 sm:p-8">
+              <p className="mb-4 text-sm text-muted-foreground">
+                We&apos;re shipping the core workflow first. On the horizon:
+              </p>
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {COMING_SOON.map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-center gap-2 text-sm text-foreground/90"
+                  >
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </CardContent>
           </Card>
         </section>
