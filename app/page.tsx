@@ -4,16 +4,7 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  ArrowDown,
-  ArrowRight,
-  FileSearch,
-  HelpCircle,
-  Search,
-  Send,
-  Sparkles,
-  X,
-} from 'lucide-react'
+import { ArrowDown, ArrowRight, FileSearch, Search, Send, Sparkles, X } from 'lucide-react'
 import { useSupabaseSession } from '../lib/useSupabaseSession'
 import { NextPageProps, useUnwrapNextPageProps } from '../lib/nextPageProps'
 import { BRAND_NAME } from '../lib/brand'
@@ -93,31 +84,6 @@ const WHY_BENEFITS = [
   },
 ] as const
 
-const OBJECTIONS = [
-  {
-    question: "Can't I just use Google?",
-    answer:
-      'Yes — but Google shows you businesses, not which ones have weak websites, what is broken, or what to say when you reach out. SiteSignal connects search → issues → outreach in one flow.',
-  },
-  {
-    question: "Can't I run Lighthouse myself?",
-    answer:
-      'Absolutely. But you still need to find the prospect, interpret the scores, write the pitch, and track follow-ups. SiteSignal wraps that entire workflow — not just a single audit.',
-  },
-  {
-    question: "Can't ChatGPT write outreach?",
-    answer:
-      'It can write generic emails. SiteSignal generates outreach tied to real audit findings on a specific business — so your message sounds researched, not templated.',
-  },
-] as const
-
-const COMING_SOON = [
-  'Technology recommendations',
-  'Historical website snapshots',
-  'Advanced outreach workflows',
-  'Agency collaboration tools',
-] as const
-
 function SectionLabel({ id, children }: { id: string; children: ReactNode }) {
   return (
     <h3
@@ -159,10 +125,10 @@ export default function HomePage(props: NextPageProps) {
       />
 
       <main className="mx-auto w-full max-w-6xl space-y-14 p-4 pb-12 sm:space-y-16 sm:p-6 sm:pb-16">
-        {/* Hero + product preview */}
-        <section aria-labelledby="hero-heading" className="space-y-6 sm:space-y-8">
+        {/* Hero */}
+        <section aria-labelledby="hero-heading">
           <Card className="overflow-hidden border-border bg-gradient-to-br from-card via-card to-violet-500/10 shadow-lg shadow-violet-500/5">
-            <CardContent className="p-8 sm:p-12 md:p-14 lg:px-16 lg:pt-16 lg:pb-10">
+            <CardContent className="p-8 sm:p-12 md:p-14 lg:px-16 lg:pt-16 lg:pb-12">
               <div className="mb-6 flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-violet-200">
                   <Sparkles className="h-3.5 w-3.5" />
@@ -198,17 +164,15 @@ export default function HomePage(props: NextPageProps) {
               </div>
             </CardContent>
           </Card>
+        </section>
 
-          {/* Product screenshot — immediately below hero */}
-          <div>
-            <p className="mb-3 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground sm:text-sm">
-              See the product
-            </p>
-            <ProductPreviewMock />
-            <p className="mt-3 text-center text-xs text-muted-foreground sm:text-sm">
-              Lead finder, audit insights and outreach — in one workspace
-            </p>
-          </div>
+        {/* Screenshot */}
+        <section aria-labelledby="screenshot-heading">
+          <SectionLabel id="screenshot-heading">See the product</SectionLabel>
+          <ProductPreviewMock />
+          <p className="mt-3 text-center text-xs text-muted-foreground sm:text-sm">
+            Lead finder, audit insights and outreach — in one workspace
+          </p>
         </section>
 
         {/* How it works */}
@@ -234,41 +198,7 @@ export default function HomePage(props: NextPageProps) {
           </div>
         </section>
 
-        {/* Why this works */}
-        <section aria-labelledby="why-this-works-heading">
-          <SectionLabel id="why-this-works-heading">Why {BRAND_NAME} works</SectionLabel>
-          <Card className="border-border bg-card">
-            <CardContent className="space-y-6 p-6 sm:p-8">
-              <div>
-                <p className="mb-3 text-sm font-semibold text-foreground">
-                  Most freelancers do outreach like this:
-                </p>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <span className="text-muted-foreground/60">•</span>
-                    Buy a lead list
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-muted-foreground/60">•</span>
-                    Send generic emails
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-muted-foreground/60">•</span>
-                    Hope for replies
-                  </li>
-                </ul>
-              </div>
-              <div className="h-px bg-border" />
-              <p className="text-base leading-relaxed text-foreground sm:text-lg">
-                {BRAND_NAME} starts with a{' '}
-                <span className="font-semibold text-violet-300">real website issue</span> first.
-                That means every conversation begins with evidence, not guesswork.
-              </p>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* The transformation */}
+        {/* Transformation */}
         <section aria-labelledby="transformation-heading">
           <SectionLabel id="transformation-heading">The transformation</SectionLabel>
           <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-stretch">
@@ -374,34 +304,7 @@ export default function HomePage(props: NextPageProps) {
           </Card>
         </section>
 
-        {/* Objection handling */}
-        <section aria-labelledby="objections-heading">
-          <SectionLabel id="objections-heading">Why not use separate tools?</SectionLabel>
-          <Card className="border-border bg-card">
-            <CardContent className="space-y-6 p-6 sm:p-8">
-              <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
-                You could search manually, run audits manually, write outreach manually and track
-                prospects manually. {BRAND_NAME} combines the entire workflow into one process.
-              </p>
-              <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-3">
-                {OBJECTIONS.map((item) => (
-                  <div
-                    key={item.question}
-                    className="rounded-xl border border-border bg-secondary/20 p-4 sm:p-5"
-                  >
-                    <div className="mb-2 flex items-start gap-2">
-                      <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-violet-400" />
-                      <p className="text-sm font-semibold text-foreground">{item.question}</p>
-                    </div>
-                    <p className="text-sm leading-relaxed text-muted-foreground">{item.answer}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Benefits */}
+        {/* Why use SiteSignal */}
         <section aria-labelledby="why-use-heading">
           <SectionLabel id="why-use-heading">Why use {BRAND_NAME}</SectionLabel>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -420,14 +323,11 @@ export default function HomePage(props: NextPageProps) {
           </div>
         </section>
 
-        {/* Founder story — expanded */}
+        {/* Founder story */}
         <section aria-labelledby="founder-story-heading">
-          <SectionLabel id="founder-story-heading">Why I built {BRAND_NAME}</SectionLabel>
+          <SectionLabel id="founder-story-heading">Founder story</SectionLabel>
           <Card className="overflow-hidden border-border bg-gradient-to-br from-card via-violet-500/5 to-secondary/20">
             <CardContent className="p-8 sm:p-10 md:p-12">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-violet-300/80">
-                Founder story
-              </p>
               <blockquote className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-xl sm:leading-relaxed">
                 I&apos;m a freelance developer. I built {BRAND_NAME} because I needed it — after
                 years of manually finding prospects, running audits and writing outreach one by
@@ -445,57 +345,34 @@ export default function HomePage(props: NextPageProps) {
           </Card>
         </section>
 
-        {/* Coming soon */}
-        <section aria-labelledby="coming-soon-heading">
-          <SectionLabel id="coming-soon-heading">Coming soon</SectionLabel>
-          <Card className="border-dashed border-border bg-card/50">
-            <CardContent className="p-6 sm:p-8">
-              <p className="mb-4 text-sm text-muted-foreground">
-                We&apos;re shipping the core workflow first. On the horizon:
-              </p>
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {COMING_SOON.map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-center gap-2 text-sm text-foreground/90"
-                  >
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
+        {/* Pricing CTA */}
+        <section aria-labelledby="pricing-cta-heading">
+          <SectionLabel id="pricing-cta-heading">Get started</SectionLabel>
+          <Card className="border-border bg-gradient-to-br from-card to-primary/5">
+            <CardContent className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-10">
+              <div>
+                <h3 className="text-xl font-semibold text-foreground sm:text-2xl">
+                  Start free. Upgrade when you&apos;re ready.
+                </h3>
+                <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                  Free plan includes lead searches and issue reports to get started. Pro unlocks
+                  unlimited usage, outreach formats and pipeline tracking from $49/month.
+                </p>
+              </div>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                <Button asChild className="h-11 gap-2 px-6">
+                  <Link href="/signup">
+                    Start Free
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="secondary" className="h-11 px-6">
+                  <Link href="/pricing">View pricing</Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </section>
-
-        {/* Pricing CTA */}
-        <Card className="border-border bg-gradient-to-br from-card to-primary/5">
-          <CardContent className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-10">
-            <div>
-              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Simple pricing
-              </p>
-              <h3 className="text-xl font-semibold text-foreground sm:text-2xl">
-                Start free. Upgrade when you&apos;re ready.
-              </h3>
-              <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                Free plan includes lead searches and issue reports to get started. Pro unlocks
-                unlimited usage, outreach formats and pipeline tracking from $49/month.
-              </p>
-            </div>
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-              <Button asChild className="h-11 gap-2 px-6">
-                <Link href="/signup">
-                  Start Free
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="secondary" className="h-11 px-6">
-                <Link href="/pricing">View pricing</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </main>
 
       <SiteFooter />
