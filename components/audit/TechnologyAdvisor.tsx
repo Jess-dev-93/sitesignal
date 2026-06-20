@@ -1,5 +1,6 @@
 import type { RecommendedPath, TechStack } from '../../lib/techStack'
 import { buildRecommendedPaths } from '../../lib/techStack'
+import { Badge } from '../ui/Badge'
 import { Card, CardContent } from '../ui/card'
 
 type TechnologyAdvisorProps = {
@@ -11,12 +12,6 @@ const ROLE_STYLES: Record<RecommendedPath['role'], string> = {
   best: 'border-success-border/50 bg-success-muted/30',
   alternative: 'border-violet-500/25 bg-violet-500/[0.06]',
   performance: 'border-blue-500/25 bg-blue-500/[0.06]',
-}
-
-const ROLE_BADGE: Record<RecommendedPath['role'], string> = {
-  best: 'text-success',
-  alternative: 'text-violet-300',
-  performance: 'text-blue-300',
 }
 
 export default function TechnologyAdvisor({ performance, stack }: TechnologyAdvisorProps) {
@@ -41,24 +36,29 @@ export default function TechnologyAdvisor({ performance, stack }: TechnologyAdvi
               Based on what we detected on the site and its performance score.
             </p>
           </div>
-          <span
-            className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-wider ${
+          <Badge
+            variant={
               stack.confidence === 'high'
-                ? 'border-success-border bg-success-muted text-success'
+                ? 'success'
                 : stack.confidence === 'medium'
-                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
-                  : 'border-border bg-secondary/50 text-muted-foreground'
-            }`}
+                  ? 'warning'
+                  : 'muted'
+            }
           >
             {stack.confidence} confidence
-          </span>
+          </Badge>
         </div>
 
         <div className="mb-6">
           <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Current stack
           </p>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="muted">{stack.cms}</Badge>
+            {stack.pageBuilder ? <Badge variant="violet">{stack.pageBuilder}</Badge> : null}
+            <Badge variant="blue">{stack.hosting}</Badge>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
             {stackItems.map((item) => (
               <div
                 key={item.label}
@@ -83,11 +83,18 @@ export default function TechnologyAdvisor({ performance, stack }: TechnologyAdvi
                 key={path.role}
                 className={`rounded-xl border p-4 ${ROLE_STYLES[path.role]}`}
               >
-                <p
-                  className={`text-[10px] font-bold uppercase tracking-[0.14em] ${ROLE_BADGE[path.role]}`}
+                <Badge
+                  variant={
+                    path.role === 'best'
+                      ? 'success'
+                      : path.role === 'alternative'
+                        ? 'violet'
+                        : 'blue'
+                  }
+                  className="mb-2"
                 >
                   {path.roleLabel}
-                </p>
+                </Badge>
                 <p className="mt-2 text-sm font-semibold text-foreground">{path.title}</p>
                 <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
                   {path.description}

@@ -1,4 +1,5 @@
 import { detectTechStack, type TechStack } from './techStack'
+import { extractPageTitle } from './pageMeta'
 
 const FETCH_TIMEOUT_MS = 8000
 const MAX_HTML_BYTES = 400_000
@@ -40,7 +41,13 @@ export async function fetchPageForStackDetection(url: string): Promise<{
   }
 }
 
-export async function detectTechStackFromUrl(url: string): Promise<TechStack> {
+export async function detectTechStackFromUrl(url: string): Promise<{
+  stack: TechStack
+  pageTitle: string | null
+}> {
   const { html, headers } = await fetchPageForStackDetection(url)
-  return detectTechStack(html, headers)
+  return {
+    stack: detectTechStack(html, headers),
+    pageTitle: extractPageTitle(html),
+  }
 }

@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react'
 import type { TechStack } from '../../lib/techStack'
+import { Badge } from '../ui/Badge'
 
 type ScoresInput = {
   mobile: {
@@ -97,10 +98,15 @@ export default function OpportunityScoreFactors({
                 aria-hidden="true"
               />
               <span>{factor.label}</span>
+              {active && detected ? (
+                <Badge variant="warning" className="ml-auto hidden sm:inline-flex">
+                  Active
+                </Badge>
+              ) : null}
               {!detected && scores ? (
-                <span className="rounded-full border border-border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <Badge variant="muted" className="ml-auto">
                   N/A
-                </span>
+                </Badge>
               ) : null}
             </li>
           )

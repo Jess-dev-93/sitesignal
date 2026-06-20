@@ -1,15 +1,18 @@
+import { buildReasonDetails, type ReasonDetail } from './opportunityOutcomes'
+
 export type OpportunityLevel = 'LOW' | 'MEDIUM' | 'HIGH'
 
 export type OpportunityScoreResult = {
   score: number
   level: OpportunityLevel
   reasons: string[]
+  reasonDetails: ReasonDetail[]
   primaryIssue: string
   impact: string
   recommendation: string
 }
 
-type ScoreInput = {
+export type ScoreInput = {
   mobile: {
     performance: number
     seo: number
@@ -123,6 +126,7 @@ export function computeOpportunityScore(
     score,
     level: levelFromScore(score),
     reasons: reasons.slice(0, 4),
+    reasonDetails: buildReasonDetails(scores, reasons.slice(0, 4)),
     primaryIssue,
     impact,
     recommendation,
@@ -130,6 +134,12 @@ export function computeOpportunityScore(
 }
 
 export function levelLabel(level: OpportunityLevel): string {
+  if (level === 'HIGH') return 'High opportunity'
+  if (level === 'MEDIUM') return 'Medium opportunity'
+  return 'Low opportunity'
+}
+
+export function levelBadgeLabel(level: OpportunityLevel): string {
   if (level === 'HIGH') return 'High opportunity'
   if (level === 'MEDIUM') return 'Medium opportunity'
   return 'Low opportunity'

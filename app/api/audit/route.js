@@ -357,10 +357,12 @@ export async function POST(request) {
 
     console.log(`🔍 Starting ${isQuickScan ? 'quick scan' : 'full audit'} for: ${cleanUrl}`)
 
-    const [scores, techStack] = await Promise.all([
+    const [scores, stackResult] = await Promise.all([
       getLighthouseScores(cleanUrl, { quick: isQuickScan }),
       detectTechStackFromUrl(cleanUrl),
     ])
+    const techStack = stackResult.stack
+    const pageTitle = stackResult.pageTitle
     const aiReport = isQuickScan
       ? generateFallbackReport(cleanUrl, scores, buildIssuesList(scores))
       : await generateAIReport(cleanUrl, scores)
@@ -375,6 +377,7 @@ export async function POST(request) {
     return NextResponse.json({
       success: true,
       url: cleanUrl,
+      pageTitle,
       scores,
       techStack,
       aiReport,

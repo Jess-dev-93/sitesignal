@@ -19,9 +19,14 @@ import OpportunityScoreCard from '../../../components/audit/OpportunityScoreCard
 import OpportunityScoreFactors from '../../../components/audit/OpportunityScoreFactors'
 import TechnologyAdvisor from '../../../components/audit/TechnologyAdvisor'
 import AuditProgressJourney from '../../../components/audit/AuditProgressJourney'
+import AuditReveal from '../../../components/audit/AuditReveal'
 import CollapsibleAuditReport from '../../../components/audit/CollapsibleAuditReport'
+import FirstAuditEmptyState from '../../../components/audit/FirstAuditEmptyState'
+import OpportunitySummaryCard from '../../../components/audit/OpportunitySummaryCard'
+import RecentAuditsPreview from '../../../components/audit/RecentAuditsPreview'
 import WhyThisMatters from '../../../components/audit/WhyThisMatters'
 import WorkflowJourney from '../../../components/audit/WorkflowJourney'
+import { SectionDivider } from '../../../components/ui/SectionDivider'
 import { computeOpportunityScore, normalizeScores } from '../../../lib/opportunityScore'
 import {
   getStoredProfile,
@@ -53,6 +58,7 @@ interface AuditRecord {
   id: string
   url: string
   date: string
+  pageTitle?: string | null
   scores: AuditScores
   techStack?: TechStack
   aiReport: {
@@ -67,6 +73,7 @@ interface HistoryEntry {
   id: string
   url: string
   savedAt: string
+  pageTitle?: string | null
   overallScore: number
   performance: number
   seo: number
@@ -138,6 +145,7 @@ function mapAuditRecordToHistoryEntry(record: AuditRecord): HistoryEntry {
     id: record.id,
     url: record.url,
     savedAt: record.date,
+    pageTitle: record.pageTitle,
     scores: record.scores ?? null,
     overallScore: record.scores?.overallScore ?? 0,
     performance: record.scores?.mobile?.performance ?? 0,
@@ -158,6 +166,7 @@ function mapHistoryEntryToAuditRecord(entry: HistoryEntry): AuditRecord {
     id: entry.id,
     url: entry.url,
     date: entry.savedAt,
+    pageTitle: entry.pageTitle,
     scores: entry.scores ?? {
       mobile: {
         performance: entry.performance ?? entry.mobilePerformance ?? 0,
@@ -247,6 +256,7 @@ function mapStoredHistoryToHistoryEntry(entry: any): HistoryEntry {
       id: entry.id,
       url: entry.url,
       savedAt: entry.date || entry.savedAt || new Date().toISOString(),
+      pageTitle: entry.pageTitle ?? null,
       scores: entry.scores ?? null,
       overallScore: entry.scores?.overallScore ?? 0,
       performance: entry.scores?.mobile?.performance ?? 0,
@@ -266,6 +276,7 @@ function mapStoredHistoryToHistoryEntry(entry: any): HistoryEntry {
     id: entry?.id || `audit_${Date.now()}`,
     url: entry?.url || '',
     savedAt: entry?.savedAt || entry?.date || new Date().toISOString(),
+    pageTitle: entry?.pageTitle ?? null,
     scores: entry?.scores ?? null,
     overallScore: entry?.overallScore ?? 0,
     performance: entry?.performance ?? entry?.mobilePerformance ?? 0,
@@ -467,6 +478,7 @@ function AuditPageInner() {
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           url: json.url,
           date: json.scannedAt ?? new Date().toISOString(),
+          pageTitle: json.pageTitle ?? null,
           scores: json.scores,
           techStack: json.techStack,
           aiReport: json.aiReport,
@@ -474,6 +486,10 @@ function AuditPageInner() {
 
         const nextLead: WorkspaceLead = {
           ...(selectedLead || {}),
+          title:
+            selectedLead?.title ||
+            json.pageTitle?.replace(/\s*[|\-–—]\s*.+$/, '').trim() ||
+            undefined,
           url: json.url,
           domain:
             selectedLead?.domain ||
@@ -658,8 +674,8 @@ function AuditPageInner() {
       description="Scan any website, get an opportunity score, and generate outreach from real evidence."
     >
         <PageIntroCard
-          title="Most freelancers guess."
-          description="SiteSignal finds real website issues you can use to start better conversations."
+          title="Stop guessing who needs help."
+          description="Find the reason before you pitch — with real website evidence, not gut feel."
         />
 
         <WorkflowJourney />
@@ -783,53 +799,16 @@ function AuditPageInner() {
 
                 {!auditResult && !isRunning && <WhyThisMatters />}
 
+                {!auditResult && !isRunning && auditHistory.length === 0 && (
+                  <FirstAuditEmptyState />
+                )}
+
                 {auditHistory.length > 0 && !auditResult && !isRunning && (
-                  <div className="overflow-hidden rounded-[28px] border border-border bg-card backdrop-blur-sm">
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4 sm:px-6">
-                      <div>
-                        <h3 className="text-sm font-semibold text-foreground">Recent audits</h3>
-                        <p className="text-xs text-muted-foreground">
-                          Reopen a previous scan to continue to outreach
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setActiveView('history')}
-                        className="text-xs font-medium text-blue-300 transition hover:text-blue-200"
-                      >
-                        View all →
-                      </button>
-                    </div>
-                    <div className="divide-y divide-white/[0.06]">
-                      {auditHistory.slice(0, 3).map((entry) => (
-                        <button
-                          key={entry.id}
-                          type="button"
-                          onClick={() => handleOpenFromHistory(entry)}
-                          className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-secondary/30 sm:px-6"
-                        >
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-foreground">
-                              {entry.url.replace(/^https?:\/\//, '')}
-                            </p>
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                              {new Date(entry.savedAt).toLocaleDateString(undefined, {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                              })}
-                            </p>
-                          </div>
-                          <span className="shrink-0 rounded-full border border-success-border bg-success-muted px-2.5 py-1 text-xs font-semibold text-success">
-                            {computeOpportunityScore(
-                              normalizeScores(entry),
-                              entry.report?.keyIssues ?? []
-                            ).score}{' '}
-                            opp.
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <RecentAuditsPreview
+                    entries={auditHistory.slice(0, 3)}
+                    onOpen={(entry) => handleOpenFromHistory(entry as HistoryEntry)}
+                    onViewAll={() => setActiveView('history')}
+                  />
                 )}
               </>
             )}
@@ -873,34 +852,73 @@ function AuditPageInner() {
             )}
 
             {auditResult && !isRunning && opportunityResult && (
-              <>
-                <AuditProgressJourney
-                  onGenerateOutreach={handleContinueToOutreach}
-                  onAddToPipeline={handleAddToPipeline}
-                  onViewHistory={() => setActiveView('history')}
-                  outreachReady={continueToOutreachReady}
-                />
+              <div className="space-y-10">
+                <AuditReveal index={0}>
+                  <SectionDivider label="What happens next" />
+                  <div className="mt-8">
+                    <AuditProgressJourney
+                      onGenerateOutreach={handleContinueToOutreach}
+                      onAddToPipeline={handleAddToPipeline}
+                      onViewHistory={() => setActiveView('history')}
+                      outreachReady={continueToOutreachReady}
+                    />
+                  </div>
+                </AuditReveal>
 
-                <OpportunityScoreCard result={opportunityResult} />
-                <OpportunityScoreFactors
-                  scores={auditResult.scores}
-                  techStack={auditResult.techStack}
-                />
+                <AuditReveal index={1}>
+                  <SectionDivider label="Opportunity score" />
+                  <div className="mt-8 space-y-8">
+                    <OpportunityScoreCard
+                      result={opportunityResult}
+                      url={auditResult.url}
+                      pageTitle={auditResult.pageTitle}
+                      scannedAt={auditResult.date}
+                    />
+                    <OpportunityScoreFactors
+                      scores={auditResult.scores}
+                      techStack={auditResult.techStack}
+                    />
+                  </div>
+                </AuditReveal>
 
-                <OpportunityFoundPanel
-                  result={opportunityResult}
-                  onGenerateOutreach={handleContinueToOutreach}
-                  onManualOutreach={handleOpenManualOutreach}
-                  outreachReady={continueToOutreachReady}
-                  arrivedForOutreach={arrivedForOutreach}
-                />
+                <AuditReveal index={2}>
+                  <SectionDivider label="Opportunity summary" />
+                  <div className="mt-8">
+                    <OpportunitySummaryCard
+                      result={opportunityResult}
+                      stack={auditResult.techStack}
+                      performance={auditResult.scores.mobile.performance}
+                    />
+                  </div>
+                </AuditReveal>
 
-                <TechnologyAdvisor
-                  performance={auditResult.scores.mobile.performance}
-                  stack={auditResult.techStack ?? FALLBACK_TECH_STACK}
-                />
+                <AuditReveal index={3}>
+                  <SectionDivider label="Opportunity found" />
+                  <div className="mt-8">
+                    <OpportunityFoundPanel
+                      result={opportunityResult}
+                      onGenerateOutreach={handleContinueToOutreach}
+                      onManualOutreach={handleOpenManualOutreach}
+                      outreachReady={continueToOutreachReady}
+                      arrivedForOutreach={arrivedForOutreach}
+                    />
+                  </div>
+                </AuditReveal>
 
-                <CollapsibleAuditReport url={auditResult.url}>
+                <AuditReveal index={4}>
+                  <SectionDivider label="Technology advisor" />
+                  <div className="mt-8">
+                    <TechnologyAdvisor
+                      performance={auditResult.scores.mobile.performance}
+                      stack={auditResult.techStack ?? FALLBACK_TECH_STACK}
+                    />
+                  </div>
+                </AuditReveal>
+
+                <AuditReveal index={5}>
+                  <SectionDivider label="Full audit report" />
+                  <div className="mt-8">
+                    <CollapsibleAuditReport url={auditResult.url}>
                   <div className="flex flex-wrap items-center justify-end gap-3">
                     <button
                       onClick={() => {
@@ -998,7 +1016,9 @@ function AuditPageInner() {
                     auditMode={auditMode}
                   />
                 </CollapsibleAuditReport>
-              </>
+                  </div>
+                </AuditReveal>
+              </div>
             )}
 
             {!auditResult && !isRunning && !auditLimitReached && !errorMsg && (
@@ -1029,11 +1049,16 @@ function AuditPageInner() {
             <AuditHistory onReopen={handleOpenFromHistory} />
 
             {auditHistory.length === 0 && (
-              <div className="rounded-[28px] border border-border bg-card p-16 text-center backdrop-blur-sm">
-                <div className="mb-4 text-5xl opacity-40">📂</div>
-                <h3 className="mb-2 font-semibold text-foreground">No audits saved yet</h3>
-                <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground">
-                  Run your first audit and it will appear here automatically.
+              <div className="rounded-[28px] border border-dashed border-border bg-gradient-to-br from-card to-violet-500/[0.04] p-16 text-center backdrop-blur-sm">
+                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-violet-500/20 bg-violet-500/10 text-3xl">
+                  📂
+                </div>
+                <h3 className="mb-2 text-lg font-semibold text-foreground">
+                  Run your first audit to discover opportunities
+                </h3>
+                <p className="mx-auto mb-6 max-w-sm text-sm leading-relaxed text-muted-foreground">
+                  Paste any business URL, get an opportunity score, and generate outreach from real
+                  evidence — it saves here automatically.
                 </p>
                 <button
                   onClick={() => setActiveView('tool')}

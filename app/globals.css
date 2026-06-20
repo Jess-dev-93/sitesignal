@@ -412,6 +412,24 @@ samp {
 }
 
 /* ─────────────────────────────────────────────
+   AUDIT RESULT REVEALS
+───────────────────────────────────────────── */
+@keyframes audit-reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.audit-reveal {
+  animation: audit-reveal-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ─────────────────────────────────────────────
    MOTION PREFERENCES
 ───────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {

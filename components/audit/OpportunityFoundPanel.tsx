@@ -1,4 +1,5 @@
 import type { OpportunityScoreResult } from '../../lib/opportunityScore'
+import { Badge } from '../ui/Badge'
 import { Button } from '../ui/button'
 import { Card, CardContent } from '../ui/card'
 
@@ -37,11 +38,16 @@ export default function OpportunityFoundPanel({
 
         <div className="grid gap-3 sm:grid-cols-3">
           {[
-            { label: 'Issue', value: result.primaryIssue },
-            { label: 'Impact', value: result.impact },
-            { label: 'Recommendation', value: result.recommendation },
+            { label: 'Issue', value: result.primaryIssue, badge: 'Technical issue' as const },
+            { label: 'Impact', value: result.impact, badge: 'Business impact' as const },
+            { label: 'Recommendation', value: result.recommendation, badge: 'Next step' as const },
           ].map((item) => (
             <div key={item.label} className="rounded-xl border border-border bg-card/90 p-4">
+              <div className="mb-2">
+                <Badge variant={item.label === 'Impact' ? 'warning' : item.label === 'Issue' ? 'rose' : 'success'}>
+                  {item.badge}
+                </Badge>
+              </div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 {item.label}
               </p>
