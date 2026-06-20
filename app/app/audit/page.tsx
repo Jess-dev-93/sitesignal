@@ -18,6 +18,8 @@ import OpportunityFoundPanel from '../../../components/audit/OpportunityFoundPan
 import OpportunityScoreCard from '../../../components/audit/OpportunityScoreCard'
 import OpportunityScoreFactors from '../../../components/audit/OpportunityScoreFactors'
 import TechnologyAdvisor from '../../../components/audit/TechnologyAdvisor'
+import AuditProgressJourney from '../../../components/audit/AuditProgressJourney'
+import CollapsibleAuditReport from '../../../components/audit/CollapsibleAuditReport'
 import WhyThisMatters from '../../../components/audit/WhyThisMatters'
 import WorkflowJourney from '../../../components/audit/WorkflowJourney'
 import { computeOpportunityScore, normalizeScores } from '../../../lib/opportunityScore'
@@ -587,6 +589,29 @@ function AuditPageInner() {
     router.push(`/app/outreach?${params.toString()}`)
   }
 
+  const handleAddToPipeline = () => {
+    const lead: WorkspaceLead = selectedLead || {
+      title: queryTitle || '',
+      url: auditResult?.url || prefilledUrl,
+      domain: queryDomain || '',
+    }
+
+    if (!lead.url && auditResult?.url) lead.url = auditResult.url
+
+    if (!lead.domain && lead.url) {
+      try {
+        lead.domain = new URL(lead.url).hostname.replace(/^www\./, '')
+      } catch {
+        lead.domain = lead.url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]
+      }
+    }
+
+    if (!lead.title && lead.domain) lead.title = lead.domain
+
+    sessionStorage.setItem('pendingPipelineAdd', JSON.stringify(lead))
+    router.push('/app/pipeline')
+  }
+
   const handleSignOut = useCallback(async () => {
     await supabase.auth.signOut()
     router.push('/')
@@ -849,6 +874,13 @@ function AuditPageInner() {
 
             {auditResult && !isRunning && opportunityResult && (
               <>
+                <AuditProgressJourney
+                  onGenerateOutreach={handleContinueToOutreach}
+                  onAddToPipeline={handleAddToPipeline}
+                  onViewHistory={() => setActiveView('history')}
+                  outreachReady={continueToOutreachReady}
+                />
+
                 <OpportunityScoreCard result={opportunityResult} />
                 <OpportunityScoreFactors
                   scores={auditResult.scores}
@@ -868,50 +900,35 @@ function AuditPageInner() {
                   stack={auditResult.techStack ?? FALLBACK_TECH_STACK}
                 />
 
-                <div className="overflow-hidden ss-panel-elevated">
-                  <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-6 sm:p-8">
-                    <div>
-                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        Full scan details
-                      </p>
-                      <h2 className="max-w-[400px] truncate text-lg font-semibold text-foreground">
-                        {auditResult.url.replace(/^https?:\/\//, '')}
-                      </h2>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Technical breakdown — share with clients or use in your pitch deck.
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3">
-                      <button
-                        onClick={() => {
-                          setAuditResult(null)
-                          setErrorMsg(null)
-                          setContinueToOutreachReady(false)
-                        }}
-                        className="rounded-xl border border-border bg-secondary/50 px-4 py-2 text-sm font-medium text-secondary-foreground transition-all hover:bg-secondary hover:text-foreground"
-                      >
-                        New scan
-                      </button>
-                      <button
-                        onClick={() => setActiveView('history')}
-                        className="rounded-xl border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:bg-blue-600/30 hover:text-blue-200"
-                      >
-                        View history
-                      </button>
-                    </div>
+                <CollapsibleAuditReport url={auditResult.url}>
+                  <div className="flex flex-wrap items-center justify-end gap-3">
+                    <button
+                      onClick={() => {
+                        setAuditResult(null)
+                        setErrorMsg(null)
+                        setContinueToOutreachReady(false)
+                      }}
+                      className="rounded-xl border border-border bg-secondary/50 px-4 py-2 text-sm font-medium text-secondary-foreground transition-all hover:bg-secondary hover:text-foreground"
+                    >
+                      New scan
+                    </button>
+                    <button
+                      onClick={() => setActiveView('history')}
+                      className="rounded-xl border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:bg-blue-600/30 hover:text-blue-200"
+                    >
+                      View history
+                    </button>
                   </div>
 
                   {activeScores && (
-                    <div className="border-b border-border px-6 py-5 sm:px-8">
+                    <div className="rounded-2xl border border-border bg-secondary/20 p-5 sm:p-6">
                       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
                         <div>
                           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                             Score view
                           </p>
                           <p className="mt-1 text-sm text-secondary-foreground">
-                            Both mobile and desktop are included in every audit. Switch
-                            views below.
+                            Both mobile and desktop are included in every audit. Switch views below.
                           </p>
                         </div>
 
@@ -922,7 +939,7 @@ function AuditPageInner() {
                             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
                               auditMode === 'mobile'
                                 ? 'bg-blue-600 text-white'
-                                : 'text-muted-foreground hover:text-slate-200'
+                                : 'text-muted-foreground hover:text-foreground'
                             }`}
                           >
                             Mobile
@@ -933,7 +950,7 @@ function AuditPageInner() {
                             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
                               auditMode === 'desktop'
                                 ? 'bg-blue-600 text-white'
-                                : 'text-muted-foreground hover:text-slate-200'
+                                : 'text-muted-foreground hover:text-foreground'
                             }`}
                           >
                             Desktop
@@ -960,6 +977,12 @@ function AuditPageInner() {
                               <p className={`mt-2 text-3xl font-bold ${styles.text}`}>
                                 {item.value ?? 0}
                               </p>
+                              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-border/60">
+                                <div
+                                  className={`h-1.5 rounded-full ${styles.bar}`}
+                                  style={{ width: `${item.value ?? 0}%` }}
+                                />
+                              </div>
                             </div>
                           )
                         })}
@@ -967,18 +990,14 @@ function AuditPageInner() {
                     </div>
                   )}
 
-                  <div className="p-6 sm:p-8">
-                    <AuditReport
-                      url={auditResult.url}
-                      scores={auditResult.scores}
-                      report={auditResult.aiReport}
-                      profile={profile}
-                      auditMode={auditMode}
-                    />
-                  </div>
-                </div>
-
-                <WorkflowJourney />
+                  <AuditReport
+                    url={auditResult.url}
+                    scores={auditResult.scores}
+                    report={auditResult.aiReport}
+                    profile={profile}
+                    auditMode={auditMode}
+                  />
+                </CollapsibleAuditReport>
               </>
             )}
 

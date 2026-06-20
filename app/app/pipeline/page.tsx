@@ -183,6 +183,22 @@ export default function PipelinePage(props: NextPageProps) {
     if (stored) setProfile(stored)
   }, [authReady])
 
+  useEffect(() => {
+    if (!authReady) return
+    const raw = sessionStorage.getItem('pendingPipelineAdd')
+    if (!raw) return
+
+    try {
+      const lead = JSON.parse(raw) as WorkspaceLead
+      if (lead.title) setQuickAddName(lead.title)
+      if (lead.url) setQuickAddUrl(lead.url)
+    } catch {
+      // ignore invalid payload
+    } finally {
+      sessionStorage.removeItem('pendingPipelineAdd')
+    }
+  }, [authReady])
+
   const handleSaveProfile = (nextProfile: UserProfile) => {
     setProfile(nextProfile)
     saveStoredProfile(nextProfile)

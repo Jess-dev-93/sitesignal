@@ -29,7 +29,7 @@ export default function TechnologyAdvisor({ performance, stack }: TechnologyAdvi
   ]
 
   return (
-    <Card className="overflow-hidden border-border bg-card">
+    <Card className="overflow-hidden border-violet-500/20 bg-gradient-to-br from-card via-violet-500/[0.04] to-card shadow-lg shadow-violet-500/5">
       <CardContent className="p-5 sm:p-6">
         <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
           <div>

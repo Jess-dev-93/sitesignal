@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { applyProfilePlaceholdersDeep, getProfileFallbacks } from '../lib/templateUtils'
 import { getScoreStyles } from '../lib/scoreColors'
 
@@ -87,6 +89,97 @@ function getModeScores(scores, auditMode = 'mobile') {
 
 function getModeLabel(auditMode = 'mobile') {
   return auditMode === 'desktop' ? 'Desktop' : 'Mobile'
+}
+
+function ReportSection({ title, config, index, content, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen)
+  const sectionConfig = config ?? {
+    icon: '📄',
+    accent: 'border-border bg-secondary/20',
+    iconBg: 'bg-secondary text-secondary-foreground',
+    dot: 'bg-muted-foreground',
+    tagColour: 'border-border bg-secondary/50 text-muted-foreground',
+    tag: 'Section',
+    context: null,
+  }
+
+  const itemCount = Array.isArray(content) ? content.length : content ? 1 : 0
+
+  return (
+    <div className={`overflow-hidden rounded-2xl border ${sectionConfig.accent}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-start justify-between gap-4 p-5 text-left transition hover:bg-secondary/30 sm:p-6"
+        aria-expanded={open}
+      >
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="relative flex-shrink-0">
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg ${sectionConfig.iconBg}`}
+            >
+              {sectionConfig.icon}
+            </div>
+            <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full border border-border bg-card text-[9px] font-bold text-muted-foreground">
+              {index + 1}
+            </span>
+          </div>
+
+          <div className="min-w-0">
+            <h4 className="text-base font-bold tracking-tight text-foreground sm:text-lg">
+              {title}
+            </h4>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              {sectionConfig.tag && (
+                <span
+                  className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${sectionConfig.tagColour}`}
+                >
+                  {sectionConfig.tag}
+                </span>
+              )}
+              <span className="text-[10px] font-medium text-muted-foreground">
+                {itemCount} {itemCount === 1 ? 'item' : 'items'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <ChevronDown
+          className={`mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 ${
+            open ? 'rotate-0' : '-rotate-90'
+          }`}
+          aria-hidden="true"
+        />
+      </button>
+
+      {open && (
+        <div className="border-t border-border/60 px-5 pb-5 sm:px-6 sm:pb-6">
+          {sectionConfig.context && (
+            <p className="mb-4 mt-4 border-l-2 border-border pl-3 text-xs italic leading-relaxed text-muted-foreground">
+              {sectionConfig.context}
+            </p>
+          )}
+
+          {Array.isArray(content) ? (
+            <ul className="space-y-3">
+              {content.map((item, i) => (
+                <li key={i} className="flex items-start gap-3 rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
+                  <span
+                    className={`mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full ${sectionConfig.dot}`}
+                  />
+                  <span className="text-sm leading-relaxed text-secondary-foreground">{item}</span>
+                </li>
+              ))}
+            </ul>
+          ) : typeof content === 'string' ? (
+            <p className="rounded-xl border border-border/50 bg-card/50 px-4 py-3 text-sm leading-relaxed text-secondary-foreground">
+              {content}
+            </p>
+          ) : null}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function buildScoreItems(scores, auditMode = 'mobile') {
@@ -669,6 +762,9 @@ export default function AuditReport({
   profile,
   auditMode = 'mobile',
 }) {
+  const [scoresOpen, setScoresOpen] = useState(true)
+  const [techOpen, setTechOpen] = useState(false)
+
   if (!report) return null
 
   const hydratedReport = applyProfilePlaceholdersDeep(report, profile)
@@ -721,41 +817,41 @@ export default function AuditReport({
   ].filter((s) => s.content)
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="mb-2 inline-flex items-center rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
-            Full Audit Report
+          <div className="mb-2 inline-flex items-center rounded-full border border-border bg-secondary/50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Full audit report
           </div>
-          <h3 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
+          <h3 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
             Client-ready audit findings
           </h3>
 
-          <p className="mt-1 text-sm text-slate-400">
-            Prepared by <span className="font-medium text-white">{profileValues.yourName}</span>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Prepared by <span className="font-medium text-foreground">{profileValues.yourName}</span>
             {profileValues.yourCompany !== 'Your Company' && (
               <>
                 {' '}
-                · <span className="text-slate-300">{profileValues.yourCompany}</span>
+                · <span className="text-secondary-foreground">{profileValues.yourCompany}</span>
               </>
             )}
           </p>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Audit target:{' '}
             <a
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-blue-300 transition hover:text-blue-200"
+              className="font-medium text-blue-400 transition hover:text-blue-300"
             >
               {url}
             </a>
           </p>
 
-          <p className="mt-2 text-xs text-slate-500">
-            Viewing <span className="font-semibold text-slate-300">{modeLabel}</span> score view
-            inside the report. Overall Quick Health remains based on mobile.
+          <p className="mt-2 text-xs text-muted-foreground">
+            Viewing <span className="font-semibold text-secondary-foreground">{modeLabel}</span> score
+            view inside the report. Overall quick health remains based on mobile.
           </p>
         </div>
 
@@ -766,7 +862,7 @@ export default function AuditReport({
                 key={item.label}
                 className={`min-w-[72px] rounded-xl border px-3 py-2 text-center ${getScoreBg(item.value)}`}
               >
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   {item.label}
                 </p>
                 <p className={`mt-1 text-xl font-bold leading-none ${getScoreStyle(item.value)}`}>
@@ -781,10 +877,10 @@ export default function AuditReport({
         )}
       </div>
 
-      <div className="flex flex-col gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-secondary/20 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div>
-          <p className="text-sm font-semibold text-white">Download this report</p>
-          <p className="mt-0.5 text-xs text-slate-400">
+          <p className="text-sm font-semibold text-foreground">Download this report</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
             Save as PDF to send to your client, or export to Excel/CSV for your records.
           </p>
         </div>
@@ -800,7 +896,7 @@ export default function AuditReport({
 
           <button
             onClick={() => exportToExcel(url, scores, hydratedReport, profile, auditMode)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.06] px-4 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/[0.10] active:translate-y-0"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary/60 px-4 py-2.5 text-sm font-semibold text-foreground transition hover:-translate-y-0.5 hover:bg-secondary active:translate-y-0"
           >
             <span aria-hidden="true">📊</span>
             Export to Excel
@@ -808,191 +904,169 @@ export default function AuditReport({
         </div>
       </div>
 
-      <p className="max-w-2xl rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm leading-relaxed text-slate-400">
-        💡 <span className="font-medium text-slate-300">How to use this report:</span> Each
+      <p className="max-w-2xl rounded-xl border border-border bg-secondary/20 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
+        💡 <span className="font-medium text-secondary-foreground">How to use this report:</span> Each
         section below breaks down a different part of the site audit — from the headline
-        findings through to specific issues and a clear action plan. Use this to brief a
-        client, support a proposal, or prioritise your own work.
+        findings through to specific issues and a clear action plan. Tap a section to expand.
       </p>
 
       <div className="grid grid-cols-1 gap-4">
-        {sections.map((section, index) => {
-          const config = SECTION_CONFIG[section.title] ?? {
-            icon: '📄',
-            accent: 'border-white/[0.08] bg-white/[0.03]',
-            iconBg: 'bg-white/[0.07] text-slate-300',
-            dot: 'bg-slate-400',
-            tagColour: 'border-white/10 bg-white/[0.05] text-slate-300',
-            tag: 'Section',
-            context: null,
-          }
-
-          return (
-            <div key={section.title} className={`rounded-2xl border p-5 sm:p-6 ${config.accent}`}>
-              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="relative flex-shrink-0">
-                    <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg ${config.iconBg}`}
-                    >
-                      {config.icon}
-                    </div>
-                    <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full border border-white/10 bg-slate-800 text-[9px] font-bold text-slate-300">
-                      {index + 1}
-                    </span>
-                  </div>
-
-                  <div>
-                    <h4 className="text-base font-bold tracking-tight text-white sm:text-lg">
-                      {section.title}
-                    </h4>
-                    {config.tag && (
-                      <span
-                        className={`mt-0.5 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${config.tagColour}`}
-                      >
-                        {config.tag}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {config.context && (
-                <p className="mb-4 border-l-2 border-white/10 pl-3 text-xs italic leading-relaxed text-slate-500">
-                  {config.context}
-                </p>
-              )}
-
-              <div className="mb-4 h-px w-full bg-white/[0.06]" />
-
-              {Array.isArray(section.content) ? (
-                <ul className="space-y-3">
-                  {section.content.map((item, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <span
-                        className={`mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full ${config.dot}`}
-                      />
-                      <span className="text-sm leading-relaxed text-slate-300">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : typeof section.content === 'string' ? (
-                <p className="text-sm leading-relaxed text-slate-300">{section.content}</p>
-              ) : null}
-            </div>
-          )
-        })}
+        {sections.map((section, index) => (
+          <ReportSection
+            key={section.title}
+            title={section.title}
+            config={SECTION_CONFIG[section.title]}
+            index={index}
+            content={section.content}
+            defaultOpen={index === 0}
+          />
+        ))}
       </div>
 
       {scoreItems.length > 0 && (
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
-          <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div className="overflow-hidden rounded-2xl border border-border bg-secondary/20">
+          <button
+            type="button"
+            onClick={() => setScoresOpen((v) => !v)}
+            className="flex w-full items-center justify-between gap-4 p-5 text-left sm:p-6"
+            aria-expanded={scoresOpen}
+          >
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Score recap
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Score breakdown
               </p>
-              <p className="mt-1 text-xs text-slate-500">
-                {modeLabel} scores — matched to your selected Score view.
+              <p className="mt-1 text-sm font-semibold text-foreground">
+                {modeLabel} Lighthouse scores
               </p>
             </div>
-            <p className="text-[11px] text-slate-600">
-              Source: Google Lighthouse ({modeLabel.toLowerCase()})
-            </p>
-          </div>
+            <ChevronDown
+              className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 ${
+                scoresOpen ? 'rotate-0' : '-rotate-90'
+              }`}
+              aria-hidden="true"
+            />
+          </button>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {scoreItems.map((item) => {
-              const label = getScoreLabel(item.value)
-              return (
-                <div key={item.label} className={`rounded-xl border p-4 ${getScoreBg(item.value)}`}>
-                  <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    {item.label}
-                  </p>
-                  <p className={`text-3xl font-bold leading-none tabular-nums ${getScoreStyle(item.value)}`}>
-                    {item.value}
-                  </p>
-                  <p className={`mt-1 text-[11px] font-semibold ${label.colour}`}>{label.text}</p>
-                  <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
-                    <div
-                      className={`h-1 rounded-full transition-all duration-700 ${getScoreBar(item.value)}`}
-                      style={{ width: `${item.value}%` }}
-                    />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          {scoresOpen && (
+            <div className="border-t border-border px-5 pb-5 sm:px-6 sm:pb-6">
+              <div className="mb-4 flex flex-col gap-1 pt-4 sm:flex-row sm:items-end sm:justify-between">
+                <p className="text-xs text-muted-foreground">
+                  Matched to your selected score view.
+                </p>
+                <p className="text-[11px] text-muted-foreground/70">
+                  Source: Google Lighthouse ({modeLabel.toLowerCase()})
+                </p>
+              </div>
 
-          <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-            <p className="text-[11px] leading-relaxed text-slate-500">
-              <span className="font-semibold text-slate-400">What these scores mean: </span>
-              <span className="font-medium text-emerald-400">70–100</span> is strong.{' '}
-              <span className="font-medium text-amber-400">50–69</span> means noticeable
-              issues that affect user experience and rankings.{' '}
-              <span className="font-medium text-rose-400">0–49</span> is poor — the site is
-              likely losing leads because of it. The recap above reflects your selected{' '}
-              <span className="font-medium text-slate-300">{modeLabel.toLowerCase()}</span> mode,
-              while the overall quick health score remains mobile-based.
-            </p>
-          </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {scoreItems.map((item) => {
+                  const label = getScoreLabel(item.value)
+                  return (
+                    <div key={item.label} className={`rounded-xl border p-4 ${getScoreBg(item.value)}`}>
+                      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        {item.label}
+                      </p>
+                      <p className={`text-3xl font-bold leading-none tabular-nums ${getScoreStyle(item.value)}`}>
+                        {item.value}
+                      </p>
+                      <p className={`mt-1 text-[11px] font-semibold ${label.colour}`}>{label.text}</p>
+                      <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border/60">
+                        <div
+                          className={`h-2 rounded-full transition-all duration-700 ${getScoreBar(item.value)}`}
+                          style={{ width: `${item.value}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              <div className="mt-4 rounded-xl border border-border bg-card/50 px-4 py-3">
+                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                  <span className="font-semibold text-secondary-foreground">What these scores mean: </span>
+                  <span className="font-medium text-emerald-400">70–100</span> is strong.{' '}
+                  <span className="font-medium text-amber-400">50–69</span> means noticeable
+                  issues.{' '}
+                  <span className="font-medium text-rose-400">0–49</span> is poor — likely losing
+                  leads because of it.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       <div
-        className={`rounded-2xl border p-5 sm:p-6 ${
+        className={`overflow-hidden rounded-2xl border ${
           shouldNudgeRebuild
             ? 'border-violet-500/25 bg-violet-500/[0.06]'
-            : 'border-white/[0.08] bg-white/[0.03]'
+            : 'border-border bg-secondary/20'
         }`}
       >
-        <div className="mb-4 flex items-start gap-4">
-          <div
-            className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-lg ${
-              shouldNudgeRebuild ? 'bg-violet-500/10 text-violet-300' : 'bg-white/[0.07] text-slate-300'
-            }`}
-          >
-            🧱
-          </div>
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-              Tech options
-            </p>
-            <h4 className="mt-1 text-base font-bold text-white">
-              Could this site run on better tech?
-            </h4>
-            <p className="mt-1 text-sm leading-relaxed text-slate-400">
-              Depending on budget and urgency, there are usually three sensible paths: improve the existing setup,
-              modernise the platform, or rebuild for maximum performance and long‑term ROI.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-3">
-          {techOptions.map((opt) => (
-            <div key={opt.tier} className="rounded-xl border border-white/[0.08] bg-black/30 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-semibold text-white">{opt.tier}</p>
-                <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${opt.accent}`}>
-                  {opt.badge}
-                </span>
-              </div>
-              <ul className="mt-3 space-y-2">
-                {opt.items.map((t) => (
-                  <li key={t} className="flex items-start gap-2 text-sm text-slate-300">
-                    <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-slate-500" />
-                    <span className="leading-relaxed">{t}</span>
-                  </li>
-                ))}
-              </ul>
+        <button
+          type="button"
+          onClick={() => setTechOpen((v) => !v)}
+          className="flex w-full items-start justify-between gap-4 p-5 text-left sm:p-6"
+          aria-expanded={techOpen}
+        >
+          <div className="flex items-start gap-4">
+            <div
+              className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-lg ${
+                shouldNudgeRebuild ? 'bg-violet-500/10 text-violet-300' : 'bg-secondary text-secondary-foreground'
+              }`}
+            >
+              🧱
             </div>
-          ))}
-        </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Tech options
+              </p>
+              <h4 className="mt-1 text-base font-bold text-foreground">
+                Could this site run on better tech?
+              </h4>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                Three sensible paths: improve the existing setup, modernise, or rebuild.
+              </p>
+            </div>
+          </div>
+          <ChevronDown
+            className={`mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 ${
+              techOpen ? 'rotate-0' : '-rotate-90'
+            }`}
+            aria-hidden="true"
+          />
+        </button>
 
-        {shouldNudgeRebuild && (
-          <p className="mt-4 rounded-xl border border-violet-500/20 bg-violet-500/10 px-4 py-3 text-xs leading-relaxed text-violet-200">
-            This site is scoring poorly on mobile/overall. In these cases, a “fix-it” approach can still help — but a
-            modern rebuild often delivers the fastest, most reliable improvement.
-          </p>
+        {techOpen && (
+          <div className="border-t border-border px-5 pb-5 sm:px-6 sm:pb-6">
+            <div className="grid gap-3 pt-4 md:grid-cols-3">
+              {techOptions.map((opt) => (
+                <div key={opt.tier} className="rounded-xl border border-border bg-card/60 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-semibold text-foreground">{opt.tier}</p>
+                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${opt.accent}`}>
+                      {opt.badge}
+                    </span>
+                  </div>
+                  <ul className="mt-3 space-y-2">
+                    {opt.items.map((t) => (
+                      <li key={t} className="flex items-start gap-2 text-sm text-secondary-foreground">
+                        <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-muted-foreground" />
+                        <span className="leading-relaxed">{t}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            {shouldNudgeRebuild && (
+              <p className="mt-4 rounded-xl border border-violet-500/20 bg-violet-500/10 px-4 py-3 text-xs leading-relaxed text-violet-200">
+                This site is scoring poorly on mobile/overall. A modern rebuild often delivers the
+                fastest, most reliable improvement.
+              </p>
+            )}
+          </div>
         )}
       </div>
 
@@ -1002,13 +1076,11 @@ export default function AuditReport({
             💬
           </div>
           <div>
-            <h4 className="mb-1 text-base font-bold text-white">What happens next?</h4>
-            <p className="text-sm leading-relaxed text-slate-400">
+            <h4 className="mb-1 text-base font-bold text-foreground">What happens next?</h4>
+            <p className="text-sm leading-relaxed text-muted-foreground">
               This report gives you everything you need to start a conversation. The
               issues are real, the impact is commercial, and the fixes are straightforward
-              for an experienced developer. If you'd like to talk through what a project
-              would look like — scope, timeline, and cost — get in touch and we can take
-              it from there.
+              for an experienced developer.
             </p>
           </div>
         </div>
