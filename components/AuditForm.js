@@ -2,10 +2,23 @@
 
 import { useEffect, useMemo, useState } from 'react'
 
-const EXAMPLE_URLS = [
-  'https://examplebusiness.com.au',
-  'https://plumbingwebsite.com.au',
-  'https://dentistsite.com.au',
+const EXAMPLE_SITES = [
+  { label: 'Plumber Website', url: 'https://joesplumbing.com.au' },
+  { label: 'Law Firm Website', url: 'https://smithlegal.com.au' },
+  { label: 'Dental Website', url: 'https://brightsmiledental.com.au' },
+]
+
+const SCAN_MODES = [
+  {
+    id: 'quick',
+    label: 'Quick Scan',
+    description: 'Faster · high-level scores and top issues',
+  },
+  {
+    id: 'full',
+    label: 'Full Audit',
+    description: 'Lighthouse · AI recommendations · outreach-ready insights',
+  },
 ]
 
 function normaliseUrl(value) {
@@ -28,7 +41,13 @@ function isLikelyValidUrl(value) {
   }
 }
 
-export default function AuditForm({ onSubmit, isLoading, initialUrl = '' }) {
+export default function AuditForm({
+  onSubmit,
+  isLoading,
+  initialUrl = '',
+  scanMode = 'full',
+  onScanModeChange,
+}) {
   const [inputValue, setInputValue] = useState(initialUrl || '')
   const [error, setError] = useState('')
 
@@ -58,7 +77,7 @@ export default function AuditForm({ onSubmit, isLoading, initialUrl = '' }) {
 
     setError('')
     setInputValue(finalUrl)
-    onSubmit(finalUrl)
+    onSubmit(finalUrl, scanMode)
   }
 
   const handleBlur = () => {
@@ -77,8 +96,51 @@ export default function AuditForm({ onSubmit, isLoading, initialUrl = '' }) {
     }
   }
 
+  const isQuickScan = scanMode === 'quick'
+
   return (
     <form onSubmit={handleSubmit} className="w-full">
+      <div className="mb-4">
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+          Scan mode
+        </p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {SCAN_MODES.map((mode) => {
+            const selected = scanMode === mode.id
+            return (
+              <button
+                key={mode.id}
+                type="button"
+                disabled={isLoading}
+                onClick={() => onScanModeChange?.(mode.id)}
+                className={`rounded-2xl border p-4 text-left transition disabled:opacity-50 ${
+                  selected
+                    ? 'border-success-border bg-success-muted/40 ring-1 ring-success-border/40'
+                    : 'border-white/[0.10] bg-white/[0.03] hover:border-white/[0.16] hover:bg-white/[0.05]'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                      selected ? 'border-success bg-success/20' : 'border-white/20'
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {selected ? (
+                      <span className="h-2 w-2 rounded-full bg-success" />
+                    ) : null}
+                  </span>
+                  <span className="text-sm font-semibold text-white">{mode.label}</span>
+                </div>
+                <p className="mt-2 pl-6 text-xs leading-relaxed text-slate-400">
+                  {mode.description}
+                </p>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       <div className="mb-2 flex items-center justify-between gap-3">
         <label
           htmlFor="audit-url"
@@ -135,7 +197,7 @@ export default function AuditForm({ onSubmit, isLoading, initialUrl = '' }) {
 
         <button
           type="submit"
-          disabled={isLoading || !inputValue.trim()}
+          disabled={isLoading || !canSubmit}
           className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(37,99,235,0.24)] transition hover:-translate-y-0.5 hover:bg-blue-500 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 lg:w-auto"
         >
           {isLoading ? (
@@ -160,12 +222,12 @@ export default function AuditForm({ onSubmit, isLoading, initialUrl = '' }) {
                   d="M4 12a8 8 0 018-8v8z"
                 />
               </svg>
-              Running full audit...
+              {isQuickScan ? 'Running quick scan…' : 'Running full audit…'}
             </>
           ) : (
             <>
-              <span aria-hidden="true">📊</span>
-              Run Full Audit
+              <span aria-hidden="true">{isQuickScan ? '⚡' : '📊'}</span>
+              {isQuickScan ? 'Run Quick Scan' : 'Run Full Audit'}
             </>
           )}
         </button>
@@ -176,7 +238,9 @@ export default function AuditForm({ onSubmit, isLoading, initialUrl = '' }) {
           <p className="text-xs text-rose-300">{error}</p>
         ) : (
           <p className="text-xs text-slate-500">
-            We’ll check both mobile and desktop performance, then generate an AI report.
+            {isQuickScan
+              ? 'Quick scan checks mobile performance and surfaces the biggest issues fast.'
+              : 'Full audit checks mobile and desktop, then generates outreach-ready AI insights.'}
           </p>
         )}
       </div>
@@ -187,18 +251,18 @@ export default function AuditForm({ onSubmit, isLoading, initialUrl = '' }) {
         </p>
 
         <div className="flex flex-wrap gap-1.5">
-          {EXAMPLE_URLS.map((url) => (
+          {EXAMPLE_SITES.map((site) => (
             <button
-              key={url}
+              key={site.label}
               type="button"
               onClick={() => {
-                setInputValue(url)
+                setInputValue(site.url)
                 setError('')
               }}
               disabled={isLoading}
               className="rounded-full border border-white/[0.10] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-300 transition hover:border-blue-400/30 hover:bg-blue-500/10 hover:text-blue-200 disabled:opacity-40"
             >
-              {url.replace('https://', '')}
+              {site.label}
             </button>
           ))}
         </div>

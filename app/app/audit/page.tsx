@@ -103,6 +103,7 @@ interface WorkspaceLead {
 }
 
 type AuditMode = 'mobile' | 'desktop'
+type ScanMode = 'quick' | 'full'
 
 function normaliseUrl(value: string) {
   const trimmed = value.trim()
@@ -287,6 +288,7 @@ function AuditPageInner() {
   const [auditHistory, setAuditHistory] = useState<HistoryEntry[]>([])
   const [activeView, setActiveView] = useState<'tool' | 'history'>('tool')
   const [auditMode, setAuditMode] = useState<AuditMode>('mobile')
+  const [scanMode, setScanMode] = useState<ScanMode>('full')
   const [isRunning, setIsRunning] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
@@ -400,7 +402,7 @@ function AuditPageInner() {
   }, [])
 
   const handleRunAudit = useCallback(
-    async (url: string) => {
+    async (url: string, mode: ScanMode = scanMode) => {
       if (!sessionUserId || isRunning) return
 
       const normalisedInputUrl = normaliseUrl(url)
@@ -419,7 +421,7 @@ function AuditPageInner() {
             'Content-Type': 'application/json',
             'x-user-id': sessionUserId,
           },
-          body: JSON.stringify({ url: normalisedInputUrl }),
+          body: JSON.stringify({ url: normalisedInputUrl, scanMode: mode }),
         })
 
         const json = await res.json()
@@ -483,7 +485,7 @@ function AuditPageInner() {
         setIsRunning(false)
       }
     },
-    [sessionUserId, isRunning, fetchPlan, saveToHistory, selectedLead]
+    [sessionUserId, isRunning, fetchPlan, saveToHistory, selectedLead, scanMode]
   )
 
   const handleOpenFromHistory = useCallback((entry: HistoryEntry) => {
@@ -594,18 +596,20 @@ function AuditPageInner() {
       <AppHeader
         variant="app"
         eyebrow="Workspace"
-        title="Website Audit"
-        description="Run a PageSpeed + AI analysis"
+        title="Opportunity Discovery"
+        description="Find issues you can turn into client conversations"
       />
 
       <main className="mx-auto w-full max-w-6xl space-y-6 p-4 pb-16 sm:p-6">
-        <Card className="border-border bg-gradient-to-br from-card to-secondary/30">
+        <Card className="border-border bg-gradient-to-br from-card via-card to-success-muted/30">
           <CardContent className="p-4 sm:p-6">
             <h2 className="mb-1 text-lg font-semibold text-foreground sm:text-xl">
-              Audit any website
+              Find opportunities on any website
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Review mobile or desktop results, then continue to outreach when you&apos;re ready.
+            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              Discover real issues you can pitch on — then move straight into outreach and
+              pipeline. This isn&apos;t just an audit tool. It&apos;s your reason to start a
+              conversation.
             </p>
           </CardContent>
         </Card>
@@ -619,8 +623,8 @@ function AuditPageInner() {
                   Audit first, then continue to outreach
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Run the audit below — once it completes, click{' '}
-                  <span className="font-medium text-violet-300">Continue to Outreach →</span> to
+                  Run the scan below — once it completes, click{' '}
+                  <span className="font-medium text-violet-300">Generate Outreach →</span> to
                   prepare your pitch using the real findings.
                 </p>
               </div>
@@ -649,7 +653,7 @@ function AuditPageInner() {
                 : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
             }`}
           >
-            History
+            Recent Audits
             {auditHistory.length > 0 && (
               <span
                 className={`rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
@@ -687,38 +691,127 @@ function AuditPageInner() {
                 </a>
               </div>
             ) : (
-              <div className="overflow-hidden rounded-[28px] border border-white/[0.08] bg-white/[0.035] shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur-sm">
-                <div className="border-b border-white/[0.06] p-6 sm:p-8">
-                  <div className="mb-1 flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-sm text-slate-200">
-                      📊
+              <>
+                <Card className="overflow-hidden border-success-border/40 bg-success-muted/20">
+                  <CardContent className="p-5 sm:p-6">
+                    <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-success">
+                      Example opportunity
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {[
+                        { label: 'Website', value: 'joesplumbing.com.au' },
+                        { label: 'Performance', value: '42', highlight: true },
+                        { label: 'Issue', value: 'Slow mobile experience' },
+                        { label: 'Opportunity', value: 'High', accent: true },
+                        { label: 'Recommended action', value: 'Optimise or rebuild' },
+                      ].map((item) => (
+                        <div
+                          key={item.label}
+                          className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-3"
+                        >
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                            {item.label}
+                          </p>
+                          <p
+                            className={`mt-1 text-sm font-semibold ${
+                              item.accent
+                                ? 'text-success'
+                                : item.highlight
+                                  ? 'text-rose-300'
+                                  : 'text-white'
+                            }`}
+                          >
+                            {item.value}
+                          </p>
+                        </div>
+                      ))}
                     </div>
-                    <h2 className="text-lg font-semibold text-white">Enter a website URL</h2>
+                    <p className="mt-4 text-xs text-slate-400">
+                      Every scan surfaces issues like this — concrete reasons to reach out.
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <div className="overflow-hidden rounded-[28px] border border-white/[0.08] bg-white/[0.035] shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur-sm">
+                  <div className="border-b border-white/[0.06] p-6 sm:p-8">
+                    <div className="mb-1 flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-sm text-slate-200">
+                        🔍
+                      </div>
+                      <h2 className="text-lg font-semibold text-white">
+                        Discover issues you can pitch on
+                      </h2>
+                    </div>
+                    <p className="ml-11 text-sm text-slate-400">
+                      Enter a website URL and choose how deep you want to scan.
+                    </p>
+
+                    {selectedLead?.title && (
+                      <div className="mt-4 ml-11 inline-flex items-center rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs text-slate-300">
+                        From lead finder:
+                        <span className="ml-1 font-semibold text-white">
+                          {selectedLead.title}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <p className="ml-11 text-sm text-slate-400">
-                    We&apos;ll run a full Lighthouse scan + AI recommendations
-                  </p>
 
-                  {selectedLead?.title && (
-                    <div className="mt-4 ml-11 inline-flex items-center rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs text-slate-300">
-                      From lead finder:
-                      <span className="ml-1 font-semibold text-white">
-                        {selectedLead.title}
-                      </span>
+                  <div className="p-6 sm:p-8">
+                    <AuditForm
+                      onSubmit={handleRunAudit}
+                      isLoading={isRunning}
+                      initialUrl={prefilledUrl}
+                      scanMode={scanMode}
+                      onScanModeChange={setScanMode}
+                    />
+                  </div>
+                </div>
+
+                {auditHistory.length > 0 && !auditResult && !isRunning && (
+                  <div className="overflow-hidden rounded-[28px] border border-white/[0.08] bg-white/[0.035] backdrop-blur-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-4 sm:px-6">
+                      <div>
+                        <h3 className="text-sm font-semibold text-white">Recent audits</h3>
+                        <p className="text-xs text-slate-400">
+                          Reopen a previous scan to continue to outreach
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setActiveView('history')}
+                        className="text-xs font-medium text-blue-300 transition hover:text-blue-200"
+                      >
+                        View all →
+                      </button>
                     </div>
-                  )}
-
-                 
-                </div>
-
-                <div className="p-6 sm:p-8">
-                  <AuditForm
-                    onSubmit={handleRunAudit}
-                    isLoading={isRunning}
-                    initialUrl={prefilledUrl}
-                  />
-                </div>
-              </div>
+                    <div className="divide-y divide-white/[0.06]">
+                      {auditHistory.slice(0, 3).map((entry) => (
+                        <button
+                          key={entry.id}
+                          type="button"
+                          onClick={() => handleOpenFromHistory(entry)}
+                          className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-white/[0.03] sm:px-6"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-white">
+                              {entry.url.replace(/^https?:\/\//, '')}
+                            </p>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                              {new Date(entry.savedAt).toLocaleDateString(undefined, {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </p>
+                          </div>
+                          <span className="shrink-0 rounded-full border border-success-border bg-success-muted px-2.5 py-1 text-xs font-semibold text-success">
+                            Score {entry.overallScore}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {errorMsg && !isRunning && (
@@ -746,10 +839,13 @@ function AuditPageInner() {
                     <div className="absolute inset-2 animate-spin rounded-full border-2 border-violet-500/20 border-t-violet-400 [animation-direction:reverse] [animation-duration:1.5s]" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-white">Running audit…</p>
+                    <p className="text-sm font-semibold text-white">
+                      {scanMode === 'quick' ? 'Running quick scan…' : 'Running full audit…'}
+                    </p>
                     <p className="mt-1 text-xs text-slate-400">
-                      Fetching PageSpeed data + generating AI report. This takes 15–30
-                      seconds.
+                      {scanMode === 'quick'
+                        ? 'Checking mobile performance and surfacing top issues. Usually 10–20 seconds.'
+                        : 'Fetching PageSpeed data + generating AI report. This takes 15–30 seconds.'}
                     </p>
                   </div>
                 </div>
@@ -762,7 +858,7 @@ function AuditPageInner() {
                   <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.06] p-6 sm:p-8">
                     <div>
                       <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-400">
-                        ✓ Audit complete
+                        ✓ Opportunity found
                       </p>
                       <h2 className="max-w-[400px] truncate text-lg font-semibold text-white">
                         {auditResult.url.replace(/^https?:\/\//, '')}
@@ -873,62 +969,70 @@ function AuditPageInner() {
                   className={`rounded-[28px] border p-6 shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur-sm sm:p-8 ${
                     arrivedForOutreach
                       ? 'border-violet-500/30 bg-violet-500/[0.06]'
-                      : 'border-white/[0.08] bg-white/[0.035]'
+                      : 'border-success-border/30 bg-success-muted/20'
                   }`}
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-400">
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-success">
                         {arrivedForOutreach
                           ? '✅ Audit complete — ready for outreach'
-                          : 'Next step'}
+                          : 'What do you want to do next?'}
                       </p>
-                      <h3 className="text-xl font-semibold text-white">
-                        Turn this audit into outreach
+                      <h3 className="text-xl font-semibold text-white sm:text-2xl">
+                        Turn this into a client conversation
                       </h3>
-                      <p className="mt-1 max-w-2xl text-sm text-slate-400">
-                        Use these findings to prepare an email, call script, direct message
-                        and follow-up sequence — or jump straight into manual outreach if
-                        you just want a quick custom script.
+                      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+                        You&apos;ve found real issues. Now generate outreach tied to what you
+                        discovered — email, call script, and follow-up in one flow.
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-col gap-3 sm:items-end">
                       <button
                         onClick={handleContinueToOutreach}
                         disabled={!continueToOutreachReady}
-                        className={`inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition disabled:opacity-50 ${
+                        className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-white transition disabled:opacity-50 sm:w-auto ${
                           arrivedForOutreach
                             ? 'bg-violet-600 shadow-[0_8px_24px_rgba(139,92,246,0.35)] hover:bg-violet-500'
-                            : 'bg-blue-600 hover:bg-blue-500'
+                            : 'bg-success shadow-[0_8px_24px_rgba(16,185,129,0.25)] hover:opacity-90'
                         }`}
                       >
-                        Continue to Outreach →
+                        Generate Outreach →
                       </button>
 
                       <button
                         onClick={handleOpenManualOutreach}
-                        className="inline-flex items-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/[0.08]"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/[0.08] sm:w-auto"
                       >
-                        Manual Outreach
+                        Write custom outreach instead
                       </button>
                     </div>
+                  </div>
+
+                  <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-white/[0.06] pt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    <span className="text-success">Audit</span>
+                    <span aria-hidden="true">→</span>
+                    <span className="text-white">Outreach</span>
+                    <span aria-hidden="true">→</span>
+                    <span>Pipeline</span>
                   </div>
                 </div>
               </>
             )}
 
             {!auditResult && !isRunning && !auditLimitReached && !errorMsg && (
-              <div className="py-6 text-center">
-                <p className="text-sm text-slate-500">
-                  Enter a URL above and click{' '}
-                  <span className="font-medium text-slate-400">Audit Website</span> to get
-                  started.
+              <div className="py-8 text-center">
+                <p className="text-base font-medium text-slate-300">
+                  Find a real issue. Generate a real conversation.
+                </p>
+                <p className="mt-2 text-sm text-slate-500">
+                  Start by entering a website URL above.
                 </p>
                 {auditHistory.length > 0 && (
                   <button
                     onClick={() => setActiveView('history')}
-                    className="mt-3 text-sm font-medium text-slate-200 underline underline-offset-4 transition-colors hover:text-white"
+                    className="mt-4 text-sm font-medium text-slate-200 underline underline-offset-4 transition-colors hover:text-white"
                   >
                     Or reopen a previous audit →
                   </button>
@@ -942,9 +1046,9 @@ function AuditPageInner() {
           <div>
             <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">Audit history</h2>
+                <h2 className="text-lg font-semibold text-white">Recent audits</h2>
                 <p className="text-sm text-slate-400">
-                  {auditHistory.length} saved report{auditHistory.length !== 1 ? 's' : ''}
+                  {auditHistory.length} saved opportunit{auditHistory.length !== 1 ? 'ies' : 'y'}
                 </p>
               </div>
               <button

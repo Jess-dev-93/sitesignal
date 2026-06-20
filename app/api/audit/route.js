@@ -15,7 +15,7 @@ function readCategoryScore(categories, key, fallback = 0) {
   return Math.round(raw * 100)
 }
 
-async function getLighthouseScores(url) {
+async function getLighthouseScores(url, { quick = false } = {}) {
   try {
     const apiKey = process.env.PAGESPEED_API_KEY
 
@@ -33,31 +33,15 @@ async function getLighthouseScores(url) {
       url
     )}&strategy=mobile${categories}&key=${apiKey}`
 
-    const desktopUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(
-      url
-    )}&strategy=desktop${categories}&key=${apiKey}`
-
-    const [mobileRes, desktopRes] = await Promise.all([
-      fetch(mobileUrl, { cache: 'no-store' }),
-      fetch(desktopUrl, { cache: 'no-store' }),
-    ])
-
+    const mobileRes = await fetch(mobileUrl, { cache: 'no-store' })
     const mobileData = await mobileRes.json()
-    const desktopData = await desktopRes.json()
 
     if (!mobileRes.ok || mobileData.error) {
       throw new Error(mobileData?.error?.message || 'Mobile PageSpeed request failed')
     }
 
-    if (!desktopRes.ok || desktopData.error) {
-      throw new Error(desktopData?.error?.message || 'Desktop PageSpeed request failed')
-    }
-
     const mobileCategories = mobileData.lighthouseResult?.categories || {}
-    const desktopCategories = desktopData.lighthouseResult?.categories || {}
-
     console.log('📱 Mobile categories:', mobileCategories)
-    console.log('🖥️ Desktop categories:', desktopCategories)
 
     const mobileScores = {
       performance: readCategoryScore(mobileCategories, 'performance', 0),
@@ -66,27 +50,41 @@ async function getLighthouseScores(url) {
       bestPractices: readCategoryScore(mobileCategories, 'best-practices', 0),
     }
 
-    const desktopScores = {
-      performance: readCategoryScore(
-        desktopCategories,
-        'performance',
-        mobileScores.performance
-      ),
-      seo: readCategoryScore(
-        desktopCategories,
-        'seo',
-        mobileScores.seo
-      ),
-      accessibility: readCategoryScore(
-        desktopCategories,
-        'accessibility',
-        mobileScores.accessibility
-      ),
-      bestPractices: readCategoryScore(
-        desktopCategories,
-        'best-practices',
-        mobileScores.bestPractices
-      ),
+    let desktopScores = { ...mobileScores }
+
+    if (!quick) {
+      const desktopUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(
+        url
+      )}&strategy=desktop${categories}&key=${apiKey}`
+
+      const desktopRes = await fetch(desktopUrl, { cache: 'no-store' })
+      const desktopData = await desktopRes.json()
+
+      if (!desktopRes.ok || desktopData.error) {
+        throw new Error(desktopData?.error?.message || 'Desktop PageSpeed request failed')
+      }
+
+      const desktopCategories = desktopData.lighthouseResult?.categories || {}
+      console.log('🖥️ Desktop categories:', desktopCategories)
+
+      desktopScores = {
+        performance: readCategoryScore(
+          desktopCategories,
+          'performance',
+          mobileScores.performance
+        ),
+        seo: readCategoryScore(desktopCategories, 'seo', mobileScores.seo),
+        accessibility: readCategoryScore(
+          desktopCategories,
+          'accessibility',
+          mobileScores.accessibility
+        ),
+        bestPractices: readCategoryScore(
+          desktopCategories,
+          'best-practices',
+          mobileScores.bestPractices
+        ),
+      }
     }
 
     const audits = mobileData.lighthouseResult?.audits || {}
@@ -162,7 +160,7 @@ function generateFallbackReport(url, scores, issuesList) {
   }
 }
 
-async function generateAIReport(url, scores) {
+function buildIssuesList(scores) {
   const issuesList = []
 
   if (scores.mobile.performance < 50) {
@@ -198,6 +196,12 @@ async function generateAIReport(url, scores) {
   if (!scores.details.tapTargetsOk) {
     issuesList.push('Buttons too small for mobile users — causes frustration')
   }
+
+  return issuesList
+}
+
+async function generateAIReport(url, scores) {
+  const issuesList = buildIssuesList(scores)
 
   const prompt = `
 You are a professional web developer writing a website audit report for a potential client.
@@ -305,7 +309,8 @@ Rules:
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { url } = body
+    const { url, scanMode = 'full' } = body
+    const isQuickScan = scanMode === 'quick'
 
     if (!url) {
       return NextResponse.json({ error: 'Please provide a URL' }, { status: 400 })
@@ -349,10 +354,12 @@ export async function POST(request) {
       )
     }
 
-    console.log(`🔍 Starting audit for: ${cleanUrl}`)
+    console.log(`🔍 Starting ${isQuickScan ? 'quick scan' : 'full audit'} for: ${cleanUrl}`)
 
-    const scores = await getLighthouseScores(cleanUrl)
-    const aiReport = await generateAIReport(cleanUrl, scores)
+    const scores = await getLighthouseScores(cleanUrl, { quick: isQuickScan })
+    const aiReport = isQuickScan
+      ? generateFallbackReport(cleanUrl, scores, buildIssuesList(scores))
+      : await generateAIReport(cleanUrl, scores)
 
     if (userId) {
       await incrementUsage(userId, 'audit')
@@ -366,6 +373,7 @@ export async function POST(request) {
       url: cleanUrl,
       scores,
       aiReport,
+      scanMode: isQuickScan ? 'quick' : 'full',
       scannedAt: new Date().toISOString(),
     })
   } catch (error) {
