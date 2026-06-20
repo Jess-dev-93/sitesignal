@@ -37,7 +37,7 @@ export default function ForgotPasswordPage(props: NextPageProps) {
     setMessage('')
     setError('')
     try {
-      const siteUrl = window.location.origin
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
       const redirectTo = `${siteUrl}/auth/callback?next=${encodeURIComponent('/reset-password')}`
 
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {

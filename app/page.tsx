@@ -7,6 +7,8 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowDown, ArrowRight, Check, FileSearch, Search, Send, Sparkles, X } from 'lucide-react'
 import { useSupabaseSession } from '../lib/useSupabaseSession'
+import { passwordRecoveryRedirectTarget } from '../lib/authRecovery'
+import { supabase, supabaseConfigError } from '../lib/supabaseClient'
 import { NextPageProps, useUnwrapNextPageProps } from '../lib/nextPageProps'
 import { BRAND_NAME } from '../lib/brand'
 import { AppHeader } from '../components/app-header'
@@ -108,7 +110,33 @@ export default function HomePage(props: NextPageProps) {
   const { userId: sessionUserId, loading } = useSupabaseSession()
 
   useEffect(() => {
-    if (!loading && sessionUserId) {
+    const recoveryTarget = passwordRecoveryRedirectTarget(
+      window.location.pathname,
+      window.location.hash
+    )
+    if (recoveryTarget) {
+      router.replace(recoveryTarget)
+    }
+  }, [router])
+
+  useEffect(() => {
+    if (supabaseConfigError) return
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        router.replace('/reset-password')
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [router])
+
+  useEffect(() => {
+    if (loading) return
+
+    if (sessionUserId) {
       router.replace('/app')
     }
   }, [loading, router, sessionUserId])

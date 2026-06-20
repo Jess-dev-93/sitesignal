@@ -6,7 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import MarketingShell from '../../components/layout/MarketingShell'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent } from '../../components/ui/card'
-import { supabase } from '../../lib/supabaseClient'
+import { supabase, supabaseConfigError } from '../../lib/supabaseClient'
+import { isPasswordRecoveryHash } from '../../lib/authRecovery'
 import { useSupabaseSession } from '../../lib/useSupabaseSession'
 import { NextPageProps, useUnwrapNextPageProps } from '../../lib/nextPageProps'
 
@@ -22,7 +23,45 @@ function ResetPasswordInner() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [recoveryReady, setRecoveryReady] = useState(false)
   const ready = !checkingSession
+
+  useEffect(() => {
+    if (supabaseConfigError) return
+
+    const hash = window.location.hash
+    if (isPasswordRecoveryHash(hash)) {
+      window.history.replaceState(null, '', `/reset-password${hash}`)
+    }
+
+    const code = searchParams.get('code')
+    if (code) {
+      void supabase.auth.exchangeCodeForSession(code).then(({ error: exchangeError }) => {
+        if (exchangeError) {
+          setError('This reset link is invalid or expired. Please request a new one.')
+          return
+        }
+        setRecoveryReady(true)
+        window.history.replaceState(null, '', '/reset-password')
+      })
+    }
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        setRecoveryReady(Boolean(session))
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [searchParams])
+
+  useEffect(() => {
+    if (sessionUserId) {
+      setRecoveryReady(true)
+    }
+  }, [sessionUserId])
 
   useEffect(() => {
     if (!errorParam) return
@@ -79,7 +118,7 @@ function ResetPasswordInner() {
         <CardContent className="p-5">
           {!ready ? (
             <p className="text-sm text-muted-foreground">Checking reset session…</p>
-          ) : !sessionUserId ? (
+          ) : !recoveryReady ? (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
                 You&apos;re not signed into a reset session yet. Please open the reset link from
