@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowDown, ArrowRight, FileSearch, Search, Send, Sparkles, X } from 'lucide-react'
+import { ArrowDown, ArrowRight, Check, FileSearch, Search, Send, Sparkles, X } from 'lucide-react'
 import { useSupabaseSession } from '../lib/useSupabaseSession'
 import { NextPageProps, useUnwrapNextPageProps } from '../lib/nextPageProps'
 import { BRAND_NAME } from '../lib/brand'
@@ -14,26 +14,32 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import SiteFooter from '../components/site-footer'
 
+const HERO_TRUST = [
+  'Free plan available',
+  'No credit card required',
+  'Built by a working freelancer',
+] as const
+
 const HOW_IT_WORKS = [
   {
     step: 1,
-    title: 'Find businesses ready to hire you',
+    title: 'Find prospects in minutes',
     description:
-      'Search by industry and location to find businesses that already have a reason to need help.',
+      'Search by industry and location — find businesses that already have a reason to need help.',
     icon: Search,
   },
   {
     step: 2,
     title: 'Uncover real issues',
     description:
-      'Find website issues you can use as a reason to start the conversation — not vague guesses.',
+      'Run audits that surface specific website problems you can pitch on — not vague guesses.',
     icon: FileSearch,
   },
   {
     step: 3,
-    title: 'Start evidence-based conversations',
+    title: 'Generate outreach in seconds',
     description:
-      'Generate outreach based on what you found — not generic cold pitching.',
+      'Start evidence-based conversations with emails and scripts tied to what you found.',
     icon: Send,
   },
 ] as const
@@ -67,20 +73,20 @@ const LEAD_JOURNEY = [
 
 const WHY_BENEFITS = [
   {
-    title: 'Find prospects faster',
-    description: 'Discover businesses with real website gaps — not random names on a list.',
+    title: 'Find prospects in minutes',
+    description: '5 free lead searches each month — discover real website gaps fast.',
+  },
+  {
+    title: 'Generate outreach in seconds',
+    description: 'AI-powered emails and scripts tied to actual audit findings.',
   },
   {
     title: 'Pitch with evidence',
-    description: 'Lead with specific issues you can point to, not guesswork.',
+    description: '5 free audits per month — lead with scores and issues, not guesswork.',
   },
   {
-    title: 'Sound professional',
-    description: 'Outreach that references what you actually audited.',
-  },
-  {
-    title: 'Track every follow-up',
-    description: 'Keep calls, emails and pipeline in one place.',
+    title: 'Keep every lead organised',
+    description: 'Track follow-ups, pipeline value and conversations in one place.',
   },
 ] as const
 
@@ -88,7 +94,7 @@ function SectionLabel({ id, children }: { id: string; children: ReactNode }) {
   return (
     <h3
       id={id}
-      className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground"
+      className="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-foreground/55 sm:text-sm sm:tracking-[0.18em]"
     >
       {children}
     </h3>
@@ -124,12 +130,12 @@ export default function HomePage(props: NextPageProps) {
         description="Lead generation + website audits"
       />
 
-      <main className="mx-auto w-full max-w-6xl space-y-14 p-4 pb-12 sm:space-y-16 sm:p-6 sm:pb-16">
+      <main className="mx-auto w-full max-w-6xl space-y-16 p-4 pb-14 sm:space-y-20 sm:p-6 sm:pb-20">
         {/* Hero */}
         <section aria-labelledby="hero-heading">
           <Card className="overflow-hidden border-border bg-gradient-to-br from-card via-card to-violet-500/10 shadow-lg shadow-violet-500/5">
-            <CardContent className="p-8 sm:p-12 md:p-14 lg:px-16 lg:pt-16 lg:pb-12">
-              <div className="mb-6 flex flex-wrap gap-2">
+            <CardContent className="px-8 py-14 sm:px-14 sm:py-16 md:px-16 md:py-20 lg:px-20 lg:py-24">
+              <div className="mb-8 flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-violet-200">
                   <Sparkles className="h-3.5 w-3.5" />
                   Currently in early access
@@ -138,39 +144,52 @@ export default function HomePage(props: NextPageProps) {
 
               <h2
                 id="hero-heading"
-                className="mb-5 max-w-3xl text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl md:text-5xl lg:text-[3.25rem] lg:leading-[1.1]"
+                className="mb-6 max-w-[18ch] text-3xl font-bold leading-[1.08] tracking-tight text-foreground sm:text-4xl md:text-5xl lg:text-[3.5rem]"
               >
                 Find weak websites. Turn them into paying clients.
               </h2>
-              <p className="mb-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                Find local businesses with underperforming websites, uncover issues you can pitch
-                on, and start conversations based on evidence — not cold guessing.
+
+              <p className="mb-6 max-w-xl text-lg font-medium leading-snug text-foreground/90 sm:text-xl">
+                Find businesses with real website issues, prove the value, and start better client
+                conversations.
               </p>
-              <p className="mb-8 max-w-2xl text-sm leading-relaxed text-muted-foreground/90 sm:text-base">
-                Built for freelancers, web designers, developers and small agencies who want a
-                smarter way to find clients.
+
+              <p className="mb-10 max-w-lg text-sm leading-relaxed text-muted-foreground sm:text-base">
+                Built for freelancers, web designers, developers and small agencies.
               </p>
 
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Button asChild className="h-11 gap-2 px-6 text-base">
+                <Button asChild className="h-12 gap-2 px-7 text-base">
                   <Link href="/signup">
                     Start Free
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild variant="secondary" className="h-11 px-6 text-base">
+                <Button asChild variant="secondary" className="h-12 px-7 text-base">
                   <Link href="/signin">Sign in</Link>
                 </Button>
               </div>
+
+              <ul className="mt-8 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
+                {HERO_TRUST.map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-center gap-2 text-xs text-muted-foreground sm:text-sm"
+                  >
+                    <Check className="h-3.5 w-3.5 shrink-0 text-emerald-500/80" aria-hidden="true" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </CardContent>
           </Card>
         </section>
 
-        {/* Screenshot */}
-        <section aria-labelledby="screenshot-heading">
+        {/* Screenshot showcase */}
+        <section aria-labelledby="screenshot-heading" className="pt-2">
           <SectionLabel id="screenshot-heading">See the product</SectionLabel>
           <ProductPreviewMock />
-          <p className="mt-3 text-center text-xs text-muted-foreground sm:text-sm">
+          <p className="mt-6 text-center text-sm text-muted-foreground">
             Lead finder, audit insights and outreach — in one workspace
           </p>
         </section>
@@ -198,61 +217,72 @@ export default function HomePage(props: NextPageProps) {
           </div>
         </section>
 
-        {/* Transformation */}
+        {/* Transformation — prominent */}
         <section aria-labelledby="transformation-heading">
           <SectionLabel id="transformation-heading">The transformation</SectionLabel>
-          <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-stretch">
-            <Card className="border-rose-500/20 bg-rose-500/5">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-rose-300/90">
-                  From
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 pt-0">
-                {FROM_ITEMS.map((item) => (
-                  <div key={item} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                    <X className="mt-0.5 h-4 w-4 shrink-0 text-rose-400/80" aria-hidden="true" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+          <div className="overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-secondary/30 to-card p-6 sm:p-8 md:p-10">
+            <p className="mb-8 text-center text-base font-medium text-foreground sm:text-lg">
+              Less frustration. More clients. A process you can repeat.
+            </p>
+            <div className="grid gap-6 md:grid-cols-[1fr_auto_1fr] md:items-stretch">
+              <Card className="border-rose-500/25 bg-rose-500/[0.07] shadow-sm">
+                <CardHeader className="pb-3 sm:px-8 sm:pt-8">
+                  <CardTitle className="text-base font-bold uppercase tracking-wider text-rose-300 sm:text-lg">
+                    From
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 px-6 pb-8 sm:px-8">
+                  {FROM_ITEMS.map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-start gap-3 text-base text-muted-foreground"
+                    >
+                      <X className="mt-0.5 h-5 w-5 shrink-0 text-rose-400/90" aria-hidden="true" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
 
-            <div className="hidden items-center justify-center md:flex">
-              <ArrowRight className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
-            </div>
-            <div className="flex items-center justify-center py-1 md:hidden">
-              <ArrowDown className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-            </div>
+              <div className="hidden items-center justify-center md:flex">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card">
+                  <ArrowRight className="h-6 w-6 text-foreground/70" aria-hidden="true" />
+                </div>
+              </div>
+              <div className="flex items-center justify-center py-2 md:hidden">
+                <ArrowDown className="h-6 w-6 text-foreground/50" aria-hidden="true" />
+              </div>
 
-            <Card className="border-emerald-500/20 bg-emerald-500/5">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-emerald-300/90">
-                  To
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 pt-0">
-                {TO_ITEMS.map((item) => (
-                  <div key={item} className="flex items-start gap-2.5 text-sm text-foreground">
-                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-emerald-400">
-                      ✓
-                    </span>
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+              <Card className="border-emerald-500/25 bg-emerald-500/[0.07] shadow-sm">
+                <CardHeader className="pb-3 sm:px-8 sm:pt-8">
+                  <CardTitle className="text-base font-bold uppercase tracking-wider text-emerald-300 sm:text-lg">
+                    To
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 px-6 pb-8 sm:px-8">
+                  {TO_ITEMS.map((item) => (
+                    <div key={item} className="flex items-start gap-3 text-base text-foreground">
+                      <Check
+                        className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400"
+                        aria-hidden="true"
+                      />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+            <p className="mt-8 text-center text-sm font-medium text-muted-foreground sm:text-base">
+              People buy transformations — not software.
+            </p>
           </div>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            People buy transformations — not software.
-          </p>
         </section>
 
         {/* Example lead journey */}
         <section aria-labelledby="lead-journey-heading">
           <SectionLabel id="lead-journey-heading">Example lead journey</SectionLabel>
           <Card className="border-border bg-card">
-            <CardHeader className="border-b border-border pb-4">
+            <CardHeader className="border-b border-border pb-4 sm:px-8 sm:py-6">
               <CardTitle className="text-lg font-semibold text-foreground sm:text-xl">
                 From find to pitch — in one workflow
               </CardTitle>
@@ -327,18 +357,17 @@ export default function HomePage(props: NextPageProps) {
         <section aria-labelledby="founder-story-heading">
           <SectionLabel id="founder-story-heading">Founder story</SectionLabel>
           <Card className="overflow-hidden border-border bg-gradient-to-br from-card via-violet-500/5 to-secondary/20">
-            <CardContent className="p-8 sm:p-10 md:p-12">
-              <blockquote className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-xl sm:leading-relaxed">
-                I&apos;m a freelance developer. I built {BRAND_NAME} because I needed it — after
-                years of manually finding prospects, running audits and writing outreach one by
-                one.
+            <CardContent className="p-8 sm:p-10 md:p-12 lg:p-14">
+              <blockquote className="max-w-2xl text-lg leading-relaxed text-foreground sm:text-xl sm:leading-relaxed">
+                I built {BRAND_NAME} because I was doing this work manually every week. Finding
+                prospects, running audits and writing outreach took time. I wanted a faster way to
+                identify opportunities and start better conversations.
               </blockquote>
-              <p className="mt-5 max-w-3xl text-base leading-relaxed text-muted-foreground">
-                I wanted a faster, more structured way to identify opportunities and start better
-                conversations. Not another growth-hack tool — something I&apos;d actually use on
-                real client work.
+              <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground">
+                I&apos;m a freelance developer — not a growth guru. This is the tool I wished I
+                had when chasing client work on my own.
               </p>
-              <p className="mt-6 border-t border-border pt-6 text-base font-semibold text-foreground">
+              <p className="mt-8 border-t border-border pt-6 text-base font-semibold text-foreground">
                 Built for freelancers who do the work, not just talk about it.
               </p>
             </CardContent>
@@ -348,25 +377,25 @@ export default function HomePage(props: NextPageProps) {
         {/* Pricing CTA */}
         <section aria-labelledby="pricing-cta-heading">
           <SectionLabel id="pricing-cta-heading">Get started</SectionLabel>
-          <Card className="border-border bg-gradient-to-br from-card to-primary/5">
-            <CardContent className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-10">
-              <div>
-                <h3 className="text-xl font-semibold text-foreground sm:text-2xl">
-                  Start free. Upgrade when you&apos;re ready.
+          <Card className="overflow-hidden border border-primary/20 bg-gradient-to-br from-card via-primary/5 to-violet-500/10 shadow-lg shadow-primary/5">
+            <CardContent className="flex flex-col items-start gap-6 p-8 sm:flex-row sm:items-center sm:justify-between sm:p-12">
+              <div className="max-w-lg">
+                <h3 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                  Start finding opportunities today.
                 </h3>
-                <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                  Free plan includes lead searches and issue reports to get started. Pro unlocks
-                  unlimited usage, outreach formats and pipeline tracking from $49/month.
+                <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+                  Free plan includes lead searches and issue reports. Upgrade only when you need
+                  more — unlimited audits, outreach formats and pipeline from $49/month.
                 </p>
               </div>
-              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                <Button asChild className="h-11 gap-2 px-6">
+              <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:min-w-[200px]">
+                <Button asChild className="h-12 gap-2 px-7 text-base">
                   <Link href="/signup">
                     Start Free
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild variant="secondary" className="h-11 px-6">
+                <Button asChild variant="secondary" className="h-12 px-7 text-base">
                   <Link href="/pricing">View pricing</Link>
                 </Button>
               </div>
