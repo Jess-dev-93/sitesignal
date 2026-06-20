@@ -16,6 +16,7 @@ import { Card, CardContent } from '../../../components/ui/card'
 import ExampleOpportunityCard from '../../../components/audit/ExampleOpportunityCard'
 import OpportunityFoundPanel from '../../../components/audit/OpportunityFoundPanel'
 import OpportunityScoreCard from '../../../components/audit/OpportunityScoreCard'
+import OpportunityScoreFactors from '../../../components/audit/OpportunityScoreFactors'
 import TechnologyAdvisor from '../../../components/audit/TechnologyAdvisor'
 import WhyThisMatters from '../../../components/audit/WhyThisMatters'
 import WorkflowJourney from '../../../components/audit/WorkflowJourney'
@@ -610,11 +611,11 @@ function AuditPageInner() {
   return (
     <AppPageShell
       title="Find the reason to start the conversation."
-      description="Discover website issues, uncover opportunities, and generate outreach based on real evidence."
+      description="Scan any website, get an opportunity score, and generate outreach from real evidence."
     >
         <PageIntroCard
-          title="Turn website problems into client opportunities."
-          description="Enter a URL, uncover what's holding the site back, and move straight into evidence-based outreach."
+          title="Most freelancers guess."
+          description="SiteSignal finds real website issues you can use to start better conversations."
         />
 
         <WorkflowJourney />
@@ -704,11 +705,11 @@ function AuditPageInner() {
                         🔍
                       </div>
                       <div>
-                        <h2 className="text-xl font-semibold text-foreground sm:text-2xl">
-                          Find opportunities worth contacting businesses about.
+                        <h2 className="text-lg font-semibold text-foreground sm:text-xl">
+                          Paste a website URL
                         </h2>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          Enter a website URL — results in under 30 seconds.
+                          Quick or full scan — results in under 30 seconds.
                         </p>
                       </div>
                     </div>
@@ -830,6 +831,7 @@ function AuditPageInner() {
             {auditResult && !isRunning && opportunityResult && (
               <>
                 <OpportunityScoreCard result={opportunityResult} />
+                <OpportunityScoreFactors scores={auditResult.scores} />
 
                 <OpportunityFoundPanel
                   result={opportunityResult}
