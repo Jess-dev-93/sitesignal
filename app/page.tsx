@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -144,7 +145,7 @@ export default function HomePage(props: NextPageProps) {
 
               <h2
                 id="hero-heading"
-                className="mb-6 max-w-[18ch] text-3xl font-bold leading-[1.08] tracking-tight text-foreground sm:text-4xl md:text-5xl lg:text-[3.5rem]"
+                className="mb-6 max-w-none text-3xl font-bold leading-[1.08] tracking-tight text-foreground sm:text-4xl md:text-[2.65rem] lg:text-[2.85rem] xl:text-5xl xl:whitespace-nowrap"
               >
                 Find weak websites. Turn them into paying clients.
               </h2>
@@ -176,7 +177,7 @@ export default function HomePage(props: NextPageProps) {
                     key={item}
                     className="flex items-center gap-2 text-xs text-muted-foreground sm:text-sm"
                   >
-                    <Check className="h-3.5 w-3.5 shrink-0 text-emerald-500/80" aria-hidden="true" />
+                    <Check className="h-3.5 w-3.5 shrink-0 text-success" aria-hidden="true" />
                     {item}
                   </li>
                 ))}
@@ -191,6 +192,9 @@ export default function HomePage(props: NextPageProps) {
           <ProductPreviewMock />
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Lead finder, audit insights and outreach — in one workspace
+          </p>
+          <p className="mt-3 text-center text-xs text-muted-foreground/75 sm:text-sm">
+            Built using real client outreach workflows
           </p>
         </section>
 
@@ -253,9 +257,9 @@ export default function HomePage(props: NextPageProps) {
                 <ArrowDown className="h-6 w-6 text-foreground/50" aria-hidden="true" />
               </div>
 
-              <Card className="border-emerald-500/25 bg-emerald-500/[0.07] shadow-sm">
+              <Card className="border-success-border bg-success-muted shadow-sm">
                 <CardHeader className="pb-3 sm:px-8 sm:pt-8">
-                  <CardTitle className="text-base font-bold uppercase tracking-wider text-emerald-300 sm:text-lg">
+                  <CardTitle className="text-base font-bold uppercase tracking-wider text-success sm:text-lg">
                     To
                   </CardTitle>
                 </CardHeader>
@@ -263,7 +267,7 @@ export default function HomePage(props: NextPageProps) {
                   {TO_ITEMS.map((item) => (
                     <div key={item} className="flex items-start gap-3 text-base text-foreground">
                       <Check
-                        className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400"
+                        className="mt-0.5 h-5 w-5 shrink-0 text-success"
                         aria-hidden="true"
                       />
                       <span>{item}</span>
@@ -296,7 +300,7 @@ export default function HomePage(props: NextPageProps) {
                   <div
                     key={step.label}
                     className={`flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-start sm:gap-6 sm:px-8 sm:py-5 ${
-                      step.highlight ? 'bg-secondary/20' : ''
+                      step.highlight ? 'border-l-2 border-success bg-success-muted/50 sm:border-l-[3px]' : ''
                     }`}
                   >
                     <div className="flex w-full shrink-0 items-center gap-3 sm:w-44">
@@ -358,18 +362,39 @@ export default function HomePage(props: NextPageProps) {
           <SectionLabel id="founder-story-heading">Founder story</SectionLabel>
           <Card className="overflow-hidden border-border bg-gradient-to-br from-card via-violet-500/5 to-secondary/20">
             <CardContent className="p-8 sm:p-10 md:p-12 lg:p-14">
-              <blockquote className="max-w-2xl text-lg leading-relaxed text-foreground sm:text-xl sm:leading-relaxed">
-                I built {BRAND_NAME} because I was doing this work manually every week. Finding
-                prospects, running audits and writing outreach took time. I wanted a faster way to
-                identify opportunities and start better conversations.
-              </blockquote>
-              <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground">
-                I&apos;m a freelance developer — not a growth guru. This is the tool I wished I
-                had when chasing client work on my own.
-              </p>
-              <p className="mt-8 border-t border-border pt-6 text-base font-semibold text-foreground">
-                Built for freelancers who do the work, not just talk about it.
-              </p>
+              <div className="flex flex-col gap-8 md:flex-row md:items-start md:gap-10 lg:gap-12">
+                <div className="mx-auto shrink-0 md:mx-0">
+                  <div className="relative h-28 w-28 overflow-hidden rounded-full ring-2 ring-border ring-offset-4 ring-offset-card sm:h-32 sm:w-32 md:h-36 md:w-36">
+                    <Image
+                      src="/images/founder.jpg"
+                      alt="Jess, founder of SiteSignal"
+                      fill
+                      className="object-cover object-top grayscale contrast-[1.05]"
+                      sizes="(max-width: 768px) 128px, 144px"
+                    />
+                  </div>
+                  <p className="mt-4 text-center text-sm font-medium text-foreground md:text-left">
+                    Jess
+                  </p>
+                  <p className="text-center text-xs text-muted-foreground md:text-left">
+                    Founder, {BRAND_NAME}
+                  </p>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <blockquote className="text-lg leading-relaxed text-foreground sm:text-xl sm:leading-relaxed">
+                    I built {BRAND_NAME} because I was doing this work manually every week. Finding
+                    prospects, running audits and writing outreach took time. I wanted a faster way to
+                    identify opportunities and start better conversations.
+                  </blockquote>
+                  <p className="mt-6 text-base leading-relaxed text-muted-foreground">
+                    I&apos;m a freelance developer — not a growth guru. This is the tool I wished I
+                    had when chasing client work on my own.
+                  </p>
+                  <p className="mt-8 border-t border-border pt-6 text-base font-semibold text-foreground">
+                    Built for freelancers who do the work, not just talk about it.
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </section>
@@ -377,18 +402,18 @@ export default function HomePage(props: NextPageProps) {
         {/* Pricing CTA */}
         <section aria-labelledby="pricing-cta-heading">
           <SectionLabel id="pricing-cta-heading">Get started</SectionLabel>
-          <Card className="overflow-hidden border border-primary/20 bg-gradient-to-br from-card via-primary/5 to-violet-500/10 shadow-lg shadow-primary/5">
-            <CardContent className="flex flex-col items-start gap-6 p-8 sm:flex-row sm:items-center sm:justify-between sm:p-12">
-              <div className="max-w-lg">
-                <h3 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          <Card className="overflow-hidden border border-primary/25 bg-gradient-to-br from-card via-primary/10 to-success-muted shadow-xl shadow-primary/10 ring-1 ring-success-border/30">
+            <CardContent className="flex flex-col items-start gap-8 p-10 sm:flex-row sm:items-center sm:justify-between sm:p-14 md:p-16">
+              <div className="max-w-xl">
+                <h3 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-[2.75rem] md:leading-[1.12]">
                   Start finding opportunities today.
                 </h3>
-                <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+                <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
                   Free plan includes lead searches and issue reports. Upgrade only when you need
                   more — unlimited audits, outreach formats and pipeline from $49/month.
                 </p>
               </div>
-              <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:min-w-[200px]">
+              <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:min-w-[220px]">
                 <Button asChild className="h-12 gap-2 px-7 text-base">
                   <Link href="/signup">
                     Start Free

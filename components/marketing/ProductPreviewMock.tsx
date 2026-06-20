@@ -23,7 +23,7 @@ export default function ProductPreviewMock() {
       {FLOATING_BADGES.map((badge) => (
         <span
           key={badge.label}
-          className={`absolute z-10 hidden items-center gap-1.5 rounded-full border border-emerald-500/30 bg-[#0b1020]/95 px-3 py-1.5 text-[10px] font-semibold text-emerald-300 shadow-lg shadow-emerald-500/10 backdrop-blur-sm sm:inline-flex ${badge.className}`}
+          className={`absolute z-10 hidden items-center gap-1.5 rounded-full border border-success-border bg-[#0b1020]/95 px-3 py-1.5 text-[10px] font-semibold text-success shadow-lg shadow-success/10 backdrop-blur-sm sm:inline-flex ${badge.className}`}
         >
           <Check className="h-3 w-3 shrink-0" aria-hidden="true" />
           {badge.label}
@@ -38,7 +38,7 @@ export default function ProductPreviewMock() {
         <div className="flex items-center gap-2 border-b border-white/10 bg-[#0f1528] px-4 py-3.5 sm:px-5">
           <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" aria-hidden="true" />
           <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" aria-hidden="true" />
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" aria-hidden="true" />
+          <span className="h-2.5 w-2.5 rounded-full bg-success/80" aria-hidden="true" />
           <span className="mx-auto truncate text-[11px] text-slate-500">
             app.{BRAND_NAME.toLowerCase()}.com.au — Lead Finder
           </span>
@@ -65,7 +65,7 @@ export default function ProductPreviewMock() {
                 </p>
                 <p className="text-base font-semibold text-white sm:text-lg">Plumbers in Sydney</p>
               </div>
-              <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[10px] font-semibold text-emerald-300">
+              <span className="rounded-full border border-success-border bg-success-muted px-3 py-1 text-[10px] font-semibold text-success">
                 12 hot leads
               </span>
             </div>
@@ -112,7 +112,7 @@ export default function ProductPreviewMock() {
         {FLOATING_BADGES.map((badge) => (
           <span
             key={badge.label}
-            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-card px-2.5 py-1 text-[10px] font-semibold text-emerald-400"
+            className="inline-flex items-center gap-1.5 rounded-full border border-success-border bg-card px-2.5 py-1 text-[10px] font-semibold text-success"
           >
             <Check className="h-3 w-3" aria-hidden="true" />
             {badge.label}

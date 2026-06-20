@@ -12,10 +12,10 @@ function SiteSignalLogoLink() {
       href="/"
       className="group inline-flex max-w-full items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-500 to-pink-400 shadow-[0_8px_24px_rgba(139,92,246,0.35)] transition group-hover:shadow-[0_10px_28px_rgba(192,38,211,0.35)]">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-500 to-pink-400 shadow-[0_8px_24px_rgba(139,92,246,0.35)] transition group-hover:shadow-[0_10px_28px_rgba(192,38,211,0.35)]">
         <svg
           viewBox="0 0 24 24"
-          className="h-[22px] w-[22px] text-white"
+          className="h-[26px] w-[26px] text-white"
           fill="none"
           aria-hidden="true"
         >
@@ -28,7 +28,7 @@ function SiteSignalLogoLink() {
           />
         </svg>
       </div>
-      <span className="text-base font-medium tracking-tight text-foreground">{BRAND_NAME}</span>
+      <span className="text-lg font-semibold tracking-tight text-foreground">{BRAND_NAME}</span>
     </Link>
   )
 }
@@ -98,14 +98,17 @@ export default function SiteFooter({ className = '' }: SiteFooterProps) {
       role="contentinfo"
       className={`border-t border-border bg-background ${className}`.trim()}
     >
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-11">
+      <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
         <div
-          className="grid grid-cols-1 gap-8 md:grid-cols-6 md:gap-x-6 md:gap-y-0 lg:gap-x-10"
+          className="grid grid-cols-1 gap-10 md:grid-cols-6 md:gap-x-8 md:gap-y-0 lg:gap-x-12"
           aria-label="Footer"
         >
-          <div className="min-w-0 md:col-span-2 md:pr-4 lg:pr-6">
+          <div className="min-w-0 md:col-span-2 md:pr-4 lg:pr-8">
             <SiteSignalLogoLink />
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-5 max-w-sm text-base font-medium leading-snug text-foreground">
+              Find weak websites. Turn them into paying clients.
+            </p>
+            <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
               Lead generation and website audits built for web developers who want to win better
               client work.
             </p>
@@ -162,7 +165,7 @@ export default function SiteFooter({ className = '' }: SiteFooterProps) {
           </FooterColumn>
         </div>
 
-        <div className="mt-8 w-full border-t border-border pt-5 md:mt-9">
+        <div className="mt-10 w-full border-t border-border pt-6 md:mt-12">
           <div className="flex w-full flex-col items-center justify-between gap-2 text-xs leading-relaxed text-muted-foreground sm:flex-row sm:items-center sm:gap-0 sm:text-sm">
             <p className="w-full text-center sm:w-auto sm:text-left">
               © {year} {BRAND_NAME}. All rights reserved.
