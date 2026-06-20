@@ -27,6 +27,7 @@ import {
   DEFAULT_PROFILE,
 } from '../../../lib/profileStorage'
 import type { UserProfile } from '../../../lib/profileStorage'
+import type { TechStack } from '../../../lib/techStack'
 import { getScoreStyles } from '../../../lib/scoreColors'
 
 interface AuditScores {
@@ -51,6 +52,7 @@ interface AuditRecord {
   url: string
   date: string
   scores: AuditScores
+  techStack?: TechStack
   aiReport: {
     executiveSummary: string
     keyIssues: string[]
@@ -71,6 +73,7 @@ interface HistoryEntry {
   mobilePerformance: number
   desktopPerformance: number
   scores?: AuditScores | null
+  techStack?: TechStack | null
   report: {
     executiveSummary?: string
     keyIssues?: string[]
@@ -114,6 +117,13 @@ interface WorkspaceLead {
 type AuditMode = 'mobile' | 'desktop'
 type ScanMode = 'quick' | 'full'
 
+const FALLBACK_TECH_STACK: TechStack = {
+  cms: 'Unknown CMS',
+  pageBuilder: null,
+  hosting: 'Unknown hosting',
+  confidence: 'low',
+}
+
 function normaliseUrl(value: string) {
   const trimmed = value.trim()
   if (!trimmed) return ''
@@ -134,6 +144,7 @@ function mapAuditRecordToHistoryEntry(record: AuditRecord): HistoryEntry {
     bestPractices: record.scores?.mobile?.bestPractices ?? 0,
     mobilePerformance: record.scores?.mobile?.performance ?? 0,
     desktopPerformance: record.scores?.desktop?.performance ?? 0,
+    techStack: record.techStack ?? null,
     report: record.aiReport ?? null,
     status: 'Saved',
     notes: '',
@@ -161,6 +172,7 @@ function mapHistoryEntryToAuditRecord(entry: HistoryEntry): AuditRecord {
       details: {},
       overallScore: entry.overallScore ?? 0,
     },
+    techStack: entry.techStack ?? undefined,
     aiReport: entry.report
       ? {
           executiveSummary: entry.report.executiveSummary ?? '',
@@ -199,6 +211,7 @@ function mapStoredHistoryToAuditRecord(entry: any): AuditRecord {
         details: entry.scores?.details ?? {},
         overallScore: entry.scores?.overallScore ?? 0,
       },
+      techStack: entry.techStack ?? undefined,
       aiReport: {
         executiveSummary: entry.aiReport?.executiveSummary ?? '',
         keyIssues: entry.aiReport?.keyIssues ?? [],
@@ -240,6 +253,7 @@ function mapStoredHistoryToHistoryEntry(entry: any): HistoryEntry {
       bestPractices: entry.scores?.mobile?.bestPractices ?? 0,
       mobilePerformance: entry.scores?.mobile?.performance ?? 0,
       desktopPerformance: entry.scores?.desktop?.performance ?? 0,
+      techStack: entry.techStack ?? null,
       report: entry.aiReport ?? null,
       status: entry?.status ?? 'Saved',
       notes: entry?.notes ?? '',
@@ -258,6 +272,7 @@ function mapStoredHistoryToHistoryEntry(entry: any): HistoryEntry {
     bestPractices: entry?.bestPractices ?? 0,
     mobilePerformance: entry?.mobilePerformance ?? entry?.performance ?? 0,
     desktopPerformance: entry?.desktopPerformance ?? 0,
+    techStack: entry?.techStack ?? null,
     report: entry?.report ?? null,
     status: entry?.status ?? 'Saved',
     notes: entry?.notes ?? '',
@@ -451,6 +466,7 @@ function AuditPageInner() {
           url: json.url,
           date: json.scannedAt ?? new Date().toISOString(),
           scores: json.scores,
+          techStack: json.techStack,
           aiReport: json.aiReport,
         }
 
@@ -479,6 +495,7 @@ function AuditPageInner() {
           JSON.stringify({
             url: json.url,
             scores: json.scores,
+            techStack: json.techStack,
             aiReport: json.aiReport,
           })
         )
@@ -510,6 +527,7 @@ function AuditPageInner() {
       JSON.stringify({
         url: record.url,
         scores: record.scores,
+        techStack: record.techStack,
         aiReport: record.aiReport,
       })
     )
@@ -534,6 +552,7 @@ function AuditPageInner() {
         JSON.stringify({
           url: auditResult.url,
           scores: auditResult.scores,
+          techStack: auditResult.techStack,
           aiReport: auditResult.aiReport,
         })
       )
@@ -831,7 +850,10 @@ function AuditPageInner() {
             {auditResult && !isRunning && opportunityResult && (
               <>
                 <OpportunityScoreCard result={opportunityResult} />
-                <OpportunityScoreFactors scores={auditResult.scores} />
+                <OpportunityScoreFactors
+                  scores={auditResult.scores}
+                  techStack={auditResult.techStack}
+                />
 
                 <OpportunityFoundPanel
                   result={opportunityResult}
@@ -841,7 +863,10 @@ function AuditPageInner() {
                   arrivedForOutreach={arrivedForOutreach}
                 />
 
-                <TechnologyAdvisor performance={auditResult.scores.mobile.performance} />
+                <TechnologyAdvisor
+                  performance={auditResult.scores.mobile.performance}
+                  stack={auditResult.techStack ?? FALLBACK_TECH_STACK}
+                />
 
                 <div className="overflow-hidden ss-panel-elevated">
                   <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-6 sm:p-8">

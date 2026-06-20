@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react'
+import type { TechStack } from '../../lib/techStack'
 
 type ScoresInput = {
   mobile: {
@@ -32,8 +33,15 @@ const FACTORS = [
   },
   {
     label: 'Technology age',
-    isActive: () => false,
-    comingSoon: true,
+    isActive: (s: ScoresInput) => s.mobile.performance < 65,
+    isDetected: (stack?: TechStack | null) =>
+      Boolean(
+        stack &&
+          (stack.pageBuilder === 'Elementor' ||
+            stack.pageBuilder === 'Divi' ||
+            stack.cms === 'WordPress' ||
+            stack.cms === 'Joomla')
+      ),
   },
   {
     label: 'Business impact',
@@ -46,9 +54,13 @@ const FACTORS = [
 
 type OpportunityScoreFactorsProps = {
   scores?: ScoresInput | null
+  techStack?: TechStack | null
 }
 
-export default function OpportunityScoreFactors({ scores }: OpportunityScoreFactorsProps) {
+export default function OpportunityScoreFactors({
+  scores,
+  techStack,
+}: OpportunityScoreFactorsProps) {
   return (
     <div className="rounded-xl border border-border bg-card/80 px-4 py-4 sm:px-5">
       <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -57,7 +69,11 @@ export default function OpportunityScoreFactors({ scores }: OpportunityScoreFact
       <ul className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
         {FACTORS.map((factor) => {
           const active = scores ? factor.isActive(scores) : true
-          const muted = 'comingSoon' in factor && factor.comingSoon
+          const detected =
+            'isDetected' in factor && factor.isDetected
+              ? factor.isDetected(techStack)
+              : !('comingSoon' in factor && factor.comingSoon)
+          const muted = !detected && !scores
 
           return (
             <li
@@ -81,9 +97,9 @@ export default function OpportunityScoreFactors({ scores }: OpportunityScoreFact
                 aria-hidden="true"
               />
               <span>{factor.label}</span>
-              {muted ? (
+              {!detected && scores ? (
                 <span className="rounded-full border border-border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Soon
+                  N/A
                 </span>
               ) : null}
             </li>

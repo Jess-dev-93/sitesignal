@@ -15,8 +15,42 @@ export default function ExampleOpportunityCard() {
             { label: 'Website', value: 'joesplumbing.com.au' },
             { label: 'Opportunity score', value: '87', accent: true },
             { label: 'Level', value: 'High opportunity', accent: true },
-            { label: 'Issue', value: 'Slow mobile experience' },
-            { label: 'Recommended action', value: 'Optimise or rebuild' },
+          ].map((item) => (
+            <div key={item.label} className="rounded-xl border border-border bg-card/80 p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                {item.label}
+              </p>
+              <p
+                className={`mt-1 text-sm font-semibold ${
+                  item.accent ? 'text-success' : 'text-foreground'
+                }`}
+              >
+                {item.value}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {[
+            { label: 'CMS', value: 'WordPress' },
+            { label: 'Page builder', value: 'Elementor' },
+            { label: 'Hosting', value: 'Shared hosting' },
+          ].map((item) => (
+            <div key={item.label} className="rounded-xl border border-border bg-card/80 p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                {item.label}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-foreground">{item.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {[
+            { label: 'Best option', value: 'Optimise existing site', accent: true },
+            { label: 'Alternative', value: 'Move to Webflow' },
+            { label: 'Performance', value: 'Move to Next.js' },
           ].map((item) => (
             <div key={item.label} className="rounded-xl border border-border bg-card/80 p-3">
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">

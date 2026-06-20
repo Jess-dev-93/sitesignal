@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { GoogleGenAI } from '@google/genai'
 import { getUserIdFromRequest } from '../../../lib/getUserId'
 import { getUserPlan, incrementUsage } from '../../../lib/getUserPlan'
+import { detectTechStackFromUrl } from '../../../lib/detectTechStackServer'
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
@@ -356,7 +357,10 @@ export async function POST(request) {
 
     console.log(`🔍 Starting ${isQuickScan ? 'quick scan' : 'full audit'} for: ${cleanUrl}`)
 
-    const scores = await getLighthouseScores(cleanUrl, { quick: isQuickScan })
+    const [scores, techStack] = await Promise.all([
+      getLighthouseScores(cleanUrl, { quick: isQuickScan }),
+      detectTechStackFromUrl(cleanUrl),
+    ])
     const aiReport = isQuickScan
       ? generateFallbackReport(cleanUrl, scores, buildIssuesList(scores))
       : await generateAIReport(cleanUrl, scores)
@@ -372,6 +376,7 @@ export async function POST(request) {
       success: true,
       url: cleanUrl,
       scores,
+      techStack,
       aiReport,
       scanMode: isQuickScan ? 'quick' : 'full',
       scannedAt: new Date().toISOString(),
