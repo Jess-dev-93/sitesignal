@@ -1,9 +1,10 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, FileSearch, Search, Send, Sparkles } from 'lucide-react'
+import { ArrowDown, ArrowRight, FileSearch, Search, Send, Sparkles, X } from 'lucide-react'
 import { useSupabaseSession } from '../lib/useSupabaseSession'
 import { NextPageProps, useUnwrapNextPageProps } from '../lib/nextPageProps'
 import { BRAND_NAME } from '../lib/brand'
@@ -21,24 +22,63 @@ const HOW_IT_WORKS = [
   },
   {
     step: 2,
-    title: 'Run an audit',
-    description: 'See performance, SEO, accessibility and opportunity.',
+    title: 'Uncover real issues',
+    description:
+      'Find real website issues you can use as a reason to start the conversation.',
     icon: FileSearch,
   },
   {
     step: 3,
     title: 'Send better outreach',
-    description: 'Generate emails, call scripts and follow-ups based on real issues.',
+    description: 'Generate emails, call scripts and follow-ups based on what you found.',
     icon: Send,
+  },
+] as const
+
+const FROM_ITEMS = [
+  'Cold outreach',
+  'Guessing who needs help',
+  'Generic emails',
+  'No process',
+] as const
+
+const TO_ITEMS = [
+  'Targeted prospects',
+  'Evidence-based pitches',
+  'Personalised outreach',
+  'Repeatable client acquisition',
+] as const
+
+const LEAD_JOURNEY = [
+  { label: 'Lead found', value: "Joe's Plumbing Sydney", highlight: false },
+  { label: 'Audit result', value: 'Performance 42', highlight: true },
+  { label: 'Issue found', value: 'Mobile speed slow', highlight: false },
+  { label: 'Recommended action', value: 'Optimise or rebuild', highlight: false },
+  {
+    label: 'Outreach generated',
+    value: '"We noticed your website loads slowly on mobile…"',
+    highlight: true,
+    quote: true,
   },
 ] as const
 
 const WHY_BENEFITS = [
   { title: 'Find prospects faster', description: 'Discover local businesses with real website gaps.' },
-  { title: 'Pitch with evidence', description: 'Lead with audit scores and specific issues, not guesswork.' },
+  { title: 'Pitch with evidence', description: 'Lead with specific issues, not guesswork.' },
   { title: 'Sound professional', description: 'Outreach that references what you actually found.' },
   { title: 'Track every follow-up', description: 'Keep calls, emails and pipeline in one place.' },
 ] as const
+
+function SectionLabel({ id, children }: { id: string; children: React.ReactNode }) {
+  return (
+    <h3
+      id={id}
+      className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground"
+    >
+      {children}
+    </h3>
+  )
+}
 
 export default function HomePage(props: NextPageProps) {
   useUnwrapNextPageProps(props)
@@ -69,61 +109,47 @@ export default function HomePage(props: NextPageProps) {
         description="Lead generation + website audits"
       />
 
-      <main className="mx-auto w-full max-w-6xl space-y-8 p-4 pb-10 sm:space-y-10 sm:p-6">
-        {/* Hero */}
-        <Card className="border-border bg-gradient-to-br from-card to-secondary/30">
-          <CardContent className="p-5 sm:p-8">
-            <div className="mb-4 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-violet-200">
-                <Sparkles className="h-3 w-3" />
-                Currently in early access
-              </span>
-            </div>
+      <main className="mx-auto w-full max-w-6xl space-y-14 p-4 pb-12 sm:space-y-16 sm:p-6 sm:pb-16">
+        {/* Hero — larger, who-it's-for woven in */}
+        <section aria-labelledby="hero-heading">
+          <Card className="overflow-hidden border-border bg-gradient-to-br from-card via-card to-violet-500/10 shadow-lg shadow-violet-500/5">
+            <CardContent className="p-8 sm:p-12 md:p-14 lg:p-16">
+              <div className="mb-6 flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-violet-200">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Currently in early access
+                </span>
+              </div>
 
-            <h2 className="mb-3 text-xl font-semibold leading-snug text-foreground sm:text-2xl md:text-3xl">
-              Find weak websites. Turn them into paying clients.
-            </h2>
-            <p className="mb-6 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              Find local businesses with underperforming websites, run client-ready audits, and
-              generate personalised outreach so you can pitch with confidence.
-            </p>
-
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button asChild size="sm" className="gap-2 sm:h-10 sm:px-5">
-                <Link href="/signup">
-                  Start Free
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="sm"
-                variant="secondary"
-                className="gap-2 sm:h-10 sm:px-5"
+              <h2
+                id="hero-heading"
+                className="mb-5 max-w-3xl text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl md:text-5xl lg:text-[3.25rem] lg:leading-[1.1]"
               >
-                <Link href="/signin">Sign in</Link>
-              </Button>
-            </div>
-
-            <p className="mt-5 text-xs text-muted-foreground sm:text-sm">
-              Built by a freelance web developer for real client outreach.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Who it's for */}
-        <section aria-labelledby="who-its-for-heading">
-          <h3
-            id="who-its-for-heading"
-            className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground"
-          >
-            Who it&apos;s for
-          </h3>
-          <Card className="border-border bg-card">
-            <CardContent className="p-5 sm:p-6">
-              <p className="text-sm leading-relaxed text-foreground sm:text-base">
+                Find weak websites. Turn them into paying clients.
+              </h2>
+              <p className="mb-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+                Find local businesses with underperforming websites, uncover issues you can pitch
+                on, and generate personalised outreach so you can start better conversations.
+              </p>
+              <p className="mb-8 max-w-2xl text-sm leading-relaxed text-muted-foreground/90 sm:text-base">
                 Built for freelancers, web designers, developers and small agencies who want a
                 smarter way to find clients.
+              </p>
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button asChild className="h-11 gap-2 px-6 text-base">
+                  <Link href="/signup">
+                    Start Free
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="secondary" className="h-11 px-6 text-base">
+                  <Link href="/signin">Sign in</Link>
+                </Button>
+              </div>
+
+              <p className="mt-8 text-sm text-muted-foreground">
+                Built by a freelance web developer for real client outreach.
               </p>
             </CardContent>
           </Card>
@@ -131,25 +157,20 @@ export default function HomePage(props: NextPageProps) {
 
         {/* How it works */}
         <section aria-labelledby="how-it-works-heading">
-          <h3
-            id="how-it-works-heading"
-            className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground"
-          >
-            How it works
-          </h3>
+          <SectionLabel id="how-it-works-heading">How it works</SectionLabel>
           <div className="grid gap-4 md:grid-cols-3">
             {HOW_IT_WORKS.map((item) => (
               <Card key={item.step} className="border-border bg-card">
                 <CardContent className="p-5 sm:p-6">
                   <div className="mb-4 flex items-center gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
                       {item.step}
                     </span>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary">
-                      <item.icon className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+                      <item.icon className="h-5 w-5 text-muted-foreground" />
                     </div>
                   </div>
-                  <h4 className="mb-2 text-base font-semibold text-foreground">{item.title}</h4>
+                  <h4 className="mb-2 text-lg font-semibold text-foreground">{item.title}</h4>
                   <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>
                 </CardContent>
               </Card>
@@ -157,64 +178,122 @@ export default function HomePage(props: NextPageProps) {
           </div>
         </section>
 
-        {/* Example audit result */}
-        <Card className="border-border bg-card">
-          <CardHeader className="p-4 pb-3 sm:p-6 sm:pb-4">
-            <CardTitle className="text-base font-semibold text-foreground sm:text-lg">
-              Example audit result
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              See what a prospect looks like before you reach out
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4 p-4 pt-0 sm:p-6">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-xl border border-border bg-secondary/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Performance
-                </p>
-                <p className="mt-2 text-3xl font-bold tabular-nums text-rose-400">42</p>
-              </div>
-              <div className="rounded-xl border border-border bg-secondary/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  SEO
-                </p>
-                <p className="mt-2 text-3xl font-bold tabular-nums text-amber-300">68</p>
-              </div>
-              <div className="rounded-xl border border-border bg-secondary/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Opportunity
-                </p>
-                <p className="mt-2 text-lg font-bold text-emerald-300">High</p>
-              </div>
-              <div className="rounded-xl border border-border bg-secondary/20 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Recommended action
-                </p>
-                <p className="mt-2 text-sm font-semibold leading-snug text-foreground">
-                  Rebuild or optimise
-                </p>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Turn audit results into a clear reason to contact the business.
-            </p>
-          </CardContent>
-        </Card>
+        {/* The transformation */}
+        <section aria-labelledby="transformation-heading">
+          <SectionLabel id="transformation-heading">The transformation</SectionLabel>
+          <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-stretch">
+            <Card className="border-rose-500/20 bg-rose-500/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-rose-300/90">
+                  From
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 pt-0">
+                {FROM_ITEMS.map((item) => (
+                  <div key={item} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                    <X className="mt-0.5 h-4 w-4 shrink-0 text-rose-400/80" aria-hidden="true" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
 
-        {/* Why use it */}
+            <div className="hidden items-center justify-center md:flex">
+              <ArrowRight className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+            </div>
+            <div className="flex items-center justify-center py-1 md:hidden">
+              <ArrowDown className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+            </div>
+
+            <Card className="border-emerald-500/20 bg-emerald-500/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-emerald-300/90">
+                  To
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 pt-0">
+                {TO_ITEMS.map((item) => (
+                  <div key={item} className="flex items-start gap-2.5 text-sm text-foreground">
+                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-emerald-400">
+                      ✓
+                    </span>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            People buy transformations — not software.
+          </p>
+        </section>
+
+        {/* Example lead journey */}
+        <section aria-labelledby="lead-journey-heading">
+          <SectionLabel id="lead-journey-heading">Example lead journey</SectionLabel>
+          <Card className="border-border bg-card">
+            <CardHeader className="border-b border-border pb-4">
+              <CardTitle className="text-lg font-semibold text-foreground sm:text-xl">
+                From find to pitch — in one workflow
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                See the whole journey, not just a score
+              </p>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-border">
+                {LEAD_JOURNEY.map((step, index) => (
+                  <div
+                    key={step.label}
+                    className={`flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-start sm:gap-6 sm:px-8 sm:py-5 ${
+                      step.highlight ? 'bg-secondary/20' : ''
+                    }`}
+                  >
+                    <div className="flex w-full shrink-0 items-center gap-3 sm:w-44">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+                        {index + 1}
+                      </span>
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        {step.label}
+                      </p>
+                    </div>
+                    <p
+                      className={`min-w-0 flex-1 text-sm leading-relaxed sm:text-base ${
+                        'quote' in step && step.quote
+                          ? 'italic text-foreground/90'
+                          : 'font-medium text-foreground'
+                      }`}
+                    >
+                      {step.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2 border-t border-border bg-secondary/10 px-5 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:gap-4 sm:text-sm">
+                <span>Find</span>
+                <span className="text-muted-foreground/50" aria-hidden="true">
+                  →
+                </span>
+                <span>Audit</span>
+                <span className="text-muted-foreground/50" aria-hidden="true">
+                  →
+                </span>
+                <span>Pitch</span>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Benefits */}
         <section aria-labelledby="why-use-heading">
-          <h3
-            id="why-use-heading"
-            className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground"
-          >
-            Why use {BRAND_NAME}
-          </h3>
+          <SectionLabel id="why-use-heading">Why use {BRAND_NAME}</SectionLabel>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {WHY_BENEFITS.map((benefit) => (
               <Card key={benefit.title} className="border-border bg-card">
                 <CardContent className="p-4 sm:p-5">
-                  <h4 className="mb-1.5 text-sm font-semibold text-foreground">{benefit.title}</h4>
+                  <h4 className="mb-1.5 text-sm font-semibold text-foreground sm:text-base">
+                    {benefit.title}
+                  </h4>
                   <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
                     {benefit.description}
                   </p>
@@ -224,29 +303,46 @@ export default function HomePage(props: NextPageProps) {
           </div>
         </section>
 
-        {/* Pricing preview / CTA */}
+        {/* Why I built SiteSignal */}
+        <section aria-labelledby="founder-story-heading">
+          <SectionLabel id="founder-story-heading">Why I built {BRAND_NAME}</SectionLabel>
+          <Card className="border-border bg-gradient-to-br from-card to-secondary/20">
+            <CardContent className="p-6 sm:p-8 md:p-10">
+              <blockquote className="max-w-3xl text-base leading-relaxed text-foreground sm:text-lg sm:leading-relaxed">
+                I built {BRAND_NAME} after spending years manually finding prospects, running
+                audits and writing outreach. I wanted a faster, more structured way to identify
+                opportunities and start better conversations.
+              </blockquote>
+              <p className="mt-4 text-sm text-muted-foreground">
+                — Built for freelancers who do the work, not just talk about it.
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Pricing CTA */}
         <Card className="border-border bg-gradient-to-br from-card to-primary/5">
-          <CardContent className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+          <CardContent className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-10">
             <div>
               <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Simple pricing
               </p>
-              <h3 className="text-lg font-semibold text-foreground sm:text-xl">
+              <h3 className="text-xl font-semibold text-foreground sm:text-2xl">
                 Start free. Upgrade when you&apos;re ready.
               </h3>
               <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                Free plan includes audits and lead searches to get started. Pro unlocks unlimited
-                usage, outreach formats and pipeline tracking from $49/month.
+                Free plan includes lead searches and issue reports to get started. Pro unlocks
+                unlimited usage, outreach formats and pipeline tracking from $49/month.
               </p>
             </div>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-              <Button asChild className="gap-2">
+              <Button asChild className="h-11 gap-2 px-6">
                 <Link href="/signup">
                   Start Free
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="secondary">
+              <Button asChild variant="secondary" className="h-11 px-6">
                 <Link href="/pricing">View pricing</Link>
               </Button>
             </div>
