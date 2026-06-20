@@ -13,6 +13,13 @@ import AuditReport from '../../../components/AuditReport'
 import AuditHistory from '../../../components/AuditHistory'
 import UsageLimitBanner from '../../../components/UsageLimitBanner'
 import { Card, CardContent } from '../../../components/ui/card'
+import ExampleOpportunityCard from '../../../components/audit/ExampleOpportunityCard'
+import OpportunityFoundPanel from '../../../components/audit/OpportunityFoundPanel'
+import OpportunityScoreCard from '../../../components/audit/OpportunityScoreCard'
+import TechnologyAdvisor from '../../../components/audit/TechnologyAdvisor'
+import WhyThisMatters from '../../../components/audit/WhyThisMatters'
+import WorkflowJourney from '../../../components/audit/WorkflowJourney'
+import { computeOpportunityScore, normalizeScores } from '../../../lib/opportunityScore'
 import {
   getStoredProfile,
   saveStoredProfile,
@@ -577,6 +584,14 @@ function AuditPageInner() {
       : auditResult.scores.desktop
   }, [auditResult, auditMode])
 
+  const opportunityResult = useMemo(() => {
+    if (!auditResult?.scores) return null
+    return computeOpportunityScore(
+      auditResult.scores,
+      auditResult.aiReport?.keyIssues ?? []
+    )
+  }, [auditResult])
+
   const arrivedForOutreach = queryNext === 'outreach'
 
   if (!authReady) {
@@ -594,13 +609,15 @@ function AuditPageInner() {
 
   return (
     <AppPageShell
-      title="Opportunity Discovery"
-      description="Find issues you can turn into client conversations"
+      title="Find the reason to start the conversation."
+      description="Discover website issues, uncover opportunities, and generate outreach based on real evidence."
     >
         <PageIntroCard
-          title="Find opportunities on any website"
-          description="Discover real issues you can pitch on — then move straight into outreach and pipeline. This isn't just an audit tool. It's your reason to start a conversation."
+          title="Turn website problems into client opportunities."
+          description="Enter a URL, uncover what's holding the site back, and move straight into evidence-based outreach."
         />
+
+        <WorkflowJourney />
 
         {arrivedForOutreach && !auditResult && !isRunning && (
           <Card className="border-violet-500/30 bg-violet-500/[0.06]">
@@ -680,62 +697,24 @@ function AuditPageInner() {
               </div>
             ) : (
               <>
-                <Card className="overflow-hidden border-success-border/40 bg-success-muted/20">
-                  <CardContent className="p-5 sm:p-6">
-                    <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-success">
-                      Example opportunity
-                    </p>
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {[
-                        { label: 'Website', value: 'joesplumbing.com.au' },
-                        { label: 'Performance', value: '42', highlight: true },
-                        { label: 'Issue', value: 'Slow mobile experience' },
-                        { label: 'Opportunity', value: 'High', accent: true },
-                        { label: 'Recommended action', value: 'Optimise or rebuild' },
-                      ].map((item) => (
-                        <div
-                          key={item.label}
-                          className="rounded-xl border border-border bg-secondary/50 p-3"
-                        >
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                            {item.label}
-                          </p>
-                          <p
-                            className={`mt-1 text-sm font-semibold ${
-                              item.accent
-                                ? 'text-success'
-                                : item.highlight
-                                  ? 'text-rose-300'
-                                  : 'text-foreground'
-                            }`}
-                          >
-                            {item.value}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="mt-4 text-xs text-muted-foreground">
-                      Every scan surfaces issues like this — concrete reasons to reach out.
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <div className="overflow-hidden ss-panel-elevated">
-                  <div className="border-b border-border p-6 sm:p-8">
+                <div className="overflow-hidden border-2 border-violet-500/20 ss-panel-elevated shadow-lg shadow-violet-500/10">
+                  <div className="border-b border-border bg-gradient-to-r from-card to-violet-500/5 p-6 sm:p-8">
                     <div className="mb-1 flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-sm text-slate-200">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/15 text-lg">
                         🔍
                       </div>
-                      <h2 className="text-lg font-semibold text-foreground">
-                        Discover issues you can pitch on
-                      </h2>
+                      <div>
+                        <h2 className="text-xl font-semibold text-foreground sm:text-2xl">
+                          Find opportunities worth contacting businesses about.
+                        </h2>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Enter a website URL — results in under 30 seconds.
+                        </p>
+                      </div>
                     </div>
-                    <p className="ml-11 text-sm text-muted-foreground">
-                      Enter a website URL and choose how deep you want to scan.
-                    </p>
 
                     {selectedLead?.title && (
-                      <div className="mt-4 ml-11 inline-flex items-center rounded-full border border-border bg-secondary/50 px-3 py-1 text-xs text-secondary-foreground">
+                      <div className="mt-4 inline-flex items-center rounded-full border border-border bg-secondary/50 px-3 py-1 text-xs text-secondary-foreground">
                         From lead finder:
                         <span className="ml-1 font-semibold text-foreground">
                           {selectedLead.title}
@@ -754,6 +733,10 @@ function AuditPageInner() {
                     />
                   </div>
                 </div>
+
+                {!auditResult && !isRunning && <ExampleOpportunityCard />}
+
+                {!auditResult && !isRunning && <WhyThisMatters />}
 
                 {auditHistory.length > 0 && !auditResult && !isRunning && (
                   <div className="overflow-hidden rounded-[28px] border border-border bg-card backdrop-blur-sm">
@@ -792,7 +775,11 @@ function AuditPageInner() {
                             </p>
                           </div>
                           <span className="shrink-0 rounded-full border border-success-border bg-success-muted px-2.5 py-1 text-xs font-semibold text-success">
-                            Score {entry.overallScore}
+                            {computeOpportunityScore(
+                              normalizeScores(entry),
+                              entry.report?.keyIssues ?? []
+                            ).score}{' '}
+                            opp.
                           </span>
                         </button>
                       ))}
@@ -840,20 +827,31 @@ function AuditPageInner() {
               </div>
             )}
 
-            {auditResult && !isRunning && (
+            {auditResult && !isRunning && opportunityResult && (
               <>
+                <OpportunityScoreCard result={opportunityResult} />
+
+                <OpportunityFoundPanel
+                  result={opportunityResult}
+                  onGenerateOutreach={handleContinueToOutreach}
+                  onManualOutreach={handleOpenManualOutreach}
+                  outreachReady={continueToOutreachReady}
+                  arrivedForOutreach={arrivedForOutreach}
+                />
+
+                <TechnologyAdvisor performance={auditResult.scores.mobile.performance} />
+
                 <div className="overflow-hidden ss-panel-elevated">
                   <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-6 sm:p-8">
                     <div>
-                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-400">
-                        ✓ Opportunity found
+                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        Full scan details
                       </p>
                       <h2 className="max-w-[400px] truncate text-lg font-semibold text-foreground">
                         {auditResult.url.replace(/^https?:\/\//, '')}
                       </h2>
                       <p className="mt-2 text-xs text-muted-foreground">
-                        Viewing {auditMode} results — Lighthouse scores can vary slightly
-                        between runs and environments.
+                        Technical breakdown — share with clients or use in your pitch deck.
                       </p>
                     </div>
 
@@ -866,7 +864,7 @@ function AuditPageInner() {
                         }}
                         className="rounded-xl border border-border bg-secondary/50 px-4 py-2 text-sm font-medium text-secondary-foreground transition-all hover:bg-secondary hover:text-foreground"
                       >
-                        New audit
+                        New scan
                       </button>
                       <button
                         onClick={() => setActiveView('history')}
@@ -953,79 +951,14 @@ function AuditPageInner() {
                   </div>
                 </div>
 
-                <div
-                  className={`rounded-[28px] border p-6 shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur-sm sm:p-8 ${
-                    arrivedForOutreach
-                      ? 'border-violet-500/30 bg-violet-500/[0.06]'
-                      : 'border-success-border/30 bg-success-muted/20'
-                  }`}
-                >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-success">
-                        {arrivedForOutreach
-                          ? '✅ Audit complete — ready for outreach'
-                          : 'What do you want to do next?'}
-                      </p>
-                      <h3 className="text-xl font-semibold text-foreground sm:text-2xl">
-                        Turn this into a client conversation
-                      </h3>
-                      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                        You&apos;ve found real issues. Now generate outreach tied to what you
-                        discovered — email, call script, and follow-up in one flow.
-                      </p>
-                    </div>
-
-                    <div className="flex flex-col gap-3 sm:items-end">
-                      <button
-                        onClick={handleContinueToOutreach}
-                        disabled={!continueToOutreachReady}
-                        className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-foreground transition disabled:opacity-50 sm:w-auto ${
-                          arrivedForOutreach
-                            ? 'bg-violet-600 shadow-[0_8px_24px_rgba(139,92,246,0.35)] hover:bg-violet-500'
-                            : 'bg-success shadow-[0_8px_24px_rgba(16,185,129,0.25)] hover:opacity-90'
-                        }`}
-                      >
-                        Generate Outreach →
-                      </button>
-
-                      <button
-                        onClick={handleOpenManualOutreach}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-secondary/50 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-secondary sm:w-auto"
-                      >
-                        Write custom outreach instead
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    <span className="text-success">Audit</span>
-                    <span aria-hidden="true">→</span>
-                    <span className="text-foreground">Outreach</span>
-                    <span aria-hidden="true">→</span>
-                    <span>Pipeline</span>
-                  </div>
-                </div>
+                <WorkflowJourney />
               </>
             )}
 
             {!auditResult && !isRunning && !auditLimitReached && !errorMsg && (
-              <div className="py-8 text-center">
-                <p className="text-base font-medium text-secondary-foreground">
-                  Find a real issue. Generate a real conversation.
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Start by entering a website URL above.
-                </p>
-                {auditHistory.length > 0 && (
-                  <button
-                    onClick={() => setActiveView('history')}
-                    className="mt-4 text-sm font-medium text-slate-200 underline underline-offset-4 transition-colors hover:text-foreground"
-                  >
-                    Or reopen a previous audit →
-                  </button>
-                )}
-              </div>
+              <p className="text-center text-xs text-muted-foreground">
+                Tip: paste any business URL above to see their opportunity score in seconds.
+              </p>
             )}
           </div>
         )}

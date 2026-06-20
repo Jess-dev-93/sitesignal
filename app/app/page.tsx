@@ -9,12 +9,13 @@ import { getStoredProfile } from '../../lib/profileStorage'
 import { useSupabaseSession } from '../../lib/useSupabaseSession'
 import AppPageShell from '../../components/layout/AppPageShell'
 import PageIntroCard from '../../components/layout/PageIntroCard'
+import DashboardActivity from '../../components/dashboard/DashboardActivity'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
 
 const quickActions = [
-  { title: 'Find Leads', description: 'Search for weak websites in your market', href: '/app/leads', icon: Users },
-  { title: 'Run Audit', description: 'Analyze a website for opportunities', href: '/app/audit', icon: FileSearch },
+  { title: 'Find Leads', description: 'Search for businesses with real website gaps', href: '/app/leads', icon: Users },
+  { title: 'Find Opportunities', description: 'Turn website issues into client conversations', href: '/app/audit', icon: FileSearch },
   { title: 'Create Outreach', description: 'Generate professional pitch scripts', href: '/app/outreach', icon: Send },
   { title: 'View Pipeline', description: 'Track your deals and prospects', href: '/app/pipeline', icon: GitBranch },
 ]
@@ -85,6 +86,8 @@ export default function DashboardPage(props: NextPageProps) {
           </Link>
         </Button>
       </PageIntroCard>
+
+      <DashboardActivity />
 
       <div>
         <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
