@@ -80,7 +80,7 @@ export default function OutreachTabs({
       className="overflow-hidden rounded-[28px] border border-white/[0.08] bg-white/[0.035] shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur-sm"
     >
       {/* Header */}
-      <div className="relative overflow-hidden border-b border-white/[0.07] bg-white/[0.03] px-6 py-5 sm:px-10">
+      <div className="relative overflow-hidden border-b border-border bg-white/[0.03] px-6 py-5 sm:px-10">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-500/[0.10] blur-3xl"
@@ -165,7 +165,7 @@ export default function OutreachTabs({
                   className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold transition ${
                     activeTab === tab.key
                       ? 'border-blue-500/40 bg-blue-500/10 text-blue-300'
-                      : 'border-white/[0.08] bg-white/[0.03] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200'
+                      : 'border-white/[0.08] bg-white/[0.03] text-slate-400 hover:bg-white/[0.06] hover:text-foreground'
                   }`}
                 >
                   <span>{tab.icon}</span>
@@ -183,7 +183,7 @@ export default function OutreachTabs({
             <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03]">
 
               {/* Tab toolbar */}
-              <div className="flex flex-col gap-3 border-b border-white/[0.07] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{activeTabConfig?.icon}</span>

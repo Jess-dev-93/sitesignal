@@ -203,31 +203,31 @@ export default function AuthForm({
     <>
       <SupabaseConfigNotice />
       {supabaseConfigError ? null : (
-    <section className="rounded-[24px] border border-white/[0.08] bg-white/[0.035] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur-sm">
+    <section className="ss-panel-elevated p-5">
       <div className="mb-4">
-        <div className="mb-2 inline-flex items-center rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
+        <div className="mb-2 inline-flex items-center rounded-full border border-border bg-secondary/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-secondary-foreground">
           Account
         </div>
 
-        <h2 className="text-xl font-bold text-white">
+        <h2 className="text-xl font-bold text-foreground">
           {mode === 'sign-in' ? 'Sign in' : 'Create your account'}
         </h2>
 
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Use a real account so your leads, audits, outreach, and call list belong to you.
         </p>
       </div>
 
       <form onSubmit={handleAuth} className="space-y-4">
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Email
           </label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border border-white/[0.10] bg-slate-950/50 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
+            className="w-full rounded-xl border border-border bg-input px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
             placeholder="you@example.com"
             autoComplete="email"
             name="email"
@@ -236,7 +236,7 @@ export default function AuthForm({
         </div>
 
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Password
           </label>
           <div className="relative">
@@ -244,7 +244,7 @@ export default function AuthForm({
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-white/[0.10] bg-slate-950/50 px-4 py-3 pr-12 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
+              className="w-full rounded-xl border border-border bg-input px-4 py-3 pr-12 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
               placeholder="Minimum 6 characters"
               autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
               name="password"
@@ -253,7 +253,7 @@ export default function AuthForm({
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg border border-white/[0.10] bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08]"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg border border-border bg-secondary/50 px-2.5 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-secondary"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? 'Hide' : 'Show'}
@@ -262,7 +262,7 @@ export default function AuthForm({
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <label className="flex items-center gap-2 text-sm text-slate-300">
+          <label className="flex items-center gap-2 text-sm text-secondary-foreground">
             <input
               type="checkbox"
               checked={rememberEmail}
@@ -279,7 +279,7 @@ export default function AuthForm({
               setError('')
               setMessage('')
             }}
-            className="text-sm font-semibold text-slate-300 transition hover:text-white"
+            className="text-sm font-semibold text-secondary-foreground transition hover:text-foreground"
           >
             Clear
           </button>
@@ -302,7 +302,7 @@ export default function AuthForm({
             type="button"
             onClick={handleResendConfirmation}
             disabled={loading || !email}
-            className="w-full rounded-2xl border border-white/[0.10] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-2xl border border-border bg-secondary/50 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
           >
             Resend confirmation email
           </button>
@@ -345,27 +345,27 @@ export default function AuthForm({
         </button>
 
         {mode === 'sign-in' ? (
-          <div className="space-y-3 text-center text-sm text-slate-400">
+          <div className="space-y-3 text-center text-sm text-muted-foreground">
             <p>
               Forgot your password?{' '}
               <Link
                 href="/forgot-password"
-                className="text-slate-200 transition hover:text-white"
+                className="text-slate-200 transition hover:text-foreground"
               >
                 Reset it
               </Link>
             </p>
             <p>
               Don&apos;t have an account?{' '}
-              <Link href="/signup" className="text-slate-200 transition hover:text-white">
+              <Link href="/signup" className="text-slate-200 transition hover:text-foreground">
                 Create one
               </Link>
             </p>
           </div>
         ) : (
-          <p className="text-center text-sm text-slate-400">
+          <p className="text-center text-sm text-muted-foreground">
             Already have an account?{' '}
-            <Link href="/signin" className="text-slate-200 transition hover:text-white">
+            <Link href="/signin" className="text-slate-200 transition hover:text-foreground">
               Sign in
             </Link>
           </p>

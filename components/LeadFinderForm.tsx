@@ -49,7 +49,7 @@ export default function LeadFinderForm({
   return (
     <div>
       {/* Label — matches "WEBSITE URL" in AuditForm */}
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
         Industry &amp; Location
       </p>
 
@@ -58,7 +58,7 @@ export default function LeadFinderForm({
         <div className="relative flex-1">
           <span
             aria-hidden="true"
-            className="absolute -translate-y-1/2 pointer-events-none left-4 top-1/2 text-slate-400"
+            className="absolute -translate-y-1/2 pointer-events-none left-4 top-1/2 text-muted-foreground"
           >
             🔎
           </span>
@@ -76,7 +76,7 @@ export default function LeadFinderForm({
             placeholder="e.g. plumbers Sydney, dentists Melbourne..."
             disabled={isLoading}
             autoComplete="off"
-            className="w-full rounded-xl border border-white/[0.10] bg-slate-950/50 py-3 pl-11 pr-4 text-sm text-white shadow-sm outline-none transition placeholder:text-slate-500 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 disabled:opacity-50"
+            className="w-full rounded-xl border border-border bg-input py-3 pl-11 pr-4 text-sm text-white shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 disabled:opacity-50"
           />
         </div>
 
@@ -130,7 +130,7 @@ export default function LeadFinderForm({
         ).map((pref) => (
           <label
             key={pref.key}
-            className="flex items-start gap-3 rounded-xl border border-white/[0.10] bg-white/[0.03] px-4 py-3 text-left text-sm text-slate-300 transition hover:bg-white/[0.05]"
+            className="flex items-start gap-3 rounded-xl border border-border bg-secondary/30 px-4 py-3 text-left text-sm text-secondary-foreground transition hover:bg-secondary/40"
           >
             <input
               type="checkbox"
@@ -143,7 +143,7 @@ export default function LeadFinderForm({
             />
             <span className="min-w-0">
               <span className="block font-semibold text-white">{pref.label}</span>
-              <span className="mt-0.5 block text-xs text-slate-400">{pref.help}</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">{pref.help}</span>
             </span>
           </label>
         ))}
@@ -151,7 +151,7 @@ export default function LeadFinderForm({
 
       {/* Try a search — properly left aligned, matches "TRY AN EXAMPLE" */}
       <div className="mt-3">
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           Try a search
         </p>
         <div className="flex flex-wrap gap-1.5">
@@ -160,7 +160,7 @@ export default function LeadFinderForm({
               key={s}
               onClick={() => setQuery(s)}
               disabled={isLoading}
-              className="rounded-full border border-white/[0.10] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-300 transition hover:border-blue-400/30 hover:bg-blue-500/10 hover:text-blue-200 disabled:opacity-40"
+              className="rounded-full border border-border bg-secondary/50 px-3 py-1 text-xs font-medium text-secondary-foreground transition hover:border-blue-400/30 hover:bg-blue-500/10 hover:text-blue-200 disabled:opacity-40"
             >
               {s}
             </button>

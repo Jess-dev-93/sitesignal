@@ -1,6 +1,5 @@
 'use client'
 
-import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect } from 'react'
@@ -16,6 +15,8 @@ import ProductPreviewMock from '../components/marketing/ProductPreviewMock'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import SiteFooter from '../components/site-footer'
+import PageBackground from '../components/layout/PageBackground'
+import SectionLabel from '../components/layout/SectionLabel'
 
 const HERO_TRUST = [
   'Free plan available',
@@ -93,17 +94,6 @@ const WHY_BENEFITS = [
   },
 ] as const
 
-function SectionLabel({ id, children }: { id: string; children: ReactNode }) {
-  return (
-    <h3
-      id={id}
-      className="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-foreground/55 sm:text-sm sm:tracking-[0.18em]"
-    >
-      {children}
-    </h3>
-  )
-}
-
 export default function HomePage(props: NextPageProps) {
   useUnwrapNextPageProps(props)
   const router = useRouter()
@@ -146,12 +136,8 @@ export default function HomePage(props: NextPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-48 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-violet-500/10 blur-3xl" />
-        <div className="absolute bottom-0 left-[-160px] h-[520px] w-[520px] rounded-full bg-fuchsia-500/10 blur-3xl" />
-        <div className="absolute top-[35%] right-[-200px] h-[520px] w-[520px] rounded-full bg-indigo-500/10 blur-3xl" />
-      </div>
+    <div className="relative min-h-screen bg-background text-foreground">
+      <PageBackground />
 
       <AppHeader
         variant="marketing"
@@ -159,7 +145,7 @@ export default function HomePage(props: NextPageProps) {
         description="Lead generation + website audits"
       />
 
-      <main className="mx-auto w-full max-w-6xl space-y-16 p-4 pb-14 sm:space-y-20 sm:p-6 sm:pb-20">
+      <main className="ss-marketing-main-wide">
         {/* Hero */}
         <section aria-labelledby="hero-heading">
           <Card className="overflow-hidden border-border bg-gradient-to-br from-card via-card to-violet-500/10 shadow-lg shadow-violet-500/5">

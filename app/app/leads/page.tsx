@@ -9,7 +9,8 @@ import ProfileModal from '../../../components/profile/ProfileModal'
 import OnboardingModal from '../../../components/OnboardingModal'
 import UsageLimitBanner from '../../../components/UsageLimitBanner'
 import LeadFinderWorkspace from '../../../components/LeadFinderWorkspace'
-import { AppHeader } from '../../../components/app-header'
+import AppPageShell from '../../../components/layout/AppPageShell'
+import PageIntroCard from '../../../components/layout/PageIntroCard'
 import { Card, CardContent } from '../../../components/ui/card'
 import {
   DEFAULT_PROFILE,
@@ -172,31 +173,17 @@ export default function LeadsPage(props: NextPageProps) {
   // ── Page ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <AppHeader
-        variant="app"
-        eyebrow="Workspace"
-        title="Leads"
-        description="Find weak websites in your market"
-      />
-
-      <main className="mx-auto w-full max-w-6xl space-y-6 p-4 pb-16 sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground sm:text-xl">
-              Lead Finder
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Search by industry and location — surface the best opportunities, then audit and pitch.
-            </p>
-          </div>
-
-          <div className="self-start sm:self-center">
-            <UsageLimitBanner userId={sessionUserId} refreshKey={usageBannerKey} compact />
-          </div>
+    <AppPageShell title="Leads" description="Find weak websites in your market">
+      <PageIntroCard
+        title="Lead Finder"
+        description="Search by industry and location — surface the best opportunities, then audit and pitch."
+      >
+        <div className="mt-4">
+          <UsageLimitBanner userId={sessionUserId} refreshKey={usageBannerKey} compact />
         </div>
+      </PageIntroCard>
 
-        <Card className="border-border bg-card">
+      <Card className="border-border bg-card">
           <CardContent className="p-4 sm:p-6">
             <LeadFinderWorkspace
               userId={sessionUserId}
@@ -204,9 +191,8 @@ export default function LeadsPage(props: NextPageProps) {
               onStartAuditedOutreach={handleStartAuditedOutreach}
               onOpenManualOutreach={handleOpenManualOutreach}
             />
-          </CardContent>
-        </Card>
-      </main>
+        </CardContent>
+      </Card>
 
       <ProfileModal
         open={showProfileModal}
@@ -219,6 +205,6 @@ export default function LeadsPage(props: NextPageProps) {
       {showOnboarding && (
         <OnboardingModal onComplete={handleOnboardingComplete} />
       )}
-    </div>
+    </AppPageShell>
   )
 }

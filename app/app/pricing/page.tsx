@@ -2,7 +2,8 @@
 
 import { NextPageProps, useUnwrapNextPageProps } from '../../../lib/nextPageProps'
 import { useSupabaseSession } from '../../../lib/useSupabaseSession'
-import { AppHeader } from '../../../components/app-header'
+import AppPageShell from '../../../components/layout/AppPageShell'
+import PageIntroCard from '../../../components/layout/PageIntroCard'
 import PricingContent from '../../../components/pricing/PricingContent'
 
 export default function AppPricingPage(props: NextPageProps) {
@@ -10,19 +11,12 @@ export default function AppPricingPage(props: NextPageProps) {
   const { userId: sessionUserId } = useSupabaseSession()
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <AppHeader
-        variant="app"
-        eyebrow="Workspace"
-        title="Pricing"
-        description="Upgrade your plan or compare features"
+    <AppPageShell title="Pricing" description="Upgrade your plan or compare features">
+      <PageIntroCard
+        title="Plans for every stage"
+        description="Start free, then upgrade when you need unlimited audits, outreach, and pipeline tools."
       />
-
-      <main className="flex-1 px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mx-auto w-full max-w-6xl">
-          <PricingContent sessionUserId={sessionUserId} variant="app" />
-        </div>
-      </main>
-    </div>
+      <PricingContent sessionUserId={sessionUserId} variant="app" />
+    </AppPageShell>
   )
 }

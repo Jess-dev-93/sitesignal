@@ -101,7 +101,7 @@ export default function AuditForm({
   return (
     <form onSubmit={handleSubmit} className="w-full">
       <div className="mb-4">
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           Scan mode
         </p>
         <div className="grid gap-2 sm:grid-cols-2">
@@ -116,7 +116,7 @@ export default function AuditForm({
                 className={`rounded-2xl border p-4 text-left transition disabled:opacity-50 ${
                   selected
                     ? 'border-success-border bg-success-muted/40 ring-1 ring-success-border/40'
-                    : 'border-white/[0.10] bg-white/[0.03] hover:border-white/[0.16] hover:bg-white/[0.05]'
+                    : 'border-border bg-secondary/30 hover:border-white/[0.16] hover:bg-secondary/40'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -130,9 +130,9 @@ export default function AuditForm({
                       <span className="h-2 w-2 rounded-full bg-success" />
                     ) : null}
                   </span>
-                  <span className="text-sm font-semibold text-white">{mode.label}</span>
+                  <span className="text-sm font-semibold text-foreground">{mode.label}</span>
                 </div>
-                <p className="mt-2 pl-6 text-xs leading-relaxed text-slate-400">
+                <p className="mt-2 pl-6 text-xs leading-relaxed text-muted-foreground">
                   {mode.description}
                 </p>
               </button>
@@ -144,7 +144,7 @@ export default function AuditForm({
       <div className="mb-2 flex items-center justify-between gap-3">
         <label
           htmlFor="audit-url"
-          className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400"
+          className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
         >
           Website URL
         </label>
@@ -156,7 +156,7 @@ export default function AuditForm({
               setInputValue('')
               setError('')
             }}
-            className="text-xs font-medium text-slate-500 transition hover:text-slate-300"
+            className="text-xs font-medium text-muted-foreground transition hover:text-secondary-foreground"
           >
             Clear
           </button>
@@ -167,7 +167,7 @@ export default function AuditForm({
         <div className="relative flex-1">
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
           >
             🌐
           </span>
@@ -187,10 +187,10 @@ export default function AuditForm({
             onBlur={handleBlur}
             placeholder="Enter a website URL, e.g. business.com.au"
             disabled={isLoading}
-            className={`w-full rounded-2xl border bg-slate-950/50 py-3.5 pl-12 pr-4 text-sm text-white shadow-sm outline-none transition placeholder:text-slate-500 focus:ring-4 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base ${
+            className={`w-full rounded-2xl border bg-input py-3.5 pl-12 pr-4 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:ring-4 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base ${
               error
                 ? 'border-rose-400/40 focus:border-rose-400 focus:ring-rose-500/10'
-                : 'border-white/[0.10] focus:border-blue-400 focus:ring-blue-500/10'
+                : 'border-border focus:border-blue-400 focus:ring-blue-500/10'
             }`}
           />
         </div>
@@ -237,7 +237,7 @@ export default function AuditForm({
         {error ? (
           <p className="text-xs text-rose-300">{error}</p>
         ) : (
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             {isQuickScan
               ? 'Quick scan checks mobile performance and surfaces the biggest issues fast.'
               : 'Full audit checks mobile and desktop, then generates outreach-ready AI insights.'}
@@ -246,7 +246,7 @@ export default function AuditForm({
       </div>
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:flex-shrink-0">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:flex-shrink-0">
           Try an example
         </p>
 
@@ -260,7 +260,7 @@ export default function AuditForm({
                 setError('')
               }}
               disabled={isLoading}
-              className="rounded-full border border-white/[0.10] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-300 transition hover:border-blue-400/30 hover:bg-blue-500/10 hover:text-blue-200 disabled:opacity-40"
+              className="rounded-full border border-border bg-secondary/50 px-3 py-1 text-xs font-medium text-secondary-foreground transition hover:border-blue-400/30 hover:bg-blue-500/10 hover:text-blue-200 disabled:opacity-40"
             >
               {site.label}
             </button>

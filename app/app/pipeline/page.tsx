@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabaseClient'
 import { useSupabaseSession } from '../../../lib/useSupabaseSession'
 import { NextPageProps, useUnwrapNextPageProps } from '../../../lib/nextPageProps'
+import AppPageShell from '../../../components/layout/AppPageShell'
+import PageIntroCard from '../../../components/layout/PageIntroCard'
 import ProfileModal from '../../../components/profile/ProfileModal'
 import CallListPanel from '../../../components/CallListPanel'
-import { AppHeader } from '../../../components/app-header'
 import { Card, CardContent } from '../../../components/ui/card'
 import {
   getStoredProfile,
@@ -134,7 +135,7 @@ function StatPill({
       <span className="text-base">{icon}</span>
       <div>
         <p className={`text-xl font-bold ${color}`}>{count}</p>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
           {label}
         </p>
       </div>
@@ -430,25 +431,11 @@ export default function PipelinePage(props: NextPageProps) {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <AppHeader
-        variant="app"
-        eyebrow="Workspace"
-        title="Pipeline"
-        description="Manage your call queue and follow-ups"
+    <AppPageShell title="Pipeline" description="Manage your call queue and follow-ups">
+      <PageIntroCard
+        title="Call queue"
+        description="Manage your leads, track call outcomes, and schedule follow-ups."
       />
-
-      <main className="mx-auto w-full max-w-6xl space-y-6 p-4 pb-16 sm:p-6">
-        <Card className="border-border bg-gradient-to-br from-card to-secondary/30">
-          <CardContent className="p-4 sm:p-6">
-            <h2 className="mb-1 text-lg font-semibold text-foreground sm:text-xl">
-              Call queue
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Manage your leads, track call outcomes, and schedule follow-ups.
-            </p>
-          </CardContent>
-        </Card>
 
         <div className="space-y-8">
 
@@ -512,7 +499,7 @@ export default function PipelinePage(props: NextPageProps) {
                 <p className="text-sm font-semibold text-orange-200">
                   {followUpDue} follow-up{followUpDue !== 1 ? 's' : ''} due today
                 </p>
-                <p className="mt-0.5 text-xs text-slate-400">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   Review the leads below and update their status after you call.
                 </p>
               </div>
@@ -722,7 +709,6 @@ export default function PipelinePage(props: NextPageProps) {
           onClose={() => setShowProfileModal(false)}
           onSave={handleSaveProfile}
         />
-      </main>
-    </div>
+    </AppPageShell>
   )
 }

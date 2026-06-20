@@ -97,7 +97,7 @@ export default function UsageLimitBanner({
           ? 'border-rose-500/30 bg-rose-500/[0.06]'
           : anyLimitReached
             ? 'border-amber-500/30 bg-amber-500/[0.06]'
-            : 'border-white/[0.08] bg-white/[0.035]'
+            : 'border-border bg-card'
       }`}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -121,7 +121,7 @@ export default function UsageLimitBanner({
             </p>
           </div>
 
-          <p className="mb-4 text-xs leading-relaxed text-slate-400">
+          <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
             {bothLimitsReached
               ? 'Upgrade to Pro for unlimited audits and lead searches — no limits, ever.'
               : anyLimitReached
@@ -135,17 +135,17 @@ export default function UsageLimitBanner({
             {/* Audit bar */}
             <div>
               <div className="mb-1.5 flex items-center justify-between">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Website Audits
                 </span>
                 <span className={`text-[11px] font-bold ${
-                  usage.auditLimitReached ? 'text-rose-400' : 'text-slate-300'
+                  usage.auditLimitReached ? 'text-rose-400' : 'text-secondary-foreground'
                 }`}>
                   {usage.auditCount} / {usage.auditLimit}
                   {usage.auditLimitReached && ' — Limit reached'}
                 </span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
                 <div
                   className={`h-2 rounded-full transition-all duration-700 ${
                     usage.auditLimitReached
@@ -162,17 +162,17 @@ export default function UsageLimitBanner({
             {/* Search bar */}
             <div>
               <div className="mb-1.5 flex items-center justify-between">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Lead Searches
                 </span>
                 <span className={`text-[11px] font-bold ${
-                  usage.searchLimitReached ? 'text-rose-400' : 'text-slate-300'
+                  usage.searchLimitReached ? 'text-rose-400' : 'text-secondary-foreground'
                 }`}>
                   {usage.searchCount} / {usage.searchLimit}
                   {usage.searchLimitReached && ' — Limit reached'}
                 </span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
                 <div
                   className={`h-2 rounded-full transition-all duration-700 ${
                     usage.searchLimitReached

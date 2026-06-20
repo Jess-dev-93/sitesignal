@@ -9,7 +9,7 @@ const MAX_HISTORY_ITEMS = 50
 const STATUS_OPTIONS = ['Saved', 'Outreach Sent', 'Follow Up', 'Meeting Booked', 'Won', 'Lost']
 
 const STATUS_STYLES = {
-  Saved: 'bg-slate-500/10 text-slate-300 border-slate-500/20',
+  Saved: 'bg-slate-500/10 text-secondary-foreground border-slate-500/20',
   'Outreach Sent': 'bg-blue-500/10 text-blue-300 border-blue-500/20',
   'Follow Up': 'bg-amber-500/10 text-amber-300 border-amber-500/20',
   'Meeting Booked': 'bg-purple-500/10 text-purple-300 border-purple-500/20',
@@ -1048,30 +1048,30 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
     <section
       id="audit-history-section"
       aria-labelledby="history-heading"
-      className="overflow-hidden rounded-[28px] border border-white/[0.08] bg-white/[0.035] shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur-sm"
+      className="overflow-hidden ss-panel-elevated"
     >
-      <div className="relative overflow-hidden border-b border-white/[0.07] bg-white/[0.03] px-5 py-5 sm:px-8 sm:py-6 md:px-10">
+      <div className="relative overflow-hidden border-b border-white/[0.07] bg-secondary/30 px-5 py-5 sm:px-8 sm:py-6 md:px-10">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-purple-500/[0.10] blur-3xl"
         />
         <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-start gap-4">
-            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-white/[0.10] bg-white/[0.07] text-xl shadow-sm">
+            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-border bg-secondary text-xl shadow-sm">
               🗂️
             </div>
             <div>
-              <div className="mb-2 inline-flex items-center rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
+              <div className="mb-2 inline-flex items-center rounded-full border border-border bg-secondary/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-secondary-foreground">
                 Audit History
               </div>
               <h2
                 id="history-heading"
-                className="text-xl font-bold tracking-tight text-white sm:text-2xl md:text-3xl"
+                className="text-xl font-bold tracking-tight text-foreground sm:text-2xl md:text-3xl"
               >
                 Your saved audit reports
               </h2>
               {!collapsed && (
-                <p className="mt-1 max-w-lg text-sm leading-relaxed text-slate-400">
+                <p className="mt-1 max-w-lg text-sm leading-relaxed text-muted-foreground">
                   Every audit you run is saved here. Download, track status, add notes, and
                   reopen any report.
                 </p>
@@ -1080,8 +1080,8 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
           </div>
 
           <div className="flex flex-shrink-0 flex-wrap items-center gap-2">
-            <span className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-300">
-              <span className="font-bold text-white">{history.length}</span> saved
+            <span className="rounded-2xl border border-border bg-secondary/40 px-4 py-2 text-sm text-secondary-foreground">
+              <span className="font-bold text-foreground">{history.length}</span> saved
             </span>
 
             {!collapsed && (
@@ -1096,7 +1096,7 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
 
                 <button
                   onClick={() => exportAllCSV(history)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.06] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/[0.10] active:translate-y-0"
+                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary px-4 py-2 text-sm font-semibold text-foreground transition hover:-translate-y-0.5 hover:bg-white/[0.10] active:translate-y-0"
                 >
                   <span aria-hidden="true">📊</span>
                   All Reports CSV
@@ -1107,7 +1107,7 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
             <button
               onClick={() => setCollapsed((prev) => !prev)}
               aria-label={collapsed ? 'Expand audit history' : 'Collapse audit history'}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.06] px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.10]"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:bg-white/[0.10]"
             >
               {collapsed ? (
                 <>
@@ -1129,7 +1129,7 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
         <div className="px-5 py-5 sm:px-8 sm:py-6 md:px-10 md:py-6">
           <div className="mb-5">
             <div className="relative">
-              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
                 🔎
               </span>
               <input
@@ -1137,15 +1137,15 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by URL..."
-                className="w-full rounded-xl border border-white/[0.10] bg-slate-950/50 py-3 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
+                className="w-full rounded-xl border border-border bg-input py-3 pl-11 pr-4 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
               />
             </div>
           </div>
 
           {filtered.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-8 text-center">
-              <p className="text-sm font-medium text-white">No audits match your search.</p>
-              <p className="mt-1 text-sm text-slate-500">
+            <div className="rounded-2xl border border-dashed border-border bg-white/[0.02] px-4 py-8 text-center">
+              <p className="text-sm font-medium text-foreground">No audits match your search.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
                 Try a different domain or clear the search.
               </p>
             </div>
@@ -1161,7 +1161,7 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
                   <article
                     key={entry.id}
                     role="listitem"
-                    className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] transition-all duration-200 hover:border-white/[0.12] hover:bg-white/[0.04]"
+                    className="overflow-hidden rounded-2xl border border-border bg-secondary/30 transition-all duration-200 hover:border-white/[0.12] hover:bg-secondary/50"
                   >
                     <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
                       <div className="min-w-0 flex-1">
@@ -1171,12 +1171,12 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
                           >
                             {entry.status}
                           </span>
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs text-muted-foreground">
                             {formatDate(entry.savedAt)}
                           </span>
                         </div>
 
-                        <p className="truncate text-sm font-semibold text-white sm:text-base">
+                        <p className="truncate text-sm font-semibold text-foreground sm:text-base">
                           {entry.url || 'Untitled audit'}
                         </p>
 
@@ -1200,7 +1200,7 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
                         <div
                           className={`min-w-[64px] rounded-xl border px-3 py-2 text-center ${getScoreBg(entry.overallScore)}`}
                         >
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                             Overall
                           </p>
                           <p
@@ -1219,9 +1219,9 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
                           ].map(({ l, v }) => (
                             <div
                               key={l}
-                              className="rounded-lg border border-white/[0.07] bg-white/[0.03] px-2 py-1 text-center"
+                              className="rounded-lg border border-white/[0.07] bg-secondary/30 px-2 py-1 text-center"
                             >
-                              <p className="text-[10px] text-slate-500">{l}</p>
+                              <p className="text-[10px] text-muted-foreground">{l}</p>
                               <p className={`text-sm font-bold ${getScoreColour(v)}`}>{v}</p>
                             </div>
                           ))}
@@ -1257,7 +1257,7 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
 
                         <button
                           onClick={() => setExpanded(isOpen ? null : entry.id)}
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.10] bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-300 transition hover:bg-white/[0.08]"
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-secondary/50 px-3 py-2 text-xs font-semibold text-secondary-foreground transition hover:bg-secondary"
                         >
                           {isOpen ? '▲ Less' : '▼ More'}
                         </button>
@@ -1276,13 +1276,13 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
                       <div className="border-t border-white/[0.07] bg-white/[0.02] px-4 py-4 sm:px-5">
                         <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
                           <div>
-                            <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                            <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                               Status
                             </label>
                             <select
                               value={entry.status}
                               onChange={(e) => updateEntry(entry.id, { status: e.target.value })}
-                              className="w-full rounded-xl border border-white/[0.10] bg-slate-950/60 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10"
+                              className="w-full rounded-xl border border-border bg-slate-950/60 px-3 py-2.5 text-sm text-foreground outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10"
                             >
                               {STATUS_OPTIONS.map((s) => (
                                 <option key={s} value={s}>
@@ -1293,7 +1293,7 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
                           </div>
 
                           <div>
-                            <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                            <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                               Notes
                             </label>
                             <textarea
@@ -1301,7 +1301,7 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
                               onChange={(e) => updateEntry(entry.id, { notes: e.target.value })}
                               placeholder="Add notes about this audit..."
                               rows={3}
-                              className="w-full resize-y rounded-xl border border-white/[0.10] bg-slate-950/60 px-3 py-2.5 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10"
+                              className="w-full resize-y rounded-xl border border-border bg-slate-950/60 px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10"
                             />
                           </div>
                         </div>
@@ -1317,7 +1317,7 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
                               key={l}
                               className={`rounded-xl border p-3 text-center ${getScoreBg(v)}`}
                             >
-                              <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">
+                              <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                                 {l}
                               </p>
                               <p className={`mt-1 text-lg font-bold ${getScoreColour(v)}`}>
@@ -1328,9 +1328,9 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
                         </div>
 
                         <div className="mt-4 flex flex-col gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3 sm:flex-row sm:items-center sm:justify-between">
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-muted-foreground">
                             📁{' '}
-                            <span className="font-medium text-slate-300">
+                            <span className="font-medium text-secondary-foreground">
                               Download this report
                             </span>{' '}
                             — PDF to send to the client, Excel for your records.
@@ -1345,7 +1345,7 @@ export default function AuditHistory({ onReopen, refreshKey = 0 }) {
                             </button>
                             <button
                               onClick={() => exportEntryToExcel(entry)}
-                              className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.10] bg-white/[0.06] px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.10]"
+                              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-secondary px-4 py-2 text-xs font-semibold text-foreground transition hover:bg-white/[0.10]"
                             >
                               <span aria-hidden="true">📊</span>
                               Export Excel

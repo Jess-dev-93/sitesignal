@@ -5,12 +5,13 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabaseClient'
 import { useSupabaseSession } from '../../../lib/useSupabaseSession'
 import { NextPageProps, useUnwrapNextPageProps } from '../../../lib/nextPageProps'
+import AppPageShell from '../../../components/layout/AppPageShell'
+import PageIntroCard from '../../../components/layout/PageIntroCard'
 import ProfileModal from '../../../components/profile/ProfileModal'
 import AuditForm from '../../../components/AuditForm'
 import AuditReport from '../../../components/AuditReport'
 import AuditHistory from '../../../components/AuditHistory'
 import UsageLimitBanner from '../../../components/UsageLimitBanner'
-import { AppHeader } from '../../../components/app-header'
 import { Card, CardContent } from '../../../components/ui/card'
 import {
   getStoredProfile,
@@ -592,27 +593,14 @@ function AuditPageInner() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <AppHeader
-        variant="app"
-        eyebrow="Workspace"
-        title="Opportunity Discovery"
-        description="Find issues you can turn into client conversations"
-      />
-
-      <main className="mx-auto w-full max-w-6xl space-y-6 p-4 pb-16 sm:p-6">
-        <Card className="border-border bg-gradient-to-br from-card via-card to-success-muted/30">
-          <CardContent className="p-4 sm:p-6">
-            <h2 className="mb-1 text-lg font-semibold text-foreground sm:text-xl">
-              Find opportunities on any website
-            </h2>
-            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Discover real issues you can pitch on — then move straight into outreach and
-              pipeline. This isn&apos;t just an audit tool. It&apos;s your reason to start a
-              conversation.
-            </p>
-          </CardContent>
-        </Card>
+    <AppPageShell
+      title="Opportunity Discovery"
+      description="Find issues you can turn into client conversations"
+    >
+        <PageIntroCard
+          title="Find opportunities on any website"
+          description="Discover real issues you can pitch on — then move straight into outreach and pipeline. This isn't just an audit tool. It's your reason to start a conversation."
+        />
 
         {arrivedForOutreach && !auditResult && !isRunning && (
           <Card className="border-violet-500/30 bg-violet-500/[0.06]">
@@ -673,10 +661,10 @@ function AuditPageInner() {
             {auditLimitReached ? (
               <div className="rounded-[28px] border border-amber-500/30 bg-amber-500/[0.06] p-8 text-center backdrop-blur-sm">
                 <div className="mb-4 text-4xl">🔒</div>
-                <h2 className="mb-2 text-xl font-semibold text-white">
+                <h2 className="mb-2 text-xl font-semibold text-foreground">
                   Monthly audit limit reached
                 </h2>
-                <p className="mx-auto mb-6 max-w-sm text-sm text-slate-400">
+                <p className="mx-auto mb-6 max-w-sm text-sm text-muted-foreground">
                   You&apos;ve used all{' '}
                   <span className="font-semibold text-amber-400">
                     {planInfo?.auditLimit} audit{planInfo?.auditLimit === 1 ? '' : 's'}
@@ -707,9 +695,9 @@ function AuditPageInner() {
                       ].map((item) => (
                         <div
                           key={item.label}
-                          className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-3"
+                          className="rounded-xl border border-border bg-secondary/50 p-3"
                         >
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                             {item.label}
                           </p>
                           <p
@@ -718,7 +706,7 @@ function AuditPageInner() {
                                 ? 'text-success'
                                 : item.highlight
                                   ? 'text-rose-300'
-                                  : 'text-white'
+                                  : 'text-foreground'
                             }`}
                           >
                             {item.value}
@@ -726,30 +714,30 @@ function AuditPageInner() {
                         </div>
                       ))}
                     </div>
-                    <p className="mt-4 text-xs text-slate-400">
+                    <p className="mt-4 text-xs text-muted-foreground">
                       Every scan surfaces issues like this — concrete reasons to reach out.
                     </p>
                   </CardContent>
                 </Card>
 
-                <div className="overflow-hidden rounded-[28px] border border-white/[0.08] bg-white/[0.035] shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur-sm">
-                  <div className="border-b border-white/[0.06] p-6 sm:p-8">
+                <div className="overflow-hidden ss-panel-elevated">
+                  <div className="border-b border-border p-6 sm:p-8">
                     <div className="mb-1 flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-sm text-slate-200">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-sm text-slate-200">
                         🔍
                       </div>
-                      <h2 className="text-lg font-semibold text-white">
+                      <h2 className="text-lg font-semibold text-foreground">
                         Discover issues you can pitch on
                       </h2>
                     </div>
-                    <p className="ml-11 text-sm text-slate-400">
+                    <p className="ml-11 text-sm text-muted-foreground">
                       Enter a website URL and choose how deep you want to scan.
                     </p>
 
                     {selectedLead?.title && (
-                      <div className="mt-4 ml-11 inline-flex items-center rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs text-slate-300">
+                      <div className="mt-4 ml-11 inline-flex items-center rounded-full border border-border bg-secondary/50 px-3 py-1 text-xs text-secondary-foreground">
                         From lead finder:
-                        <span className="ml-1 font-semibold text-white">
+                        <span className="ml-1 font-semibold text-foreground">
                           {selectedLead.title}
                         </span>
                       </div>
@@ -768,11 +756,11 @@ function AuditPageInner() {
                 </div>
 
                 {auditHistory.length > 0 && !auditResult && !isRunning && (
-                  <div className="overflow-hidden rounded-[28px] border border-white/[0.08] bg-white/[0.035] backdrop-blur-sm">
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-4 sm:px-6">
+                  <div className="overflow-hidden rounded-[28px] border border-border bg-card backdrop-blur-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4 sm:px-6">
                       <div>
-                        <h3 className="text-sm font-semibold text-white">Recent audits</h3>
-                        <p className="text-xs text-slate-400">
+                        <h3 className="text-sm font-semibold text-foreground">Recent audits</h3>
+                        <p className="text-xs text-muted-foreground">
                           Reopen a previous scan to continue to outreach
                         </p>
                       </div>
@@ -789,13 +777,13 @@ function AuditPageInner() {
                           key={entry.id}
                           type="button"
                           onClick={() => handleOpenFromHistory(entry)}
-                          className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-white/[0.03] sm:px-6"
+                          className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-secondary/30 sm:px-6"
                         >
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-white">
+                            <p className="truncate text-sm font-medium text-foreground">
                               {entry.url.replace(/^https?:\/\//, '')}
                             </p>
-                            <p className="mt-0.5 text-xs text-slate-500">
+                            <p className="mt-0.5 text-xs text-muted-foreground">
                               {new Date(entry.savedAt).toLocaleDateString(undefined, {
                                 day: 'numeric',
                                 month: 'short',
@@ -822,7 +810,7 @@ function AuditPageInner() {
                   {errorMsg.includes('limit') && (
                     <a
                       href="/app/pricing"
-                      className="mt-1 inline-block text-xs text-slate-300 underline underline-offset-2 hover:text-white"
+                      className="mt-1 inline-block text-xs text-secondary-foreground underline underline-offset-2 hover:text-foreground"
                     >
                       View upgrade options →
                     </a>
@@ -839,10 +827,10 @@ function AuditPageInner() {
                     <div className="absolute inset-2 animate-spin rounded-full border-2 border-violet-500/20 border-t-violet-400 [animation-direction:reverse] [animation-duration:1.5s]" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-white">
+                    <p className="text-sm font-semibold text-foreground">
                       {scanMode === 'quick' ? 'Running quick scan…' : 'Running full audit…'}
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       {scanMode === 'quick'
                         ? 'Checking mobile performance and surfacing top issues. Usually 10–20 seconds.'
                         : 'Fetching PageSpeed data + generating AI report. This takes 15–30 seconds.'}
@@ -854,16 +842,16 @@ function AuditPageInner() {
 
             {auditResult && !isRunning && (
               <>
-                <div className="overflow-hidden rounded-[28px] border border-white/[0.08] bg-white/[0.035] shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.06] p-6 sm:p-8">
+                <div className="overflow-hidden ss-panel-elevated">
+                  <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-6 sm:p-8">
                     <div>
                       <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-400">
                         ✓ Opportunity found
                       </p>
-                      <h2 className="max-w-[400px] truncate text-lg font-semibold text-white">
+                      <h2 className="max-w-[400px] truncate text-lg font-semibold text-foreground">
                         {auditResult.url.replace(/^https?:\/\//, '')}
                       </h2>
-                      <p className="mt-2 text-xs text-slate-500">
+                      <p className="mt-2 text-xs text-muted-foreground">
                         Viewing {auditMode} results — Lighthouse scores can vary slightly
                         between runs and environments.
                       </p>
@@ -876,7 +864,7 @@ function AuditPageInner() {
                           setErrorMsg(null)
                           setContinueToOutreachReady(false)
                         }}
-                        className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:bg-white/[0.07] hover:text-white"
+                        className="rounded-xl border border-border bg-secondary/50 px-4 py-2 text-sm font-medium text-secondary-foreground transition-all hover:bg-secondary hover:text-foreground"
                       >
                         New audit
                       </button>
@@ -890,26 +878,26 @@ function AuditPageInner() {
                   </div>
 
                   {activeScores && (
-                    <div className="border-b border-white/[0.06] px-6 py-5 sm:px-8">
+                    <div className="border-b border-border px-6 py-5 sm:px-8">
                       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
                         <div>
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                             Score view
                           </p>
-                          <p className="mt-1 text-sm text-slate-300">
+                          <p className="mt-1 text-sm text-secondary-foreground">
                             Both mobile and desktop are included in every audit. Switch
                             views below.
                           </p>
                         </div>
 
-                        <div className="inline-flex rounded-xl border border-white/[0.08] bg-white/[0.03] p-1">
+                        <div className="inline-flex rounded-xl border border-border bg-secondary/30 p-1">
                           <button
                             type="button"
                             onClick={() => setAuditMode('mobile')}
                             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
                               auditMode === 'mobile'
                                 ? 'bg-blue-600 text-white'
-                                : 'text-slate-400 hover:text-slate-200'
+                                : 'text-muted-foreground hover:text-slate-200'
                             }`}
                           >
                             Mobile
@@ -920,7 +908,7 @@ function AuditPageInner() {
                             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
                               auditMode === 'desktop'
                                 ? 'bg-blue-600 text-white'
-                                : 'text-slate-400 hover:text-slate-200'
+                                : 'text-muted-foreground hover:text-slate-200'
                             }`}
                           >
                             Desktop
@@ -941,7 +929,7 @@ function AuditPageInner() {
                               key={item.label}
                               className={`rounded-2xl border p-4 ${styles.panel}`}
                             >
-                              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                                 {item.label}
                               </p>
                               <p className={`mt-2 text-3xl font-bold ${styles.text}`}>
@@ -979,10 +967,10 @@ function AuditPageInner() {
                           ? '✅ Audit complete — ready for outreach'
                           : 'What do you want to do next?'}
                       </p>
-                      <h3 className="text-xl font-semibold text-white sm:text-2xl">
+                      <h3 className="text-xl font-semibold text-foreground sm:text-2xl">
                         Turn this into a client conversation
                       </h3>
-                      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+                      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                         You&apos;ve found real issues. Now generate outreach tied to what you
                         discovered — email, call script, and follow-up in one flow.
                       </p>
@@ -992,7 +980,7 @@ function AuditPageInner() {
                       <button
                         onClick={handleContinueToOutreach}
                         disabled={!continueToOutreachReady}
-                        className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-white transition disabled:opacity-50 sm:w-auto ${
+                        className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-foreground transition disabled:opacity-50 sm:w-auto ${
                           arrivedForOutreach
                             ? 'bg-violet-600 shadow-[0_8px_24px_rgba(139,92,246,0.35)] hover:bg-violet-500'
                             : 'bg-success shadow-[0_8px_24px_rgba(16,185,129,0.25)] hover:opacity-90'
@@ -1003,17 +991,17 @@ function AuditPageInner() {
 
                       <button
                         onClick={handleOpenManualOutreach}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/[0.08] sm:w-auto"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-secondary/50 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-secondary sm:w-auto"
                       >
                         Write custom outreach instead
                       </button>
                     </div>
                   </div>
 
-                  <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-white/[0.06] pt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     <span className="text-success">Audit</span>
                     <span aria-hidden="true">→</span>
-                    <span className="text-white">Outreach</span>
+                    <span className="text-foreground">Outreach</span>
                     <span aria-hidden="true">→</span>
                     <span>Pipeline</span>
                   </div>
@@ -1023,16 +1011,16 @@ function AuditPageInner() {
 
             {!auditResult && !isRunning && !auditLimitReached && !errorMsg && (
               <div className="py-8 text-center">
-                <p className="text-base font-medium text-slate-300">
+                <p className="text-base font-medium text-secondary-foreground">
                   Find a real issue. Generate a real conversation.
                 </p>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-muted-foreground">
                   Start by entering a website URL above.
                 </p>
                 {auditHistory.length > 0 && (
                   <button
                     onClick={() => setActiveView('history')}
-                    className="mt-4 text-sm font-medium text-slate-200 underline underline-offset-4 transition-colors hover:text-white"
+                    className="mt-4 text-sm font-medium text-slate-200 underline underline-offset-4 transition-colors hover:text-foreground"
                   >
                     Or reopen a previous audit →
                   </button>
@@ -1046,8 +1034,8 @@ function AuditPageInner() {
           <div>
             <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">Recent audits</h2>
-                <p className="text-sm text-slate-400">
+                <h2 className="text-lg font-semibold text-foreground">Recent audits</h2>
+                <p className="text-sm text-muted-foreground">
                   {auditHistory.length} saved opportunit{auditHistory.length !== 1 ? 'ies' : 'y'}
                 </p>
               </div>
@@ -1062,10 +1050,10 @@ function AuditPageInner() {
             <AuditHistory onReopen={handleOpenFromHistory} />
 
             {auditHistory.length === 0 && (
-              <div className="rounded-[28px] border border-white/[0.08] bg-white/[0.035] p-16 text-center backdrop-blur-sm">
+              <div className="rounded-[28px] border border-border bg-card p-16 text-center backdrop-blur-sm">
                 <div className="mb-4 text-5xl opacity-40">📂</div>
-                <h3 className="mb-2 font-semibold text-white">No audits saved yet</h3>
-                <p className="mx-auto mb-6 max-w-xs text-sm text-slate-400">
+                <h3 className="mb-2 font-semibold text-foreground">No audits saved yet</h3>
+                <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground">
                   Run your first audit and it will appear here automatically.
                 </p>
                 <button
@@ -1078,8 +1066,6 @@ function AuditPageInner() {
             )}
           </div>
         )}
-      </main>
-
       <ProfileModal
         open={showProfileModal}
         initialProfile={profile}
@@ -1087,6 +1073,6 @@ function AuditPageInner() {
         onClose={() => setShowProfileModal(false)}
         onSave={handleSaveProfile}
       />
-    </div>
+      </AppPageShell>
   )
 }

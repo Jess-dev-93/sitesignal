@@ -65,7 +65,7 @@ function getTempClasses(temp?: string) {
   const t = (temp || '').toLowerCase()
   if (t === 'hot') return 'border-red-400/20 bg-red-500/10 text-red-200'
   if (t === 'warm') return 'border-amber-400/20 bg-amber-500/10 text-amber-200'
-  return 'border-white/[0.10] bg-white/[0.05] text-slate-300'
+  return 'border-border bg-secondary/40 text-secondary-foreground'
 }
 
 function getQueueStatusLabel(status: string) {
@@ -164,7 +164,7 @@ export default function CallListPanel({
                           {(lead.lead_temperature || 'new').toUpperCase()}
                         </span>
 
-                        <span className="rounded-full border border-white/[0.10] bg-white/[0.05] px-2.5 py-1 text-xs text-slate-300">
+                        <span className="rounded-full border border-border bg-secondary/40 px-2.5 py-1 text-xs text-secondary-foreground">
                           {getQueueStatusLabel(item.status)}
                         </span>
 
@@ -175,7 +175,7 @@ export default function CallListPanel({
                         )}
 
                         {lead.location && (
-                          <span className="rounded-full border border-white/[0.10] bg-white/[0.05] px-2.5 py-1 text-xs text-slate-300">
+                          <span className="rounded-full border border-border bg-secondary/40 px-2.5 py-1 text-xs text-secondary-foreground">
                             {lead.location}
                           </span>
                         )}
@@ -194,11 +194,11 @@ export default function CallListPanel({
                         {lead.website_url}
                       </a>
 
-                      <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
-                        <span className="rounded-full bg-white/[0.05] px-2.5 py-1">
+                      <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        <span className="rounded-full bg-secondary/40 px-2.5 py-1">
                           Quick Health: {lead.quick_health_score ?? 0}
                         </span>
-                        <span className="rounded-full bg-white/[0.05] px-2.5 py-1">
+                        <span className="rounded-full bg-secondary/40 px-2.5 py-1">
                           Opportunity: {lead.opportunity_score ?? 0}
                         </span>
                       </div>
@@ -307,7 +307,7 @@ export default function CallListPanel({
 
                       <button
                         onClick={() => onRemove(item.id)}
-                        className="rounded-xl border border-white/[0.10] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/[0.08]"
+                        className="rounded-xl border border-border bg-secondary/50 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-secondary"
                       >
                         Remove
                       </button>

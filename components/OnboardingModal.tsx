@@ -142,13 +142,13 @@ export default function OnboardingModal({ onComplete }: OnboardingModalProps) {
         <button
           onClick={handleSkip}
           aria-label="Skip onboarding"
-          className="absolute top-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-xl text-white/30 hover:text-white/60 hover:bg-white/[0.06] transition-all"
+          className="absolute top-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-xl text-white/30 hover:text-white/60 hover:bg-secondary transition-all"
         >
           ✕
         </button>
 
         {/* Progress bar */}
-        <div className="h-1 w-full bg-white/[0.06]">
+        <div className="h-1 w-full bg-secondary">
           <div
             className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
             style={{ width: `${progressPct}%` }}
@@ -251,7 +251,7 @@ export default function OnboardingModal({ onComplete }: OnboardingModalProps) {
                       ${
                         form.yourSpecialty === s
                           ? 'border-blue-500 bg-blue-500/[0.15] text-blue-300'
-                          : 'border-white/[0.08] bg-white/[0.03] text-white/60 hover:border-white/20 hover:text-white/80'
+                          : 'border-border bg-secondary/30 text-white/60 hover:border-white/20 hover:text-white/80'
                       }
                     `}
                   >
@@ -414,8 +414,8 @@ function BackButton({ onClick }: { onClick: () => void }) {
 
 const inputClass = [
   'w-full px-4 py-3 rounded-xl text-sm text-white',
-  'bg-white/[0.05] border border-white/[0.09]',
+  'bg-secondary/40 border border-white/[0.09]',
   'placeholder:text-white/25',
-  'focus:outline-none focus:border-blue-500/60 focus:bg-white/[0.07]',
+  'focus:outline-none focus:border-blue-500/60 focus:bg-secondary',
   'transition-all duration-200',
 ].join(' ')
