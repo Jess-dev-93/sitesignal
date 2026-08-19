@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { getUserIdFromRequest } from '../../../../lib/getUserId'
+import { AUTH_REQUIRED } from '../../../../lib/authGuestMode'
 
 export async function PATCH(req, { params }) {
   try {
     const userId = getUserIdFromRequest(req)
     const { id } = params
     const body = await req.json()
+
+    if (!userId && AUTH_REQUIRED) {
+      return NextResponse.json({ success: true, guest: true })
+    }
 
     const updatePayload = {
       updated_at: new Date().toISOString(),
@@ -51,6 +56,10 @@ export async function DELETE(req, { params }) {
   try {
     const userId = getUserIdFromRequest(req)
     const { id } = params
+
+    if (!userId && AUTH_REQUIRED) {
+      return NextResponse.json({ success: true, guest: true })
+    }
 
     const { error } = await supabaseAdmin
       .from('call_list')

@@ -8,6 +8,7 @@ import { ArrowDown, ArrowRight, Check, FileSearch, Search, Send, Sparkles, X } f
 import { useSupabaseSession } from '../lib/useSupabaseSession'
 import { passwordRecoveryRedirectTarget } from '../lib/authRecovery'
 import { supabase, supabaseConfigError } from '../lib/supabaseClient'
+import { AUTH_REQUIRED, isGuestModeEnabled } from '../lib/authGuestMode'
 import { NextPageProps, useUnwrapNextPageProps } from '../lib/nextPageProps'
 import { BRAND_NAME } from '../lib/brand'
 import { AppHeader } from '../components/app-header'
@@ -126,12 +127,17 @@ export default function HomePage(props: NextPageProps) {
   useEffect(() => {
     if (loading) return
 
+    if (isGuestModeEnabled()) {
+      router.replace('/app')
+      return
+    }
+
     if (sessionUserId) {
       router.replace('/app')
     }
   }, [loading, router, sessionUserId])
 
-  if (!loading && sessionUserId) {
+  if (!loading && (sessionUserId || isGuestModeEnabled())) {
     return null
   }
 

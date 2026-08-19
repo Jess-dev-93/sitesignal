@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../lib/supabaseAdmin'
 import { getUserIdFromRequest } from '../../../lib/getUserId'
+import { AUTH_REQUIRED } from '../../../lib/authGuestMode'
 
 // GET: fetch recent search history for this user
 export async function GET(request) {

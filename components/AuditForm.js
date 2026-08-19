@@ -11,13 +11,13 @@ const EXAMPLE_SITES = [
 const SCAN_MODES = [
   {
     id: 'quick',
-    label: 'Quick Scan',
-    description: 'Faster · high-level scores and top issues',
+    label: 'Quick Audit',
+    description: 'Single-page scan using the existing Lighthouse-based audit flow.',
   },
   {
-    id: 'full',
-    label: 'Full Audit',
-    description: 'Lighthouse · AI recommendations · outreach-ready insights',
+    id: 'full-site',
+    label: 'Full Site Audit',
+    description: 'Discover the site pages first, then highlight the best pages for a future deep audit.',
   },
 ]
 
@@ -45,7 +45,7 @@ export default function AuditForm({
   onSubmit,
   isLoading,
   initialUrl = '',
-  scanMode = 'full',
+  scanMode = 'quick',
   onScanModeChange,
 }) {
   const [inputValue, setInputValue] = useState(initialUrl || '')
@@ -222,7 +222,7 @@ export default function AuditForm({
                   d="M4 12a8 8 0 018-8v8z"
                 />
               </svg>
-              {isQuickScan ? 'Running quick scan…' : 'Running full audit…'}
+              {isQuickScan ? 'Running quick audit…' : 'Discovering site pages…'}
             </>
           ) : (
             <>
@@ -239,8 +239,8 @@ export default function AuditForm({
         ) : (
           <p className="text-xs text-muted-foreground">
             {isQuickScan
-              ? 'Quick scan checks mobile performance and surfaces the biggest issues fast.'
-              : 'Full audit checks mobile and desktop, then generates outreach-ready AI insights.'}
+              ? 'Quick Audit keeps the existing single-page experience intact.'
+              : 'Full Site Audit discovers the site pages first and highlights the most important ones for later deep auditing.'}
           </p>
         )}
       </div>

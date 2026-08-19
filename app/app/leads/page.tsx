@@ -18,6 +18,7 @@ import {
   saveStoredProfile,
   UserProfile,
 } from '../../../lib/profileStorage'
+import { AUTH_REQUIRED, isGuestModeEnabled } from '../../../lib/authGuestMode'
 
 const ONBOARDING_KEY = 'clientFinderOnboardingComplete'
 
@@ -73,7 +74,9 @@ export default function LeadsPage(props: NextPageProps) {
   // ── Auth ───────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!authChecked) return
-    if (!sessionUserId) router.replace('/signin')
+    if (AUTH_REQUIRED && !sessionUserId) {
+      router.replace('/signin')
+    }
   }, [authChecked, router, sessionUserId])
 
   // ── Onboarding — show once only ────────────────────────────────────────────
@@ -160,7 +163,7 @@ export default function LeadsPage(props: NextPageProps) {
 
   // ── Loading state ──────────────────────────────────────────────────────────
 
-  if (!authChecked || !sessionUserId) {
+  if (!authChecked || (!sessionUserId && AUTH_REQUIRED)) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-6">
         <Card className="max-w-md border-border bg-card">

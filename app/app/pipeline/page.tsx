@@ -16,6 +16,7 @@ import {
   DEFAULT_PROFILE,
 } from '../../../lib/profileStorage'
 import type { UserProfile } from '../../../lib/profileStorage'
+import { AUTH_REQUIRED } from '../../../lib/authGuestMode'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -173,7 +174,9 @@ export default function PipelinePage(props: NextPageProps) {
   // ─── Auth ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!authReady) return
-    if (!sessionUserId) router.replace('/signin')
+    if (AUTH_REQUIRED && !sessionUserId) {
+      router.replace('/signin')
+    }
   }, [authReady, router, sessionUserId])
 
   // ─── Profile ──────────────────────────────────────────────────────────────

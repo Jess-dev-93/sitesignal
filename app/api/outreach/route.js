@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../lib/supabaseAdmin'
 import { getUserIdFromRequest } from '../../../lib/getUserId'
+import { AUTH_REQUIRED } from '../../../lib/authGuestMode'
 
 function extractDomain(url = '') {
   try {
@@ -377,6 +378,10 @@ export async function POST(req) {
       yourTitle: profile?.yourTitle,
       yourLocation: profile?.yourLocation,
     })
+
+    if (!userId && AUTH_REQUIRED) {
+      return NextResponse.json({ success: true, guest: true, content: buildFallbackOutreach(lead, profile, clientContact) })
+    }
 
     let workingLead = null
     let finalLeadId = leadId || null

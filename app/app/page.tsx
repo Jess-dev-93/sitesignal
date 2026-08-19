@@ -12,6 +12,7 @@ import PageIntroCard from '../../components/layout/PageIntroCard'
 import DashboardActivity from '../../components/dashboard/DashboardActivity'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
+import { AUTH_REQUIRED } from '../../lib/authGuestMode'
 
 const quickActions = [
   { title: 'Find Leads', description: 'Search for businesses with real website gaps', href: '/app/leads', icon: Users },
@@ -39,10 +40,15 @@ export default function DashboardPage(props: NextPageProps) {
   }, [])
 
   useEffect(() => {
-    if (!sessionUserId) return
+    if (!sessionUserId && AUTH_REQUIRED) return
+
+    const headers: Record<string, string> = {}
+    if (sessionUserId) {
+      headers['x-user-id'] = sessionUserId
+    }
 
     fetch('/api/dashboard-stats', {
-      headers: { 'x-user-id': sessionUserId },
+      headers,
     })
       .then((res) => res.json())
       .then((data) => {

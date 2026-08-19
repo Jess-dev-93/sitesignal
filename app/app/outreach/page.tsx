@@ -17,6 +17,7 @@ import {
 } from '../../../lib/profileStorage'
 import type { UserProfile } from '../../../lib/profileStorage'
 import { getScoreStyles } from '../../../lib/scoreColors'
+import { AUTH_REQUIRED } from '../../../lib/authGuestMode'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -169,7 +170,9 @@ function OutreachPageInner() {
   // ─── Auth ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!authReady) return
-    if (!sessionUserId) router.replace('/signin')
+    if (AUTH_REQUIRED && !sessionUserId) {
+      router.replace('/signin')
+    }
   }, [authReady, router, sessionUserId])
 
   // ─── Profile ──────────────────────────────────────────────────────────────

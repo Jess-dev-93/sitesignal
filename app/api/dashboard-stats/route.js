@@ -3,6 +3,7 @@ import { getUserIdFromRequest } from '../../../lib/getUserId'
 import { getUserPlan } from '../../../lib/getUserPlan'
 import { supabaseAdmin } from '../../../lib/supabaseAdmin'
 import { formatPipelineValue, parseEstimatedValue } from '../../../lib/parseEstimatedValue'
+import { AUTH_REQUIRED } from '../../../lib/authGuestMode'
 
 function getMonthStartIso() {
   const now = new Date()

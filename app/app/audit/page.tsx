@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState, useCallback, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { supabase } from '../../../lib/supabaseClient'
 import { useSupabaseSession } from '../../../lib/useSupabaseSession'
 import { NextPageProps, useUnwrapNextPageProps } from '../../../lib/nextPageProps'
 import AppPageShell from '../../../components/layout/AppPageShell'
@@ -27,7 +26,7 @@ import RecentAuditsPreview from '../../../components/audit/RecentAuditsPreview'
 import WhyThisMatters from '../../../components/audit/WhyThisMatters'
 import WorkflowJourney from '../../../components/audit/WorkflowJourney'
 import { SectionDivider } from '../../../components/ui/SectionDivider'
-import { computeOpportunityScore, normalizeScores } from '../../../lib/opportunityScore'
+import { computeOpportunityScore } from '../../../lib/opportunityScore'
 import {
   getStoredProfile,
   saveStoredProfile,
@@ -36,6 +35,7 @@ import {
 import type { UserProfile } from '../../../lib/profileStorage'
 import type { TechStack } from '../../../lib/techStack'
 import { getScoreStyles } from '../../../lib/scoreColors'
+import { AUTH_REQUIRED } from '../../../lib/authGuestMode'
 
 interface AuditScores {
   mobile: {
@@ -101,6 +101,68 @@ interface PlanInfo {
   searchLimit: number | null
 }
 
+interface SiteDiscoveryResult {
+  success: boolean
+  discovery?: {
+    discoveredPages: string[]
+    recommendedPages: string[]
+    discoveredCount: number
+    source: string
+    url: string
+    origin: string
+  }
+  lightweightResults?: Array<{
+    url: string
+    title: string
+    metaDescription: string
+    h1Count: number
+    canonicalPresent: boolean
+    canonicalValue: string
+    robotsNoindex: boolean
+    langPresent: boolean
+    viewportPresent: boolean
+    imageCount: number
+    imagesMissingAlt: number
+    structuredDataPresent: boolean
+    ogPresent: boolean
+    internalLinks: number
+    status: string
+    hasMissingTitle: boolean
+    hasMissingMetaDescription: boolean
+    hasMissingH1: boolean
+    hasMultipleH1: boolean
+    hasNoindex: boolean
+  }>
+  issueSummary?: Array<{ label: string; count: number; percentage: number }>
+  selectedDeepAuditPages?: string[]
+  deepResults?: Array<{
+    url: string
+    pageTitle: string
+    scores: {
+      mobile: { performance: number; seo: number; accessibility: number; bestPractices: number }
+      desktop: { performance: number; seo: number; accessibility: number; bestPractices: number }
+      overallScore: number
+    } | null
+  }>
+  deepSummary?: {
+    count: number
+    averageMobilePerformance: number
+    averageDesktopPerformance: number
+    averageAccessibility: number
+    averageBestPractices: number
+    averageSeo: number
+    highestPerformingPage: { url: string; pageTitle: string; scores: { mobile: { performance: number } } } | null
+    lowestPerformingPage: { url: string; pageTitle: string; scores: { mobile: { performance: number } } } | null
+  }
+  siteReport?: {
+    executiveSummary: string
+    keyIssues: string[]
+    businessImpact: string[]
+    recommendations: string[]
+  }
+  error?: string
+}
+
 interface WorkspaceLead {
   title?: string
   url?: string
@@ -124,7 +186,7 @@ interface WorkspaceLead {
 }
 
 type AuditMode = 'mobile' | 'desktop'
-type ScanMode = 'quick' | 'full'
+type ScanMode = 'quick' | 'full-site'
 
 const FALLBACK_TECH_STACK: TechStack = {
   cms: 'Unknown CMS',
@@ -200,95 +262,49 @@ function mapHistoryEntryToAuditRecord(entry: HistoryEntry): AuditRecord {
   }
 }
 
-function mapStoredHistoryToAuditRecord(entry: any): AuditRecord {
-  if (entry?.scores && entry?.aiReport) {
-    return {
-      id: entry.id,
-      url: entry.url,
-      date: entry.date || entry.savedAt || new Date().toISOString(),
-      scores: {
-        mobile: {
-          performance: entry.scores?.mobile?.performance ?? 0,
-          seo: entry.scores?.mobile?.seo ?? 0,
-          accessibility: entry.scores?.mobile?.accessibility ?? 0,
-          bestPractices: entry.scores?.mobile?.bestPractices ?? 0,
-        },
-        desktop: {
-          performance: entry.scores?.desktop?.performance ?? 0,
-          seo: entry.scores?.desktop?.seo ?? 0,
-          accessibility: entry.scores?.desktop?.accessibility ?? 0,
-          bestPractices: entry.scores?.desktop?.bestPractices ?? 0,
-        },
-        details: entry.scores?.details ?? {},
-        overallScore: entry.scores?.overallScore ?? 0,
-      },
-      techStack: entry.techStack ?? undefined,
-      aiReport: {
-        executiveSummary: entry.aiReport?.executiveSummary ?? '',
-        keyIssues: entry.aiReport?.keyIssues ?? [],
-        businessImpact: entry.aiReport?.businessImpact ?? [],
-        recommendations: entry.aiReport?.recommendations ?? [],
-      },
-    }
-  }
+function mapStoredHistoryToHistoryEntry(entry: Partial<HistoryEntry> & Record<string, unknown>): HistoryEntry {
+  const aiReport = entry.aiReport as
+    | { executiveSummary?: string; keyIssues?: string[]; businessImpact?: string[]; recommendations?: string[] }
+    | undefined
 
-  return mapHistoryEntryToAuditRecord({
-    id: entry?.id || `audit_${Date.now()}`,
-    url: entry?.url || '',
-    savedAt: entry?.savedAt || entry?.date || new Date().toISOString(),
-    overallScore: entry?.overallScore ?? 0,
-    performance: entry?.performance ?? entry?.mobilePerformance ?? 0,
-    seo: entry?.seo ?? 0,
-    accessibility: entry?.accessibility ?? 0,
-    bestPractices: entry?.bestPractices ?? 0,
-    mobilePerformance: entry?.mobilePerformance ?? entry?.performance ?? 0,
-    desktopPerformance: entry?.desktopPerformance ?? 0,
-    scores: entry?.scores ?? null,
-    report: entry?.report ?? null,
-    status: entry?.status ?? 'Saved',
-    notes: entry?.notes ?? '',
-  })
-}
-
-function mapStoredHistoryToHistoryEntry(entry: any): HistoryEntry {
-  if (entry?.scores && entry?.aiReport) {
+  if (entry?.scores && aiReport) {
     return {
-      id: entry.id,
-      url: entry.url,
-      savedAt: entry.date || entry.savedAt || new Date().toISOString(),
+      id: String(entry.id ?? `audit_${Date.now()}`),
+      url: String(entry.url ?? ''),
+      savedAt: String(entry.date || entry.savedAt || new Date().toISOString()),
       pageTitle: entry.pageTitle ?? null,
-      scores: entry.scores ?? null,
-      overallScore: entry.scores?.overallScore ?? 0,
-      performance: entry.scores?.mobile?.performance ?? 0,
-      seo: entry.scores?.mobile?.seo ?? 0,
-      accessibility: entry.scores?.mobile?.accessibility ?? 0,
-      bestPractices: entry.scores?.mobile?.bestPractices ?? 0,
-      mobilePerformance: entry.scores?.mobile?.performance ?? 0,
-      desktopPerformance: entry.scores?.desktop?.performance ?? 0,
-      techStack: entry.techStack ?? null,
-      report: entry.aiReport ?? null,
+      scores: entry.scores as AuditScores | null,
+      overallScore: Number((entry.scores as { overallScore?: number } | undefined)?.overallScore ?? 0),
+      performance: Number((entry.scores as { mobile?: { performance?: number } } | undefined)?.mobile?.performance ?? 0),
+      seo: Number((entry.scores as { mobile?: { seo?: number } } | undefined)?.mobile?.seo ?? 0),
+      accessibility: Number((entry.scores as { mobile?: { accessibility?: number } } | undefined)?.mobile?.accessibility ?? 0),
+      bestPractices: Number((entry.scores as { mobile?: { bestPractices?: number } } | undefined)?.mobile?.bestPractices ?? 0),
+      mobilePerformance: Number((entry.scores as { mobile?: { performance?: number } } | undefined)?.mobile?.performance ?? 0),
+      desktopPerformance: Number((entry.scores as { desktop?: { performance?: number } } | undefined)?.desktop?.performance ?? 0),
+      techStack: entry.techStack as TechStack | null,
+      report: aiReport as HistoryEntry['report'],
       status: entry?.status ?? 'Saved',
       notes: entry?.notes ?? '',
     }
   }
 
   return {
-    id: entry?.id || `audit_${Date.now()}`,
-    url: entry?.url || '',
-    savedAt: entry?.savedAt || entry?.date || new Date().toISOString(),
-    pageTitle: entry?.pageTitle ?? null,
-    scores: entry?.scores ?? null,
-    overallScore: entry?.overallScore ?? 0,
-    performance: entry?.performance ?? entry?.mobilePerformance ?? 0,
-    seo: entry?.seo ?? 0,
-    accessibility: entry?.accessibility ?? 0,
-    bestPractices: entry?.bestPractices ?? 0,
-    mobilePerformance: entry?.mobilePerformance ?? entry?.performance ?? 0,
-    desktopPerformance: entry?.desktopPerformance ?? 0,
-    techStack: entry?.techStack ?? null,
-    report: entry?.report ?? null,
-    status: entry?.status ?? 'Saved',
-    notes: entry?.notes ?? '',
+    id: String(entry?.id || `audit_${Date.now()}`),
+    url: String(entry?.url || ''),
+    savedAt: String(entry?.savedAt || entry?.date || new Date().toISOString()),
+    pageTitle: entry?.pageTitle ? String(entry.pageTitle) : null,
+    scores: entry?.scores as AuditScores | null,
+    overallScore: Number(entry?.overallScore ?? 0),
+    performance: Number(entry?.performance ?? entry?.mobilePerformance ?? 0),
+    seo: Number(entry?.seo ?? 0),
+    accessibility: Number(entry?.accessibility ?? 0),
+    bestPractices: Number(entry?.bestPractices ?? 0),
+    mobilePerformance: Number(entry?.mobilePerformance ?? entry?.performance ?? 0),
+    desktopPerformance: Number(entry?.desktopPerformance ?? 0),
+    techStack: entry?.techStack as TechStack | null,
+    report: (entry?.report ?? null) as HistoryEntry['report'],
+    status: entry?.status ? String(entry.status) : 'Saved',
+    notes: entry?.notes ? String(entry.notes) : '',
   }
 }
 
@@ -322,11 +338,13 @@ function AuditPageInner() {
   const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null)
 
   const [auditResult, setAuditResult] = useState<AuditRecord | null>(null)
+  const [siteDiscoveryResult, setSiteDiscoveryResult] = useState<SiteDiscoveryResult | null>(null)
   const [auditHistory, setAuditHistory] = useState<HistoryEntry[]>([])
   const [activeView, setActiveView] = useState<'tool' | 'history'>('tool')
   const [auditMode, setAuditMode] = useState<AuditMode>('mobile')
-  const [scanMode, setScanMode] = useState<ScanMode>('full')
+  const [scanMode, setScanMode] = useState<ScanMode>('quick')
   const [isRunning, setIsRunning] = useState(false)
+  const [fullSiteProgress, setFullSiteProgress] = useState('Discovering pages')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const [prefilledUrl, setPrefilledUrl] = useState('')
@@ -340,7 +358,9 @@ function AuditPageInner() {
 
   useEffect(() => {
     if (!authReady) return
-    if (!sessionUserId) router.push('/signin')
+    if (AUTH_REQUIRED && !sessionUserId) {
+      router.push('/signin')
+    }
   }, [authReady, router, sessionUserId])
 
   useEffect(() => {
@@ -390,10 +410,14 @@ function AuditPageInner() {
   }, [queryUrl, queryTitle, queryDomain])
 
   const fetchPlan = useCallback(async () => {
-    if (!sessionUserId) return
     try {
+      const headers: Record<string, string> = {}
+      if (sessionUserId) {
+        headers['x-user-id'] = sessionUserId
+      }
+
       const res = await fetch('/api/user-plan', {
-        headers: { 'x-user-id': sessionUserId },
+        headers,
       })
       const json = await res.json()
       if (json.success) setPlanInfo(json.data)
@@ -401,8 +425,8 @@ function AuditPageInner() {
   }, [sessionUserId])
 
   useEffect(() => {
-    if (authReady && sessionUserId) fetchPlan()
-  }, [authReady, sessionUserId, fetchPlan])
+    if (authReady) fetchPlan()
+  }, [authReady, fetchPlan])
 
   useEffect(() => {
     if (!authReady) return
@@ -440,24 +464,88 @@ function AuditPageInner() {
 
   const handleRunAudit = useCallback(
     async (url: string, mode: ScanMode = scanMode) => {
-      if (!sessionUserId || isRunning) return
+      if (isRunning || (!sessionUserId && AUTH_REQUIRED)) return
 
       const normalisedInputUrl = normaliseUrl(url)
       if (!normalisedInputUrl) return
 
       setIsRunning(true)
       setAuditResult(null)
+      setSiteDiscoveryResult(null)
       setErrorMsg(null)
+      setFullSiteProgress('Discovering pages')
       setContinueToOutreachReady(false)
       setActiveView('tool')
 
       try {
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        }
+
+        if (sessionUserId) {
+          headers['x-user-id'] = sessionUserId
+        }
+
+        if (mode === 'full-site') {
+          const progressSteps = [
+            'Discovering pages',
+            'Running site checks',
+            'Deep auditing representative pages',
+            'Creating site report',
+          ]
+
+          const progressTimer = window.setInterval(() => {
+            setFullSiteProgress((current) => {
+              const currentIndex = progressSteps.indexOf(current)
+              const nextIndex = (currentIndex + 1) % progressSteps.length
+              return progressSteps[nextIndex]
+            })
+          }, 1800)
+
+          try {
+            const res = await fetch('/api/site-discovery', {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({ url: normalisedInputUrl }),
+            })
+
+            const json = await res.json()
+
+            if (!json.success) {
+              setErrorMsg(json.error ?? 'Site discovery failed. Please try again.')
+              return
+            }
+
+            const nextLead: WorkspaceLead = {
+              ...(selectedLead || {}),
+              title: selectedLead?.title || undefined,
+              url: normalisedInputUrl,
+              domain:
+                selectedLead?.domain ||
+                (() => {
+                  try {
+                    return new URL(normalisedInputUrl).hostname.replace(/^www\./, '')
+                  } catch {
+                    return normalisedInputUrl
+                      .replace(/^https?:\/\//, '')
+                      .replace(/^www\./, '')
+                      .split('/')[0]
+                  }
+                })(),
+            }
+
+            setSelectedLead(nextLead)
+            setSiteDiscoveryResult(json)
+            setPrefilledUrl(normalisedInputUrl)
+            return
+          } finally {
+            window.clearInterval(progressTimer)
+          }
+        }
+
         const res = await fetch('/api/audit', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': sessionUserId,
-          },
+          headers,
           body: JSON.stringify({ url: normalisedInputUrl, scanMode: mode }),
         })
 
@@ -628,11 +716,6 @@ function AuditPageInner() {
     router.push('/app/pipeline')
   }
 
-  const handleSignOut = useCallback(async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-  }, [router])
-
   const auditLimitReached =
     planInfo?.auditLimit !== null &&
     planInfo?.auditLimit !== undefined &&
@@ -769,7 +852,7 @@ function AuditPageInner() {
                           Paste a website URL
                         </h2>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          Quick or full scan — results in under 30 seconds.
+                          Quick Audit keeps the single-page experience intact, while Full Site Audit discovers the site pages first.
                         </p>
                       </div>
                     </div>
@@ -795,15 +878,15 @@ function AuditPageInner() {
                   </div>
                 </div>
 
-                {!auditResult && !isRunning && <ExampleOpportunityCard />}
+                {!auditResult && !siteDiscoveryResult && !isRunning && <ExampleOpportunityCard />}
 
-                {!auditResult && !isRunning && <WhyThisMatters />}
+                {!auditResult && !siteDiscoveryResult && !isRunning && <WhyThisMatters />}
 
-                {!auditResult && !isRunning && auditHistory.length === 0 && (
+                {!auditResult && !siteDiscoveryResult && !isRunning && auditHistory.length === 0 && (
                   <FirstAuditEmptyState />
                 )}
 
-                {auditHistory.length > 0 && !auditResult && !isRunning && (
+                {auditHistory.length > 0 && !auditResult && !siteDiscoveryResult && !isRunning && (
                   <RecentAuditsPreview
                     entries={auditHistory.slice(0, 3)}
                     onOpen={(entry) => handleOpenFromHistory(entry as HistoryEntry)}
@@ -811,6 +894,105 @@ function AuditPageInner() {
                   />
                 )}
               </>
+            )}
+
+            {siteDiscoveryResult && !isRunning && (
+              <div className="rounded-[28px] border border-violet-500/20 bg-violet-500/[0.06] p-8 backdrop-blur-sm">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-300">
+                      Full Site Audit
+                    </p>
+                    <h3 className="mt-2 text-xl font-semibold text-foreground">
+                      {siteDiscoveryResult.discovery?.discoveredCount ?? 0} pages discovered
+                    </h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Source: <span className="font-medium text-foreground">{siteDiscoveryResult.discovery?.source ?? 'discovery'}</span>
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-card/80 px-4 py-3 text-sm text-muted-foreground">
+                    <p className="font-semibold text-foreground">Representative deep-audit pages</p>
+                    <p className="mt-1">{siteDiscoveryResult.selectedDeepAuditPages?.length ?? 0} selected for deep Lighthouse review.</p>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
+                  <div className="rounded-2xl border border-border bg-secondary/20 p-5">
+                    <p className="text-sm font-semibold text-foreground">Discovered pages</p>
+                    <ul className="mt-3 space-y-2">
+                      {(siteDiscoveryResult.discovery?.discoveredPages ?? []).map((page) => (
+                        <li
+                          key={page}
+                          className="rounded-xl border border-border/60 bg-card/70 px-3 py-2 text-sm text-secondary-foreground"
+                        >
+                          {page}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-border bg-secondary/20 p-5">
+                      <p className="text-sm font-semibold text-foreground">Representative deep-audit pages</p>
+                      <ul className="mt-3 space-y-2">
+                        {(siteDiscoveryResult.selectedDeepAuditPages ?? []).map((page, index) => (
+                          <li key={page} className="rounded-xl border border-border/60 bg-card/70 px-3 py-2 text-sm text-secondary-foreground">
+                            <span className="mr-2 font-semibold text-foreground">{index + 1}.</span>
+                            {page}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="rounded-2xl border border-border bg-secondary/20 p-5">
+                      <p className="text-sm font-semibold text-foreground">Site-wide issue summary</p>
+                      <ul className="mt-3 space-y-2">
+                        {(siteDiscoveryResult.issueSummary ?? []).map((issue) => (
+                          <li key={issue.label} className="rounded-xl border border-border/60 bg-card/70 px-3 py-2 text-sm text-secondary-foreground">
+                            {issue.label}: {issue.count} pages ({issue.percentage}%)
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {siteDiscoveryResult.siteReport && (
+                  <div className="mt-6 rounded-2xl border border-border bg-card/70 p-5">
+                    <p className="text-sm font-semibold text-foreground">AI site report</p>
+                    <div className="mt-4 space-y-4">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Executive Summary</p>
+                        <p className="mt-2 text-sm leading-relaxed text-secondary-foreground">{siteDiscoveryResult.siteReport.executiveSummary}</p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Key Issues</p>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-secondary-foreground">
+                          {siteDiscoveryResult.siteReport.keyIssues.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Business Impact</p>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-secondary-foreground">
+                          {siteDiscoveryResult.siteReport.businessImpact.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Recommended Next Steps</p>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-secondary-foreground">
+                          {siteDiscoveryResult.siteReport.recommendations.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {errorMsg && !isRunning && (
@@ -839,12 +1021,12 @@ function AuditPageInner() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">
-                      {scanMode === 'quick' ? 'Running quick scan…' : 'Running full audit…'}
+                      {scanMode === 'quick' ? 'Running quick audit…' : fullSiteProgress}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {scanMode === 'quick'
                         ? 'Checking mobile performance and surfacing top issues. Usually 10–20 seconds.'
-                        : 'Fetching PageSpeed data + generating AI report. This takes 15–30 seconds.'}
+                        : 'The Full Site Audit is collecting page evidence and representative deep-audit pages.'}
                     </p>
                   </div>
                 </div>
@@ -1021,7 +1203,7 @@ function AuditPageInner() {
               </div>
             )}
 
-            {!auditResult && !isRunning && !auditLimitReached && !errorMsg && (
+            {!auditResult && !siteDiscoveryResult && !isRunning && !auditLimitReached && !errorMsg && (
               <p className="text-center text-xs text-muted-foreground">
                 Tip: paste any business URL above to see their opportunity score in seconds.
               </p>

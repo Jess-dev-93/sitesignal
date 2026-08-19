@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../../lib/supabaseAdmin'
 import { getUserIdFromRequest } from '../../../lib/getUserId'
+import { AUTH_REQUIRED } from '../../../lib/authGuestMode'
 
 function extractDomain(url = '') {
   try {
@@ -52,6 +53,10 @@ export async function GET(req) {
     const userId = getUserIdFromRequest(req)
     const { searchParams } = new URL(req.url)
     const date = searchParams.get('date') || new Date().toISOString().slice(0, 10)
+
+    if (!userId && AUTH_REQUIRED) {
+      return NextResponse.json({ items: [] })
+    }
 
     const { data, error } = await supabaseAdmin
       .from('call_list')
@@ -124,6 +129,10 @@ export async function POST(req) {
 
     if (!lead) {
       return NextResponse.json({ error: 'Lead is required' }, { status: 400 })
+    }
+
+    if (!userId && AUTH_REQUIRED) {
+      return NextResponse.json({ success: true, guest: true, message: 'Guest mode enabled' })
     }
 
     const leadPayload = mapLeadToExistingLeadSchema(lead, userId)

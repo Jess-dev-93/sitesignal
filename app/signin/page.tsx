@@ -6,18 +6,24 @@ import MarketingShell from '../../components/layout/MarketingShell'
 import { Card, CardContent } from '../../components/ui/card'
 import { useSupabaseSession } from '../../lib/useSupabaseSession'
 import { NextPageProps, useUnwrapNextPageProps } from '../../lib/nextPageProps'
+import { AUTH_REQUIRED, isGuestModeEnabled } from '../../lib/authGuestMode'
 
 export default function SignInPage(props: NextPageProps) {
   useUnwrapNextPageProps(props)
   const { userId: sessionUserId, loading: checkingSession } = useSupabaseSession()
 
   useEffect(() => {
+    if (isGuestModeEnabled()) {
+      window.location.href = '/app'
+      return
+    }
+
     if (!checkingSession && sessionUserId) {
       window.location.href = '/app'
     }
   }, [checkingSession, sessionUserId])
 
-  if (checkingSession) {
+  if (checkingSession && !isGuestModeEnabled()) {
     return (
       <MarketingShell headerDescription="Checking your session…">
         <Card className="border-border bg-card">
