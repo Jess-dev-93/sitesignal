@@ -2,23 +2,30 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '../../../lib/supabaseClient'
+
 import { useSupabaseSession } from '../../../lib/useSupabaseSession'
-import { NextPageProps, useUnwrapNextPageProps } from '../../../lib/nextPageProps'
+import {
+  NextPageProps,
+  useUnwrapNextPageProps,
+} from '../../../lib/nextPageProps'
+
 import ProfileModal from '../../../components/profile/ProfileModal'
 import OnboardingModal from '../../../components/OnboardingModal'
 import UsageLimitBanner from '../../../components/UsageLimitBanner'
 import LeadFinderWorkspace from '../../../components/LeadFinderWorkspace'
 import AppPageShell from '../../../components/layout/AppPageShell'
-import PageIntroCard from '../../../components/layout/PageIntroCard'
 import { Card, CardContent } from '../../../components/ui/card'
+
 import {
   DEFAULT_PROFILE,
   getStoredProfile,
   saveStoredProfile,
   UserProfile,
 } from '../../../lib/profileStorage'
-import { AUTH_REQUIRED, isGuestModeEnabled } from '../../../lib/authGuestMode'
+
+import {
+  AUTH_REQUIRED,
+} from '../../../lib/authGuestMode'
 
 const ONBOARDING_KEY = 'clientFinderOnboardingComplete'
 
@@ -30,14 +37,17 @@ type WorkspaceLead = {
   opportunityScore?: number
   estimatedValue?: string
   problems?: string[]
+
   scores?: {
     overall?: number
+
     mobile?: {
       performance?: number
       seo?: number
       accessibility?: number
       bestPractices?: number
     }
+
     desktop?: {
       performance?: number
     }
@@ -46,167 +56,267 @@ type WorkspaceLead = {
 
 function normaliseLeadUrl(lead: WorkspaceLead) {
   const raw = lead.url || lead.domain || ''
-  if (!raw) return ''
-  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw
+
+  if (!raw) {
+    return ''
+  }
+
+  if (
+    raw.startsWith('http://') ||
+    raw.startsWith('https://')
+  ) {
+    return raw
+  }
+
   return `https://${raw}`
 }
 
 export default function LeadsPage(props: NextPageProps) {
   useUnwrapNextPageProps(props)
+
   const router = useRouter()
-  const { email: sessionEmail, userId: sessionUserId, loading: authChecked } =
-    useSupabaseSession()
 
-  const [profile, setProfile]               = useState<UserProfile>(DEFAULT_PROFILE)
-  const [showProfileModal, setShowProfileModal] = useState(false)
-  const [profileComplete, setProfileComplete]   = useState(true)
+  const {
+    email: sessionEmail,
+    userId: sessionUserId,
+    loading: authChecked,
+  } = useSupabaseSession()
 
-  const [showOnboarding, setShowOnboarding] = useState(false)
-  const [usageBannerKey, setUsageBannerKey] = useState(0)
+const [profile, setProfile] =
+  useState<UserProfile>(() => getStoredProfile())
 
-  // ── Load profile from localStorage ────────────────────────────────────────
+const [showProfileModal, setShowProfileModal] =
+  useState(false)
+
+  const [showOnboarding, setShowOnboarding] =
+    useState(false)
+
+  const [usageBannerKey] =
+    useState(0)
+
+  // =====================================================
+  // PROFILE
+  // =====================================================
+
   useEffect(() => {
-    const stored = getStoredProfile()
-    setProfile(stored)
-    setProfileComplete(!!stored.yourName?.trim())
-  }, [])
+  const stored = getStoredProfile()
+  setProfile(stored)
+}, [])
 
-  // ── Auth ───────────────────────────────────────────────────────────────────
+  // =====================================================
+  // AUTH
+  // =====================================================
+
   useEffect(() => {
-    if (!authChecked) return
+    if (!authChecked) {
+      return
+    }
+
     if (AUTH_REQUIRED && !sessionUserId) {
       router.replace('/signin')
     }
-  }, [authChecked, router, sessionUserId])
+  }, [
+    authChecked,
+    router,
+    sessionUserId,
+  ])
 
-  // ── Onboarding — show once only ────────────────────────────────────────────
+  // =====================================================
+  // ONBOARDING
+  // Show once only
+  // =====================================================
+
   useEffect(() => {
-    if (!authChecked || !sessionUserId) return
-    const alreadyDone = localStorage.getItem(ONBOARDING_KEY) === 'true'
-    if (alreadyDone) return
-    const t = setTimeout(() => setShowOnboarding(true), 500)
-    return () => clearTimeout(t)
-  }, [authChecked, sessionUserId])
+    if (!authChecked || !sessionUserId) {
+      return
+    }
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
+    const alreadyDone =
+      localStorage.getItem(ONBOARDING_KEY) === 'true'
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.replace('/signin')
-  }
+    if (alreadyDone) {
+      return
+    }
 
-  const handleSaveProfile = (nextProfile: UserProfile) => {
-    setProfile(nextProfile)
-    saveStoredProfile(nextProfile)
-    setProfileComplete(!!nextProfile.yourName?.trim())
-  }
+    const timer = setTimeout(() => {
+      setShowOnboarding(true)
+    }, 500)
+
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [
+    authChecked,
+    sessionUserId,
+  ])
+
+  // =====================================================
+  // PROFILE HANDLERS
+  // =====================================================
+const handleSaveProfile = (
+  nextProfile: UserProfile
+) => {
+  setProfile(nextProfile)
+  saveStoredProfile(nextProfile)
+}
 
   const handleOnboardingComplete = () => {
-    setShowOnboarding(false)
-    setTimeout(() => {
-      const updated = getStoredProfile()
-      setProfile(updated)
-      setProfileComplete(!!updated.yourName?.trim())
-    }, 100)
-  }
+  setShowOnboarding(false)
 
-  // Audit Website — goes to /app/audit with URL + title prefilled
-  const handleRunFullAudit = (lead: WorkspaceLead) => {
-    const normalisedUrl = normaliseLeadUrl(lead)
-    if (!normalisedUrl) return
+  window.setTimeout(() => {
+    setProfile(getStoredProfile())
+  }, 100)
+}
 
-    sessionStorage.setItem('pendingAuditLead', JSON.stringify(lead))
+  // =====================================================
+  // AUDIT
+  // Review opportunity
+  // =====================================================
+
+  const handleRunFullAudit = (
+    lead: WorkspaceLead
+  ) => {
+    const normalisedUrl =
+      normaliseLeadUrl(lead)
+
+    if (!normalisedUrl) {
+      return
+    }
+
+    sessionStorage.setItem(
+      'pendingAuditLead',
+      JSON.stringify(lead)
+    )
 
     const params = new URLSearchParams({
-      url:    normalisedUrl,
-      title:  lead.title  || '',
+      url: normalisedUrl,
+      title: lead.title || '',
       domain: lead.domain || '',
     })
 
-    router.push(`/app/audit?${params.toString()}`)
-  }
-
-  // Start Audited Outreach — goes to /app/audit with next=outreach
-  // After audit completes the audit page will show "Continue to Outreach →"
-  const handleStartAuditedOutreach = (lead: WorkspaceLead) => {
-    const normalisedUrl = normaliseLeadUrl(lead)
-    if (!normalisedUrl) return
-
-    sessionStorage.setItem('pendingAuditLead', JSON.stringify(lead))
-
-    const params = new URLSearchParams({
-      url:    normalisedUrl,
-      title:  lead.title  || '',
-      domain: lead.domain || '',
-      next:   'outreach',           // ← audit page reads this to show CTA
-    })
-
-    router.push(`/app/audit?${params.toString()}`)
-  }
-
-  // Manual Outreach — goes straight to /app/outreach?mode=manual
-  // ✅ FIXED — was incorrectly routing to /app/audit
-  const handleOpenManualOutreach = (lead: WorkspaceLead) => {
-    const normalisedUrl = normaliseLeadUrl(lead)
-
-    sessionStorage.setItem('pendingOutreachLead', JSON.stringify(lead))
-
-    const params = new URLSearchParams({
-      mode:   'manual',
-      url:    normalisedUrl,
-      title:  lead.title  || '',
-      domain: lead.domain || '',
-    })
-
-    router.push(`/app/outreach?${params.toString()}`)
-  }
-
-  // ── Loading state ──────────────────────────────────────────────────────────
-
-  if (!authChecked || (!sessionUserId && AUTH_REQUIRED)) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center p-6">
-        <Card className="max-w-md border-border bg-card">
-          <CardContent className="p-6 text-sm text-muted-foreground">Loading…</CardContent>
-        </Card>
-      </div>
+    router.push(
+      `/app/audit?${params.toString()}`
     )
   }
 
-  // ── Page ───────────────────────────────────────────────────────────────────
+  // =====================================================
+  // AUDITED OUTREACH
+  // Audit first, then continue to outreach
+  // =====================================================
 
+  const handleStartAuditedOutreach = (
+    lead: WorkspaceLead
+  ) => {
+    const normalisedUrl =
+      normaliseLeadUrl(lead)
+
+    if (!normalisedUrl) {
+      return
+    }
+
+    sessionStorage.setItem(
+      'pendingAuditLead',
+      JSON.stringify(lead)
+    )
+
+    const params = new URLSearchParams({
+      url: normalisedUrl,
+      title: lead.title || '',
+      domain: lead.domain || '',
+      next: 'outreach',
+    })
+
+    router.push(
+      `/app/audit?${params.toString()}`
+    )
+  }
+
+  // =====================================================
+  // MANUAL OUTREACH
+  // Skip audit and go straight to outreach
+  // =====================================================
+
+  const handleOpenManualOutreach = (
+    lead: WorkspaceLead
+  ) => {
+    const normalisedUrl =
+      normaliseLeadUrl(lead)
+
+    sessionStorage.setItem(
+      'pendingOutreachLead',
+      JSON.stringify(lead)
+    )
+
+    const params = new URLSearchParams({
+      mode: 'manual',
+      url: normalisedUrl,
+      title: lead.title || '',
+      domain: lead.domain || '',
+    })
+
+    router.push(
+      `/app/outreach?${params.toString()}`
+    )
+  }
+
+  // =====================================================
+  // LOADING / AUTH CHECK
+  // =====================================================
+
+  if (AUTH_REQUIRED && !authChecked) {
   return (
-    <AppPageShell title="Leads" description="Find weak websites in your market">
-      <PageIntroCard
-        title="Lead Finder"
-        description="Search by industry and location — surface the best opportunities, then audit and pitch."
-      >
-        <div className="mt-4">
-          <UsageLimitBanner userId={sessionUserId} refreshKey={usageBannerKey} compact />
-        </div>
-      </PageIntroCard>
-
-      <Card className="border-border bg-card">
-          <CardContent className="p-4 sm:p-6">
-            <LeadFinderWorkspace
-              userId={sessionUserId}
-              onRunFullAudit={handleRunFullAudit}
-              onStartAuditedOutreach={handleStartAuditedOutreach}
-              onOpenManualOutreach={handleOpenManualOutreach}
-            />
+    <div className="flex min-h-[60vh] items-center justify-center p-6">
+      <Card className="max-w-md border-border bg-card">
+        <CardContent className="p-6 text-sm text-muted-foreground">
+          Loading…
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+  // =====================================================
+  // PAGE
+  // =====================================================
+
+  return (
+    <AppPageShell
+      title="Opportunities"
+      description="Find businesses with website and digital issues worth investigating."
+    >
+      <UsageLimitBanner
+  userId={sessionUserId || 'demo-user'}
+  refreshKey={usageBannerKey}
+  compact
+/>
+
+      <LeadFinderWorkspace
+        userId={sessionUserId || 'demo-user'}
+        onRunFullAudit={handleRunFullAudit}
+        onStartAuditedOutreach={
+          handleStartAuditedOutreach
+        }
+        onOpenManualOutreach={
+          handleOpenManualOutreach
+        }
+      />
 
       <ProfileModal
         open={showProfileModal}
         initialProfile={profile}
         sessionEmail={sessionEmail}
-        onClose={() => setShowProfileModal(false)}
+        onClose={() =>
+          setShowProfileModal(false)
+        }
         onSave={handleSaveProfile}
       />
 
       {showOnboarding && (
-        <OnboardingModal onComplete={handleOnboardingComplete} />
+        <OnboardingModal
+          onComplete={
+            handleOnboardingComplete
+          }
+        />
       )}
     </AppPageShell>
   )

@@ -2,9 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { Button } from '../ui/button'
+import { ArrowUpRight, Crown, FileSearch, Radar } from 'lucide-react'
 import { computeOpportunityScore, normalizeScores } from '../../lib/opportunityScore'
 
 type AuditHistoryEntry = {
@@ -86,67 +84,26 @@ export default function DashboardActivity() {
   const hasActivity = recentAudits.length > 0 || recentSearches.length > 0 || bestOpportunity
 
   if (!hasActivity) {
-    return (
-      <Card className="border-border bg-gradient-to-br from-card to-violet-500/5">
-        <CardContent className="p-5 sm:p-6">
-          <p className="text-sm font-medium text-foreground">Your workspace is ready</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Run a lead search or scan a website — your recent activity and best opportunities
-            will show up here.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button asChild size="sm" className="gap-2">
-              <Link href="/app/leads">
-                Find leads
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild size="sm" variant="secondary">
-              <Link href="/app/audit">Scan a website</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    )
+    return <section className="ss-empty-signal"><div className="ss-empty-icon"><Radar /></div><div><span>Nothing boring here</span><h2>Your signal field is ready.</h2><p>Run a market search or decode a website. The strongest commercial opportunities will rise to the top automatically.</p></div><Link href="/app/leads" className="ss-ghost-button">Start searching <ArrowUpRight className="h-4 w-4" /></Link></section>
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <section className="ss-dashboard-section">
+      <div className="ss-section-heading"><div><span>Signal</span><h2>Your opportunity field</h2></div><p>Evidence, not guesswork.</p></div>
+      <div className="ss-activity-grid">
       {bestOpportunity ? (
-        <Card className="border-success-border/40 bg-success-muted/15 lg:col-span-2">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-foreground">
-              Best opportunity
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-medium text-foreground">
-                {(bestOpportunity.entry.url ?? '').replace(/^https?:\/\//, '') || 'Recent scan'}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Opportunity score{' '}
-                <span className="font-semibold text-success">{bestOpportunity.score}</span> — worth
-                following up
-              </p>
-            </div>
-            <Button asChild size="sm" className="gap-2 shrink-0">
-              <Link href={`/app/outreach?url=${encodeURIComponent(bestOpportunity.entry.url ?? '')}&mode=audited`}>
-                Generate outreach
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <article className="ss-best-signal">
+          <div className="ss-best-glow" /><div className="ss-best-label"><Crown className="h-4 w-4" /> Strongest signal</div>
+          <div className="ss-best-body"><div><p className="ss-best-domain">{(bestOpportunity.entry.url ?? '').replace(/^https?:\/\//, '') || 'Recent scan'}</p><p className="ss-best-copy">The clearest commercial opportunity in your recent scans.</p></div><div className="ss-score-orb"><strong>{bestOpportunity.score}</strong><span>opportunity</span></div></div>
+          <Link href={`/app/audit?url=${encodeURIComponent(bestOpportunity.entry.url ?? '')}`} className="ss-best-link">Open client-ready findings <ArrowUpRight className="h-4 w-4" /></Link>
+        </article>
       ) : null}
 
-      <Card className="border-border bg-card">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold text-foreground">Recent audits</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
+      <article className="ss-feed-card">
+        <div className="ss-feed-heading"><div className="ss-feed-icon"><FileSearch /></div><div><span>Decoded</span><h3>Recent audits</h3></div><Link href="/app/audit">View all</Link></div>
+        <div className="ss-feed-list">
           {recentAudits.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No scans yet.</p>
+            <p className="ss-feed-empty">No websites decoded yet.</p>
           ) : (
             recentAudits.map((entry) => {
               const opp = auditOpportunity(entry)
@@ -154,45 +111,44 @@ export default function DashboardActivity() {
                 <Link
                   key={entry.id ?? entry.url}
                   href="/app/audit"
-                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-secondary/20 px-3 py-2.5 transition hover:bg-secondary/40"
+                  className="ss-feed-row"
                 >
-                  <span className="truncate text-sm text-foreground">
+                  <span className="truncate">
                     {(entry.url ?? '').replace(/^https?:\/\//, '')}
                   </span>
-                  <span className="shrink-0 text-xs font-semibold text-success">{opp.score}</span>
+                  <span className="ss-mini-score">{opp.score}</span>
                 </Link>
               )
             })
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </article>
 
-      <Card className="border-border bg-card">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold text-foreground">Recent lead searches</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
+      <article className="ss-feed-card">
+        <div className="ss-feed-heading"><div className="ss-feed-icon ss-feed-icon-violet"><Radar /></div><div><span>Scouted</span><h3>Recent searches</h3></div><Link href="/app/leads">View all</Link></div>
+        <div className="ss-feed-list">
           {recentSearches.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No searches yet.</p>
+            <p className="ss-feed-empty">No markets searched yet.</p>
           ) : (
             recentSearches.map((entry, i) => (
               <Link
                 key={`${entry.query}-${entry.searchedAt}-${i}`}
                 href="/app/leads"
-                className="block rounded-lg border border-border bg-secondary/20 px-3 py-2.5 transition hover:bg-secondary/40"
+                className="ss-feed-row ss-search-row"
               >
-                <p className="text-sm font-medium text-foreground">{entry.query || 'Lead search'}</p>
+                <p>{entry.query || 'Opportunity search'}</p>
                 {entry.totalFound != null ? (
-                  <p className="text-xs text-muted-foreground">
+                  <span>
                     {entry.totalFound} found
                     {entry.hotLeads != null ? ` · ${entry.hotLeads} hot` : ''}
-                  </p>
+                  </span>
                 ) : null}
               </Link>
             ))
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </article>
+      </div>
+    </section>
   )
 }

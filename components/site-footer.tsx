@@ -37,7 +37,6 @@ const APP_LINKS = [
   { href: '/app', label: 'Dashboard' },
   { href: '/app/leads', label: 'Leads' },
   { href: '/app/audit', label: 'Audit' },
-  { href: '/app/outreach', label: 'Outreach' },
   { href: '/app/pipeline', label: 'Pipeline' },
 ] as const
 

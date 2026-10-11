@@ -1,13 +1,13 @@
 export type ScoreTone = 'strong' | 'warning' | 'poor'
 
 export function normalizeScore(score: unknown): number {
-  return typeof score === 'number' && !Number.isNaN(score) ? score : 0
+  return typeof score === 'number' && Number.isFinite(score) ? score : 0
 }
 
 export function getScoreTone(score: unknown): ScoreTone {
   const safeScore = normalizeScore(score)
 
-  if (safeScore >= 70) return 'strong'
+  if (safeScore >= 90) return 'strong'
   if (safeScore >= 50) return 'warning'
   return 'poor'
 }
@@ -26,7 +26,7 @@ export function getScoreStyles(score: unknown) {
       ring: 'border-emerald-500/30',
       glow: 'shadow-[0_0_12px_rgba(52,211,153,0.15)]',
       panel: 'border-emerald-500/20 bg-emerald-500/[0.06]',
-      hex: '#34d399',
+      hex: '#10b981',
       label: 'Strong',
       icon: '✅',
     }
@@ -42,8 +42,8 @@ export function getScoreStyles(score: unknown) {
       ring: 'border-amber-500/30',
       glow: 'shadow-[0_0_12px_rgba(245,158,11,0.15)]',
       panel: 'border-amber-500/20 bg-amber-500/[0.06]',
-      hex: '#fbbf24',
-      label: 'Needs work',
+      hex: '#f59e0b',
+      label: 'Opportunity',
       icon: '⚠️',
     }
   }
@@ -57,8 +57,8 @@ export function getScoreStyles(score: unknown) {
     ring: 'border-rose-500/30',
     glow: 'shadow-[0_0_12px_rgba(244,63,94,0.15)]',
     panel: 'border-rose-500/20 bg-rose-500/[0.06]',
-    hex: '#fb7185',
-    label: 'Poor',
+    hex: '#f43f5e',
+    label: 'Priority',
     icon: '❌',
   }
 }

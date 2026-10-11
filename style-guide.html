@@ -1,0 +1,1205 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A reusable client style system for JM Sites projects.">
+  <title>JM Sites · Client Style System</title>
+
+  <style>
+    /*
+      JM Sites reusable client CSS
+
+      1. Change the client tokens.
+      2. Build sections and containers.
+      3. Apply typography and components.
+
+      Custom classes and variables start with jm-.
+      is- classes are modifiers used with a jm- class.
+    */
+
+    /* 01 · CLIENT TOKENS
+    ================================================== */
+
+    :root {
+      --jm-color-primary: #6d28d9;
+      --jm-color-secondary: #22d3ee;
+      --jm-color-accent: #ec4899;
+      --jm-color-background: #ffffff;
+      --jm-color-surface: #f6f7fb;
+      --jm-color-dark: #17151f;
+      --jm-color-text: #17151f;
+      --jm-color-muted: #625f6b;
+      --jm-color-border: #d9d7df;
+      --jm-color-input-border: #8c8992;
+      --jm-color-focus: #2563eb;
+      --jm-color-error: #b42318;
+
+      --jm-color-on-primary: #ffffff;
+      --jm-color-on-secondary: #17151f;
+      --jm-color-on-accent: #17151f;
+      --jm-color-on-dark: #ffffff;
+
+      --jm-gradient-brand: linear-gradient(
+        135deg,
+        var(--jm-color-primary),
+        var(--jm-color-accent)
+      );
+      --jm-gradient-cool: linear-gradient(
+        135deg,
+        var(--jm-color-primary),
+        var(--jm-color-secondary)
+      );
+      --jm-gradient-dark: linear-gradient(
+        135deg,
+        var(--jm-color-dark),
+        var(--jm-color-primary)
+      );
+
+      --jm-font-body: Arial, Helvetica, sans-serif;
+      --jm-font-heading: Arial, Helvetica, sans-serif;
+      --jm-type-display: clamp(2.75rem, 6vw, 5rem);
+      --jm-type-h1: clamp(2.25rem, 5vw, 4rem);
+      --jm-type-h2: clamp(1.75rem, 3.5vw, 3rem);
+      --jm-type-h3: clamp(1.3rem, 2.5vw, 2rem);
+      --jm-type-lead: clamp(1.15rem, 2vw, 1.4rem);
+
+      --jm-width-container: 75rem;
+      --jm-width-reading: 48rem;
+      --jm-gutter: clamp(1rem, 4vw, 2.5rem);
+      --jm-space-small: .75rem;
+      --jm-space-medium: 1.25rem;
+      --jm-space-large: 2rem;
+      --jm-space-section: clamp(3.5rem, 7vw, 6rem);
+
+      --jm-radius-small: .5rem;
+      --jm-radius-medium: 1rem;
+      --jm-radius-large: 1.5rem;
+    }
+
+    /* 02 · BASELINE
+    ================================================== */
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--jm-color-background);
+      color: var(--jm-color-text);
+      font: 1rem/1.6 var(--jm-font-body);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    a {
+      color: var(--jm-color-primary);
+      text-underline-offset: .2em;
+    }
+
+    a:hover {
+      color: var(--jm-color-primary);
+      text-decoration-thickness: .15em;
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--jm-color-focus);
+      outline-offset: 3px;
+    }
+
+    /* 03 · LAYOUT
+       Section → container → content
+    ================================================== */
+
+    .jm-section {
+      padding-block: var(--jm-space-section);
+      scroll-margin-top: 5rem;
+    }
+
+    .jm-container {
+      width: min(
+        calc(100% - var(--jm-gutter) - var(--jm-gutter)),
+        var(--jm-width-container)
+      );
+      margin-inline: auto;
+    }
+
+    .jm-reading {
+      max-width: var(--jm-width-reading);
+    }
+
+    .jm-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--jm-space-medium);
+    }
+
+    .jm-grid.is-two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .jm-grid.is-four {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .jm-grid.is-asymmetric {
+      grid-template-columns: minmax(9rem, 15rem) minmax(0, 1fr);
+    }
+
+    .jm-stack {
+      display: grid;
+      gap: var(--jm-space-medium);
+    }
+
+    .jm-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--jm-space-medium);
+    }
+
+    /* Only reset margins where our gap controls the spacing. */
+    .jm-grid > *,
+    .jm-stack > *,
+    .jm-actions > * {
+      margin-block: 0;
+    }
+
+    .jm-pad-small {
+      padding: var(--jm-space-small);
+    }
+
+    .jm-pad-medium {
+      padding: var(--jm-space-medium);
+    }
+
+    .jm-pad-large {
+      padding: var(--jm-space-large);
+    }
+
+    /* 04 · TYPOGRAPHY
+    ================================================== */
+
+    .jm-type-display,
+    .jm-type-h1,
+    .jm-type-h2,
+    .jm-type-h3 {
+      margin: 0;
+      color: inherit;
+      font-family: var(--jm-font-heading);
+      font-weight: 700;
+      line-height: 1.15;
+      text-wrap: balance;
+    }
+
+    .jm-type-display {
+      font-size: var(--jm-type-display);
+      letter-spacing: -.05em;
+    }
+
+    .jm-type-h1 {
+      font-size: var(--jm-type-h1);
+      letter-spacing: -.04em;
+    }
+
+    .jm-type-h2 {
+      font-size: var(--jm-type-h2);
+      letter-spacing: -.03em;
+    }
+
+    .jm-type-h3 {
+      font-size: var(--jm-type-h3);
+      letter-spacing: -.02em;
+    }
+
+    .jm-type-body {
+      max-width: 65ch;
+      margin: 0;
+      font: 400 1rem/1.6 var(--jm-font-body);
+    }
+
+    .jm-type-lead {
+      max-width: 55ch;
+      margin: 0;
+      font: 400 var(--jm-type-lead)/1.55 var(--jm-font-body);
+    }
+
+    .jm-type-small {
+      margin: 0;
+      color: var(--jm-color-muted);
+      font: 400 .875rem/1.5 var(--jm-font-body);
+    }
+
+    .jm-type-link {
+      font-weight: 700;
+    }
+
+    .jm-type-link:hover {
+      text-decoration: underline;
+    }
+
+    .jm-type-list {
+      margin: 0;
+      padding-left: 1.5rem;
+      list-style-position: outside;
+      line-height: 1.7;
+    }
+
+    .jm-type-list li + li {
+      margin-top: .25rem;
+    }
+
+    .jm-eyebrow {
+      display: inline-block;
+      margin-bottom: .8rem;
+      color: var(--jm-color-primary);
+      font-size: .75rem;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    /* 05 · CONTENT PATTERNS
+    ================================================== */
+
+    .jm-section-heading {
+      max-width: 60rem;
+      margin-bottom: var(--jm-space-large);
+    }
+
+    .jm-section-heading > :first-child {
+      margin-top: 0;
+    }
+
+    .jm-section-heading > p {
+      margin: .65rem 0 0;
+      color: var(--jm-color-muted);
+    }
+
+    .jm-panel {
+      padding: clamp(1.25rem, 3vw, 2rem);
+      border: 1px solid var(--jm-color-border);
+      border-radius: var(--jm-radius-medium);
+      background: var(--jm-color-background);
+      color: var(--jm-color-text);
+    }
+
+    .jm-panel > :first-child {
+      margin-top: 0;
+    }
+
+    .jm-panel.jm-pad-small {
+      padding: var(--jm-space-small);
+    }
+
+    .jm-panel.jm-pad-medium {
+      padding: var(--jm-space-medium);
+    }
+
+    .jm-panel.jm-pad-large {
+      padding: var(--jm-space-large);
+    }
+
+    .jm-hero {
+      padding-block: clamp(3rem, 6vw, 5rem);
+    }
+
+    .jm-hero .jm-type-display {
+      max-width: 15ch;
+    }
+
+    .jm-hero .jm-type-lead {
+      margin-top: 1.3rem;
+    }
+
+    .jm-hero .jm-actions {
+      margin-top: var(--jm-space-large);
+    }
+
+    /* 06 · BUTTONS
+    ================================================== */
+
+    .jm-button,
+    .wp-block-button.jm-button > .wp-block-button__link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      min-height: 2.75rem;
+      padding: .7rem 1.3rem;
+      border: 2px solid transparent;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--jm-color-primary);
+      font: 700 .95rem/1.2 var(--jm-font-body);
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 180ms ease, filter 180ms ease;
+    }
+
+    .jm-button.is-primary,
+    .wp-block-button.jm-button.is-primary > .wp-block-button__link {
+      background: var(--jm-color-primary);
+      color: var(--jm-color-on-primary);
+    }
+
+    .jm-button.is-secondary,
+    .wp-block-button.jm-button.is-secondary > .wp-block-button__link {
+      border-color: var(--jm-color-primary);
+      color: var(--jm-color-primary);
+    }
+
+    .jm-button.is-tertiary,
+    .wp-block-button.jm-button.is-tertiary > .wp-block-button__link {
+      padding-inline: .4rem;
+      text-decoration: underline;
+      text-underline-offset: .2em;
+    }
+
+    /* WordPress puts Additional CSS classes on the Button wrapper. */
+    .wp-block-button.jm-button,
+    .wp-block-button.jm-button:is(
+      .is-primary,
+      .is-secondary,
+      .is-tertiary
+    ) {
+      display: inline-block;
+      min-height: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: none;
+      color: inherit;
+    }
+
+    .jm-button:not(.wp-block-button):is(
+      :hover,
+      :focus-visible
+    ):not(:disabled),
+    .wp-block-button.jm-button >
+    .wp-block-button__link:is(:hover, :focus-visible) {
+      transform: translateY(-2px);
+    }
+
+    .jm-button.is-primary:not(.wp-block-button):not(:disabled):hover,
+    .wp-block-button.jm-button.is-primary >
+    .wp-block-button__link:hover {
+      filter: brightness(.86);
+      color: var(--jm-color-on-primary);
+    }
+
+    .jm-button:disabled {
+      opacity: .48;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* 07 · CARDS
+    ================================================== */
+
+    .jm-card {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+      border: 1px solid var(--jm-color-border);
+      border-radius: var(--jm-radius-large);
+      background: var(--jm-color-background);
+      color: var(--jm-color-text);
+      box-shadow: 0 .5rem 2rem rgba(23, 21, 31, .05);
+    }
+
+    .jm-card-visual {
+      min-height: 9rem;
+      background: var(--jm-color-surface);
+    }
+
+    .jm-card-content {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: .85rem;
+      padding: 1.5rem;
+    }
+
+    .jm-card-title {
+      margin: 0;
+      font: 700 1.4rem/1.25 var(--jm-font-heading);
+      letter-spacing: -.02em;
+    }
+
+    .jm-card-text {
+      margin: 0;
+      color: var(--jm-color-muted);
+      line-height: 1.6;
+    }
+
+    .jm-card-link {
+      display: inline-block;
+      margin-top: auto;
+      font-weight: 700;
+    }
+
+    .jm-card-list {
+      margin: 0;
+      padding-left: 1.5rem;
+      list-style-position: outside;
+      color: var(--jm-color-muted);
+    }
+
+    .jm-card-list li + li {
+      margin-top: .2rem;
+    }
+
+    /* 08 · FORMS
+    ================================================== */
+
+    .jm-form {
+      display: grid;
+      gap: var(--jm-space-medium);
+      max-width: 40rem;
+    }
+
+    .jm-field {
+      display: grid;
+      gap: .4rem;
+    }
+
+    .jm-field-label {
+      font-size: .9rem;
+      font-weight: 700;
+    }
+
+    .jm-field-input {
+      width: 100%;
+      min-height: 2.9rem;
+      padding: .7rem .85rem;
+      border: 1px solid var(--jm-color-input-border);
+      border-radius: var(--jm-radius-small);
+      background: var(--jm-color-background);
+      color: var(--jm-color-text);
+    }
+
+    .jm-field-input::placeholder {
+      color: var(--jm-color-muted);
+    }
+
+    .jm-field-input:focus {
+      border-color: var(--jm-color-focus);
+      outline: 3px solid var(--jm-color-focus);
+      outline-offset: 2px;
+    }
+
+    textarea.jm-field-input {
+      min-height: 7rem;
+      resize: vertical;
+    }
+
+    .jm-field-help {
+      color: var(--jm-color-muted);
+      font-size: .8rem;
+    }
+
+    .jm-field.is-error .jm-field-input {
+      border-color: var(--jm-color-error);
+    }
+
+    .jm-field-error {
+      color: var(--jm-color-error);
+      font-size: .85rem;
+      font-weight: 700;
+    }
+
+    .jm-checkbox {
+      display: flex;
+      align-items: flex-start;
+      gap: .65rem;
+      font-size: .9rem;
+    }
+
+    .jm-checkbox input {
+      flex: 0 0 auto;
+      width: 1.15rem;
+      height: 1.15rem;
+      margin-top: .2rem;
+      accent-color: var(--jm-color-primary);
+    }
+
+    /* 09 · SMALL COMPONENTS
+    ================================================== */
+
+    .jm-badge {
+      display: inline-block;
+      justify-self: start;
+      padding: .25rem .7rem;
+      border-radius: 999px;
+      background: var(--jm-color-surface);
+      color: var(--jm-color-text);
+      font-size: .8rem;
+      font-weight: 700;
+    }
+
+    .jm-badge.is-accent {
+      border: 1px solid var(--jm-color-accent);
+    }
+
+    .jm-alert {
+      padding: 1rem 1.25rem;
+      border-left: 4px solid var(--jm-color-primary);
+      border-radius: var(--jm-radius-small);
+      background: var(--jm-color-surface);
+    }
+
+    .jm-alert p {
+      margin: .3rem 0 0;
+    }
+
+    .jm-divider {
+      border: 0;
+      border-top: 1px solid var(--jm-color-border);
+      margin-block: 1.5rem;
+    }
+
+    .jm-disclosure {
+      border: 1px solid var(--jm-color-border);
+      border-radius: var(--jm-radius-small);
+      background: var(--jm-color-background);
+    }
+
+    .jm-disclosure summary {
+      padding: 1rem 1.2rem;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .jm-disclosure > :not(summary) {
+      margin: 0;
+      padding: 0 1.2rem 1.2rem;
+    }
+
+    /* 10 · OPTIONAL HEADER AND FOOTER
+    ================================================== */
+
+    .jm-header {
+      border-bottom: 1px solid var(--jm-color-border);
+      background: var(--jm-color-background);
+    }
+
+    .jm-header-content {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem 2rem;
+      min-height: 4.75rem;
+      padding-block: .75rem;
+    }
+
+    .jm-brand {
+      color: var(--jm-color-text);
+      text-decoration: none;
+      font-weight: 800;
+      letter-spacing: -.035em;
+      font-size: 1.1rem;
+    }
+
+    .jm-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem 1.1rem;
+    }
+
+    .jm-nav a {
+      color: var(--jm-color-muted);
+      font-size: .9rem;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .jm-nav a:hover {
+      color: var(--jm-color-primary);
+    }
+
+    .jm-footer {
+      padding-block: 2rem;
+      border-top: 1px solid var(--jm-color-border);
+      color: var(--jm-color-muted);
+      font-size: .9rem;
+    }
+
+    /* 11 · UTILITIES
+    ================================================== */
+
+    .jm-text-left {
+      text-align: left;
+    }
+
+    .jm-text-center {
+      text-align: center;
+    }
+
+    .jm-text-right {
+      text-align: right;
+    }
+
+    .jm-surface {
+      background: var(--jm-color-surface);
+    }
+
+    .jm-dark {
+      background: var(--jm-color-dark);
+      color: var(--jm-color-on-dark);
+    }
+
+    .jm-dark .jm-eyebrow,
+    .jm-dark a:not(.jm-button) {
+      color: var(--jm-color-secondary);
+    }
+
+    .jm-dark .jm-type-small {
+      color: inherit;
+      opacity: .8;
+    }
+
+    .jm-dark .jm-section-heading > p {
+      color: inherit;
+      opacity: .8;
+    }
+
+    .jm-bg-primary {
+      background: var(--jm-color-primary);
+      color: var(--jm-color-on-primary);
+    }
+
+    .jm-bg-secondary {
+      background: var(--jm-color-secondary);
+      color: var(--jm-color-on-secondary);
+    }
+
+    .jm-bg-accent {
+      background: var(--jm-color-accent);
+      color: var(--jm-color-on-accent);
+    }
+
+    .jm-gradient-brand {
+      background: var(--jm-gradient-brand);
+    }
+
+    .jm-gradient-cool {
+      background: var(--jm-gradient-cool);
+    }
+
+    .jm-gradient-dark {
+      background: var(--jm-gradient-dark);
+    }
+
+    .jm-visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .jm-visually-hidden:focus-visible {
+      position: fixed;
+      z-index: 1000;
+      top: 1rem;
+      left: 1rem;
+      width: auto;
+      height: auto;
+      margin: 0;
+      padding: .75rem 1rem;
+      overflow: visible;
+      clip: auto;
+      background: var(--jm-color-background);
+    }
+
+    /* 12 · RESPONSIVE
+    ================================================== */
+
+    @media (max-width: 800px) {
+      .jm-grid,
+      .jm-grid.is-four {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .jm-grid,
+      .jm-grid.is-two,
+      .jm-grid.is-four,
+      .jm-grid.is-asymmetric {
+        grid-template-columns: 1fr;
+      }
+
+      .jm-header-content {
+        align-items: flex-start;
+      }
+
+      /* Keeps form controls readable and avoids iPhone focus zoom. */
+      .jm-field-input {
+        font-size: 16px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      .jm-button,
+      .wp-block-button.jm-button > .wp-block-button__link {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <a class="jm-visually-hidden" href="#main">Skip to content</a>
+
+  <header class="jm-header">
+    <div class="jm-container jm-header-content">
+      <a class="jm-brand" href="#top">JM Sites / Client system</a>
+
+      <nav class="jm-nav" aria-label="System sections">
+        <a href="#tokens">Tokens</a>
+        <a href="#layout">Layout</a>
+        <a href="#type">Type</a>
+        <a href="#buttons">Buttons</a>
+        <a href="#cards">Cards</a>
+        <a href="#forms">Forms</a>
+        <a href="#components">Components</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="top" class="jm-hero" aria-labelledby="page-title">
+      <div class="jm-container">
+        <span class="jm-eyebrow">Reusable client system</span>
+        <h1 id="page-title" class="jm-type-display">
+          One clean foundation for every build.
+        </h1>
+        <p class="jm-type-lead">
+          Change the tokens, then copy the section, layout and component
+          classes into a client build.
+        </p>
+
+        <div class="jm-actions">
+          <a class="jm-button is-primary" href="#tokens">
+            Start with tokens
+          </a>
+          <a class="jm-button is-secondary" href="#layout">
+            Explore layout
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section id="tokens" class="jm-section jm-surface"
+             aria-labelledby="tokens-title">
+      <div class="jm-container">
+        <div class="jm-section-heading">
+          <span class="jm-eyebrow">01 / Set the client</span>
+          <h2 id="tokens-title" class="jm-type-h2">
+            Change the variables first
+          </h2>
+          <p>
+            Edit <code>:root</code> above. Set the brand colors, text
+            contrast, fonts, widths, spacing and corners.
+          </p>
+        </div>
+
+        <div class="jm-grid">
+          <article class="jm-card">
+            <div class="jm-card-visual jm-bg-primary" aria-hidden="true"></div>
+            <div class="jm-card-content">
+              <h3 class="jm-card-title">Primary</h3>
+              <p class="jm-card-text">
+                <code>--jm-color-primary</code><br>
+                <code>--jm-color-on-primary</code>
+              </p>
+            </div>
+          </article>
+
+          <article class="jm-card">
+            <div class="jm-card-visual jm-bg-secondary" aria-hidden="true"></div>
+            <div class="jm-card-content">
+              <h3 class="jm-card-title">Secondary</h3>
+              <p class="jm-card-text">
+                <code>--jm-color-secondary</code>
+              </p>
+            </div>
+          </article>
+
+          <article class="jm-card">
+            <div class="jm-card-visual jm-bg-accent" aria-hidden="true"></div>
+            <div class="jm-card-content">
+              <h3 class="jm-card-title">Accent</h3>
+              <p class="jm-card-text">
+                <code>--jm-color-accent</code>
+              </p>
+            </div>
+          </article>
+
+          <article class="jm-card">
+            <div class="jm-card-visual jm-gradient-brand" aria-hidden="true"></div>
+            <div class="jm-card-content">
+              <h3 class="jm-card-title">Brand gradient</h3>
+              <p class="jm-card-text"><code>--jm-gradient-brand</code></p>
+            </div>
+          </article>
+
+          <article class="jm-card">
+            <div class="jm-card-visual jm-gradient-cool" aria-hidden="true"></div>
+            <div class="jm-card-content">
+              <h3 class="jm-card-title">Cool gradient</h3>
+              <p class="jm-card-text"><code>--jm-gradient-cool</code></p>
+            </div>
+          </article>
+
+          <article class="jm-card">
+            <div class="jm-card-visual jm-gradient-dark" aria-hidden="true"></div>
+            <div class="jm-card-content">
+              <h3 class="jm-card-title">Dark gradient</h3>
+              <p class="jm-card-text"><code>--jm-gradient-dark</code></p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="layout" class="jm-section" aria-labelledby="layout-title">
+      <div class="jm-container">
+        <div class="jm-section-heading">
+          <span class="jm-eyebrow">02 / Structure the page</span>
+          <h2 id="layout-title" class="jm-type-h2">
+            Section → container → content
+          </h2>
+          <p>
+            <code>jm-section</code> → <code>jm-container</code> →
+            content. Add <code>jm-reading</code> for long text.
+          </p>
+        </div>
+
+        <div class="jm-grid is-two">
+          <div class="jm-panel jm-pad-small jm-stack">
+            <h3 class="jm-type-h3">Widths</h3>
+            <p class="jm-type-body">
+              Outer Group: <code>jm-section</code><br>
+              Inner Group: <code>jm-container</code><br>
+              Long text: <code>jm-reading</code>
+            </p>
+          </div>
+
+          <div class="jm-panel jm-pad-large jm-stack">
+            <h3 class="jm-type-h3">Spacing</h3>
+            <p class="jm-type-body">
+              Padding: <code>jm-pad-small</code>,
+              <code>jm-pad-medium</code>,
+              <code>jm-pad-large</code><br>
+              Vertical content: <code>jm-stack</code><br>
+              Action row: <code>jm-actions</code>
+            </p>
+          </div>
+        </div>
+
+        <div class="jm-section-heading">
+          <h3 class="jm-type-h3">Grid choices</h3>
+          <p><code>jm-grid</code> plus an optional modifier.</p>
+        </div>
+
+        <div class="jm-stack">
+          <div class="jm-grid is-two">
+            <div class="jm-panel jm-surface">jm-grid is-two</div>
+            <div class="jm-panel jm-surface">2</div>
+          </div>
+
+          <div class="jm-grid">
+            <div class="jm-panel jm-surface">jm-grid</div>
+            <div class="jm-panel jm-surface">2</div>
+            <div class="jm-panel jm-surface">3</div>
+          </div>
+
+          <div class="jm-grid is-four">
+            <div class="jm-panel jm-surface">jm-grid is-four</div>
+            <div class="jm-panel jm-surface">2</div>
+            <div class="jm-panel jm-surface">3</div>
+            <div class="jm-panel jm-surface">4</div>
+          </div>
+
+          <div class="jm-grid is-asymmetric">
+            <div class="jm-panel jm-surface">Narrow</div>
+            <div class="jm-panel jm-surface">jm-grid is-asymmetric</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="type" class="jm-section jm-surface"
+             aria-labelledby="type-title">
+      <div class="jm-container">
+        <div class="jm-section-heading">
+          <span class="jm-eyebrow">03 / Apply type</span>
+          <h2 id="type-title" class="jm-type-h2">Typography</h2>
+          <p>Choose the HTML heading level first; the class sets its size.</p>
+        </div>
+
+        <div class="jm-stack jm-reading">
+          <div class="jm-panel jm-stack">
+            <span class="jm-type-small">jm-type-display</span>
+            <p class="jm-type-display">A clear first impression.</p>
+          </div>
+
+          <div class="jm-panel jm-stack">
+            <span class="jm-type-small">jm-type-h1</span>
+            <p class="jm-type-h1">Lead with the answer.</p>
+          </div>
+
+          <div class="jm-panel jm-stack">
+            <span class="jm-type-small">jm-type-h2</span>
+            <p class="jm-type-h2">Make each section useful.</p>
+          </div>
+
+          <div class="jm-panel jm-stack">
+            <span class="jm-type-small">jm-type-h3</span>
+            <p class="jm-type-h3">Support the main point.</p>
+          </div>
+
+          <div class="jm-panel jm-stack">
+            <span class="jm-type-small">
+              jm-type-lead · jm-type-body · jm-type-small
+            </span>
+            <p class="jm-type-lead">Lead text introduces a section.</p>
+            <p class="jm-type-body">
+              Body text stays at a comfortable reading width.
+            </p>
+            <p class="jm-type-small">Small supporting text.</p>
+            <a class="jm-type-link" href="#buttons">jm-type-link</a>
+            <ul class="jm-type-list">
+              <li>First list item with enough text to wrap onto another line
+                  while staying aligned with its own text.</li>
+              <li>Second list item.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="buttons" class="jm-section"
+             aria-labelledby="buttons-title">
+      <div class="jm-container">
+        <div class="jm-section-heading">
+          <span class="jm-eyebrow">04 / Add actions</span>
+          <h2 id="buttons-title" class="jm-type-h2">Buttons</h2>
+          <p><code>jm-button</code> plus one modifier.</p>
+        </div>
+
+        <div class="jm-panel jm-stack">
+          <div class="jm-actions">
+            <button class="jm-button is-primary" type="button">
+              Primary
+            </button>
+            <button class="jm-button is-secondary" type="button">
+              Secondary
+            </button>
+            <a class="jm-button is-tertiary" href="#cards">
+              Tertiary link →
+            </a>
+            <button class="jm-button" type="button" disabled>
+              Disabled
+            </button>
+          </div>
+
+          <p class="jm-type-small">
+            WordPress Button class: <code>jm-button is-primary</code>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="cards" class="jm-section jm-surface"
+             aria-labelledby="cards-title">
+      <div class="jm-container">
+        <div class="jm-section-heading">
+          <span class="jm-eyebrow">05 / Repeat content</span>
+          <h2 id="cards-title" class="jm-type-h2">Cards and panels</h2>
+          <p><code>jm-panel</code> or <code>jm-card</code>.</p>
+        </div>
+
+        <div class="jm-grid">
+          <article class="jm-card">
+            <div class="jm-card-visual jm-gradient-cool"
+                 aria-hidden="true"></div>
+            <div class="jm-card-content">
+              <h3 class="jm-card-title">Project card</h3>
+              <p class="jm-card-text">
+                Short supporting copy for the card.
+              </p>
+              <a class="jm-card-link" href="#components">
+                Explore components
+              </a>
+            </div>
+          </article>
+
+          <article class="jm-card">
+            <div class="jm-card-visual jm-gradient-dark"
+                 aria-hidden="true"></div>
+            <div class="jm-card-content">
+              <h3 class="jm-card-title">Service card</h3>
+              <p class="jm-card-text">A card with a short list.</p>
+              <ul class="jm-card-list">
+                <li>Planning with longer text that can wrap cleanly</li>
+                <li>Build</li>
+                <li>Support</li>
+              </ul>
+              <a class="jm-card-link" href="#forms">
+                View form styles
+              </a>
+            </div>
+          </article>
+
+          <div class="jm-panel jm-stack">
+            <h3 class="jm-type-h3">Simple panel</h3>
+            <p class="jm-type-body">
+              A bordered box without a visual.
+            </p>
+            <span class="jm-badge is-accent">Optional detail</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="forms" class="jm-section" aria-labelledby="forms-title">
+      <div class="jm-container">
+        <div class="jm-section-heading">
+          <span class="jm-eyebrow">06 / Collect input</span>
+          <h2 id="forms-title" class="jm-type-h2">Forms</h2>
+          <p>Labels, inputs, help, error and consent. Demo only.</p>
+        </div>
+
+        <div class="jm-panel">
+          <form class="jm-form" action="#" onsubmit="return false">
+            <div class="jm-field">
+              <label class="jm-field-label" for="name">Name</label>
+              <input class="jm-field-input" id="name" name="name"
+                     autocomplete="name" placeholder="Your name">
+              <span class="jm-field-help">Visible helper text.</span>
+            </div>
+
+            <div class="jm-field">
+              <label class="jm-field-label" for="service">Service</label>
+              <select class="jm-field-input" id="service" name="service">
+                <option value="">Choose a service</option>
+                <option>Website build</option>
+                <option>Website improvements</option>
+                <option>Ongoing support</option>
+              </select>
+            </div>
+
+            <div class="jm-field">
+              <label class="jm-field-label" for="message">Message</label>
+              <textarea class="jm-field-input" id="message" name="message"
+                        placeholder="Tell me what you need"></textarea>
+            </div>
+
+            <div class="jm-field is-error">
+              <label class="jm-field-label" for="email-example">
+                Email · error example
+              </label>
+              <input class="jm-field-input" id="email-example"
+                     type="email" value="not-an-email"
+                     aria-invalid="true" aria-describedby="email-error">
+              <span class="jm-field-error" id="email-error">
+                Enter a valid email address.
+              </span>
+            </div>
+
+            <label class="jm-checkbox">
+              <input type="checkbox" name="consent">
+              <span>I agree to be contacted about my enquiry.</span>
+            </label>
+
+            <div>
+              <button class="jm-button is-primary" type="button">
+                Send enquiry
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section id="components" class="jm-section jm-surface"
+             aria-labelledby="components-title">
+      <div class="jm-container">
+        <div class="jm-section-heading">
+          <span class="jm-eyebrow">07 / Add details</span>
+          <h2 id="components-title" class="jm-type-h2">Components</h2>
+          <p>Badges, alerts, disclosure and surfaces.</p>
+        </div>
+
+        <div class="jm-stack jm-reading">
+          <div class="jm-panel jm-stack">
+            <h3 class="jm-type-h3">Badges and alerts</h3>
+            <div class="jm-actions">
+              <span class="jm-badge">Standard badge</span>
+              <span class="jm-badge is-accent">Accent badge</span>
+            </div>
+            <div class="jm-alert" role="note">
+              <strong>Helpful note</strong>
+              <p>Short supporting content.</p>
+            </div>
+          </div>
+
+          <div class="jm-panel jm-stack">
+            <h3 class="jm-type-h3">Divider and disclosure</h3>
+            <hr class="jm-divider">
+            <details class="jm-disclosure">
+              <summary>Open this disclosure</summary>
+              <p>Content revealed when opened.</p>
+            </details>
+          </div>
+
+          <div class="jm-panel jm-dark jm-stack">
+            <span class="jm-eyebrow">Dark surface</span>
+            <h3 class="jm-type-h3">A second surface.</h3>
+            <p class="jm-type-body">
+              The same typography on <code>jm-dark</code>.
+            </p>
+          </div>
+
+          <div class="jm-panel jm-stack">
+            <h3 class="jm-type-h3">Alignment</h3>
+            <p class="jm-type-body jm-text-left">Left-aligned text.</p>
+            <p class="jm-type-body jm-text-center">Centred text.</p>
+            <p class="jm-type-body jm-text-right">Right-aligned text.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="jm-footer">
+    <div class="jm-container">JM Sites · Client style system</div>
+  </footer>
+</body>
+</html>

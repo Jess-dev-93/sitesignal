@@ -1,6 +1,6 @@
-// Temporary development/preview bypass for auth.
-// Set this to true to restore normal Supabase auth enforcement later.
 export const AUTH_REQUIRED = false
+
+export const GUEST_USER_ID = 'demo-user'
 
 export function isGuestModeEnabled() {
   return !AUTH_REQUIRED

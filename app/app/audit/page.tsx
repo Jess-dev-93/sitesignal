@@ -9,6 +9,8 @@ import PageIntroCard from '../../../components/layout/PageIntroCard'
 import ProfileModal from '../../../components/profile/ProfileModal'
 import AuditForm from '../../../components/AuditForm'
 import AuditReport from '../../../components/AuditReport'
+import FullSiteAuditReport from '../../../components/FullSiteAuditReport'
+import type { FullSiteAuditResult } from '../../../components/FullSiteAuditReport'
 import AuditHistory from '../../../components/AuditHistory'
 import UsageLimitBanner from '../../../components/UsageLimitBanner'
 import { Card, CardContent } from '../../../components/ui/card'
@@ -101,67 +103,7 @@ interface PlanInfo {
   searchLimit: number | null
 }
 
-interface SiteDiscoveryResult {
-  success: boolean
-  discovery?: {
-    discoveredPages: string[]
-    recommendedPages: string[]
-    discoveredCount: number
-    source: string
-    url: string
-    origin: string
-  }
-  lightweightResults?: Array<{
-    url: string
-    title: string
-    metaDescription: string
-    h1Count: number
-    canonicalPresent: boolean
-    canonicalValue: string
-    robotsNoindex: boolean
-    langPresent: boolean
-    viewportPresent: boolean
-    imageCount: number
-    imagesMissingAlt: number
-    structuredDataPresent: boolean
-    ogPresent: boolean
-    internalLinks: number
-    status: string
-    hasMissingTitle: boolean
-    hasMissingMetaDescription: boolean
-    hasMissingH1: boolean
-    hasMultipleH1: boolean
-    hasNoindex: boolean
-  }>
-  issueSummary?: Array<{ label: string; count: number; percentage: number }>
-  selectedDeepAuditPages?: string[]
-  deepResults?: Array<{
-    url: string
-    pageTitle: string
-    scores: {
-      mobile: { performance: number; seo: number; accessibility: number; bestPractices: number }
-      desktop: { performance: number; seo: number; accessibility: number; bestPractices: number }
-      overallScore: number
-    } | null
-  }>
-  deepSummary?: {
-    count: number
-    averageMobilePerformance: number
-    averageDesktopPerformance: number
-    averageAccessibility: number
-    averageBestPractices: number
-    averageSeo: number
-    highestPerformingPage: { url: string; pageTitle: string; scores: { mobile: { performance: number } } } | null
-    lowestPerformingPage: { url: string; pageTitle: string; scores: { mobile: { performance: number } } } | null
-  }
-  siteReport?: {
-    executiveSummary: string
-    keyIssues: string[]
-    businessImpact: string[]
-    recommendations: string[]
-  }
-  error?: string
-}
+
 
 interface WorkspaceLead {
   title?: string
@@ -193,6 +135,13 @@ const FALLBACK_TECH_STACK: TechStack = {
   pageBuilder: null,
   hosting: 'Unknown hosting',
   confidence: 'low',
+  analytics: [],
+  tagManagers: [],
+  marketing: [],
+  forms: [],
+  consent: [],
+  integrations: [],
+  signals: [],
 }
 
 function normaliseUrl(value: string) {
@@ -338,7 +287,8 @@ function AuditPageInner() {
   const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null)
 
   const [auditResult, setAuditResult] = useState<AuditRecord | null>(null)
-  const [siteDiscoveryResult, setSiteDiscoveryResult] = useState<SiteDiscoveryResult | null>(null)
+  const [siteDiscoveryResult, setSiteDiscoveryResult] =
+  useState<FullSiteAuditResult | null>(null)
   const [auditHistory, setAuditHistory] = useState<HistoryEntry[]>([])
   const [activeView, setActiveView] = useState<'tool' | 'history'>('tool')
   const [auditMode, setAuditMode] = useState<AuditMode>('mobile')
@@ -896,7 +846,9 @@ function AuditPageInner() {
               </>
             )}
 
-            {siteDiscoveryResult && !isRunning && (
+            {siteDiscoveryResult &&
+  !isRunning &&
+  !siteDiscoveryResult.siteReport?.roadmap && (
               <div className="rounded-[28px] border border-violet-500/20 bg-violet-500/[0.06] p-8 backdrop-blur-sm">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
@@ -994,6 +946,14 @@ function AuditPageInner() {
                 )}
               </div>
             )}
+            {siteDiscoveryResult &&
+  !isRunning &&
+  siteDiscoveryResult.siteReport?.roadmap && (
+    <FullSiteAuditReport
+      result={siteDiscoveryResult}
+      profile={profile}
+    />
+  )}
 
             {errorMsg && !isRunning && (
               <div className="flex items-start gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/[0.06] px-5 py-4">

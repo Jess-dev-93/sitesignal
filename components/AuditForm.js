@@ -1,41 +1,50 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { normaliseAuditUrl } from '../lib/normaliseAuditUrl'
 
 const EXAMPLE_SITES = [
-  { label: 'Plumber Website', url: 'https://joesplumbing.com.au' },
-  { label: 'Law Firm Website', url: 'https://smithlegal.com.au' },
-  { label: 'Dental Website', url: 'https://brightsmiledental.com.au' },
+  {
+    label: 'Plumber Website',
+    url: 'https://joesplumbing.com.au/',
+  },
+  {
+    label: 'Law Firm Website',
+    url: 'https://smithlegal.com.au/',
+  },
+  {
+    label: 'Dental Website',
+    url: 'https://brightsmiledental.com.au/',
+  },
 ]
 
 const SCAN_MODES = [
   {
     id: 'quick',
     label: 'Quick Audit',
-    description: 'Single-page scan using the existing Lighthouse-based audit flow.',
+    description:
+      'Run a detailed Lighthouse review of one page across mobile and desktop.',
   },
   {
     id: 'full-site',
     label: 'Full Site Audit',
-    description: 'Discover the site pages first, then highlight the best pages for a future deep audit.',
+    description:
+      'Discover important pages across the website and identify representative pages for deeper review.',
   },
 ]
 
-function normaliseUrl(value) {
-  const trimmed = value.trim()
-  if (!trimmed) return ''
-
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-    return trimmed
-  }
-
-  return `https://${trimmed}`
-}
-
 function isLikelyValidUrl(value) {
+  const normalisedUrl = normaliseAuditUrl(value)
+
+  if (!normalisedUrl) return false
+
   try {
-    const url = new URL(normaliseUrl(value))
-    return !!url.hostname && url.hostname.includes('.')
+    const parsedUrl = new URL(normalisedUrl)
+
+    return (
+      ['http:', 'https:'].includes(parsedUrl.protocol) &&
+      parsedUrl.hostname.includes('.')
+    )
   } catch {
     return false
   }
@@ -52,26 +61,37 @@ export default function AuditForm({
   const [error, setError] = useState('')
 
   useEffect(() => {
-    setInputValue(initialUrl || '')
+    const cleanInitialUrl = initialUrl
+      ? normaliseAuditUrl(initialUrl)
+      : ''
+
+    setInputValue(cleanInitialUrl || initialUrl || '')
     setError('')
   }, [initialUrl])
 
   const canSubmit = useMemo(() => {
-    return inputValue.trim().length > 0 && isLikelyValidUrl(inputValue)
+    return (
+      inputValue.trim().length > 0 &&
+      isLikelyValidUrl(inputValue)
+    )
   }, [inputValue])
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const handleSubmit = (event) => {
+    event.preventDefault()
 
-    const finalUrl = normaliseUrl(inputValue)
+    const finalUrl = normaliseAuditUrl(inputValue)
 
     if (!finalUrl) {
-      setError('Please enter a website URL.')
+      setError(
+        'Please enter a valid website URL like business.com.au'
+      )
       return
     }
 
     if (!isLikelyValidUrl(finalUrl)) {
-      setError('Please enter a valid URL like business.com.au')
+      setError(
+        'Please enter a valid website URL like business.com.au'
+      )
       return
     }
 
@@ -86,14 +106,29 @@ export default function AuditForm({
       return
     }
 
-    const finalUrl = normaliseUrl(inputValue)
-    setInputValue(finalUrl)
+    const finalUrl = normaliseAuditUrl(inputValue)
 
-    if (!isLikelyValidUrl(finalUrl)) {
-      setError('Please enter a valid URL like business.com.au')
-    } else {
-      setError('')
+    if (!finalUrl || !isLikelyValidUrl(finalUrl)) {
+      setError(
+        'Please enter a valid website URL like business.com.au'
+      )
+      return
     }
+
+    setInputValue(finalUrl)
+    setError('')
+  }
+
+  const handleExampleClick = (url) => {
+    const cleanUrl = normaliseAuditUrl(url)
+
+    setInputValue(cleanUrl || url)
+    setError('')
+  }
+
+  const handleClear = () => {
+    setInputValue('')
+    setError('')
   }
 
   const isQuickScan = scanMode === 'quick'
@@ -104,9 +139,11 @@ export default function AuditForm({
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           Scan mode
         </p>
+
         <div className="grid gap-2 sm:grid-cols-2">
           {SCAN_MODES.map((mode) => {
             const selected = scanMode === mode.id
+
             return (
               <button
                 key={mode.id}
@@ -122,7 +159,9 @@ export default function AuditForm({
                 <div className="flex items-center gap-2">
                   <span
                     className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                      selected ? 'border-success bg-success/20' : 'border-white/20'
+                      selected
+                        ? 'border-success bg-success/20'
+                        : 'border-white/20'
                     }`}
                     aria-hidden="true"
                   >
@@ -130,8 +169,12 @@ export default function AuditForm({
                       <span className="h-2 w-2 rounded-full bg-success" />
                     ) : null}
                   </span>
-                  <span className="text-sm font-semibold text-foreground">{mode.label}</span>
+
+                  <span className="text-sm font-semibold text-foreground">
+                    {mode.label}
+                  </span>
                 </div>
+
                 <p className="mt-2 pl-6 text-xs leading-relaxed text-muted-foreground">
                   {mode.description}
                 </p>
@@ -152,10 +195,7 @@ export default function AuditForm({
         {inputValue && !isLoading && (
           <button
             type="button"
-            onClick={() => {
-              setInputValue('')
-              setError('')
-            }}
+            onClick={handleClear}
             className="text-xs font-medium text-muted-foreground transition hover:text-secondary-foreground"
           >
             Clear
@@ -180,13 +220,20 @@ export default function AuditForm({
             spellCheck="false"
             autoFocus={!initialUrl}
             value={inputValue}
-            onChange={(e) => {
-              setInputValue(e.target.value)
-              if (error) setError('')
+            onChange={(event) => {
+              setInputValue(event.target.value)
+
+              if (error) {
+                setError('')
+              }
             }}
             onBlur={handleBlur}
             placeholder="Enter a website URL, e.g. business.com.au"
             disabled={isLoading}
+            aria-invalid={Boolean(error)}
+            aria-describedby={
+              error ? 'audit-url-error' : 'audit-url-help'
+            }
             className={`w-full rounded-2xl border bg-input py-3.5 pl-12 pr-4 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:ring-4 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base ${
               error
                 ? 'border-rose-400/40 focus:border-rose-400 focus:ring-rose-500/10'
@@ -216,18 +263,27 @@ export default function AuditForm({
                   stroke="currentColor"
                   strokeWidth="4"
                 />
+
                 <path
                   className="opacity-75"
                   fill="currentColor"
                   d="M4 12a8 8 0 018-8v8z"
                 />
               </svg>
-              {isQuickScan ? 'Running quick audit…' : 'Discovering site pages…'}
+
+              {isQuickScan
+                ? 'Running quick audit…'
+                : 'Discovering site pages…'}
             </>
           ) : (
             <>
-              <span aria-hidden="true">{isQuickScan ? '⚡' : '📊'}</span>
-              {isQuickScan ? 'Run Quick Scan' : 'Run Full Audit'}
+              <span aria-hidden="true">
+                {isQuickScan ? '⚡' : '📊'}
+              </span>
+
+              {isQuickScan
+                ? 'Run Quick Audit'
+                : 'Run Full Site Audit'}
             </>
           )}
         </button>
@@ -235,12 +291,20 @@ export default function AuditForm({
 
       <div className="mt-2 flex flex-col gap-1">
         {error ? (
-          <p className="text-xs text-rose-300">{error}</p>
+          <p
+            id="audit-url-error"
+            className="text-xs text-rose-300"
+          >
+            {error}
+          </p>
         ) : (
-          <p className="text-xs text-muted-foreground">
+          <p
+            id="audit-url-help"
+            className="text-xs text-muted-foreground"
+          >
             {isQuickScan
-              ? 'Quick Audit keeps the existing single-page experience intact.'
-              : 'Full Site Audit discovers the site pages first and highlights the most important ones for later deep auditing.'}
+              ? 'Audits one page using separate mobile and desktop Lighthouse tests.'
+              : 'Discovers important pages across the website and selects representative pages for deeper review.'}
           </p>
         )}
       </div>
@@ -255,10 +319,7 @@ export default function AuditForm({
             <button
               key={site.label}
               type="button"
-              onClick={() => {
-                setInputValue(site.url)
-                setError('')
-              }}
+              onClick={() => handleExampleClick(site.url)}
               disabled={isLoading}
               className="rounded-full border border-border bg-secondary/50 px-3 py-1 text-xs font-medium text-secondary-foreground transition hover:border-blue-400/30 hover:bg-blue-500/10 hover:text-blue-200 disabled:opacity-40"
             >

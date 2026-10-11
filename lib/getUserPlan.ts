@@ -37,7 +37,7 @@ export async function getUserPlan(userId: string): Promise<UserPlan> {
       .maybeSingle(),
   ])
 
-  const plan = (planResult.data?.plan || 'starter') as PlanKey
+  const plan = (planResult.data?.plan || 'free') as PlanKey
   const status = planResult.data?.status || 'active'
   const cancelAtPeriodEnd = planResult.data?.cancel_at_period_end || false
   const currentPeriodEnd = planResult.data?.current_period_end || null
@@ -45,7 +45,7 @@ export async function getUserPlan(userId: string): Promise<UserPlan> {
   const auditCount = usageResult.data?.audit_count || 0
   const searchCount = usageResult.data?.search_count || 0
 
-  const limits = PLAN_LIMITS[plan]
+  const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free
   const auditLimit = limits.audits === Infinity ? 999999 : limits.audits
   const searchLimit = limits.searches === Infinity ? 999999 : limits.searches
 

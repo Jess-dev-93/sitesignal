@@ -86,7 +86,7 @@ const MAIN_LINKS = [
   { href: '/app', label: 'Dashboard', icon: 'grid' as const },
   { href: '/app/leads', label: 'Leads', icon: 'users' as const },
   { href: '/app/audit', label: 'Audit', icon: 'file' as const },
-  { href: '/app/outreach', label: 'Outreach', icon: 'send' as const },
+  
   { href: '/app/pipeline', label: 'Pipeline', icon: 'branch' as const },
 ]
 

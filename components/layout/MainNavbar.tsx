@@ -46,14 +46,14 @@ function getProfileSubheading(profile: UserProfile): string {
 }
 
 // ─── Nav link config ──────────────────────────────────────────────────────────
-// ✅ Outreach flipped to comingSoon: false — page is live
+
 // ✅ Pipeline still coming soon — page not built yet
 
 const APP_NAV_LINKS = [
   { href: '/app',          label: 'Dashboard', icon: '🏠', comingSoon: false },
   { href: '/app/leads',    label: 'Leads',     icon: '🎯', comingSoon: false },
   { href: '/app/audit',    label: 'Audit',     icon: '📊', comingSoon: false },
-  { href: '/app/outreach', label: 'Outreach',  icon: '✉️', comingSoon: false },
+  
   { href: '/app/pipeline', label: 'Pipeline',  icon: '📞', comingSoon: false },
 ]
 
