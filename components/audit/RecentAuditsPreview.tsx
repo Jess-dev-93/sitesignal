@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { computeOpportunityScore, normalizeScores } from '../../lib/opportunityScore'
+import type { normalizeScores } from '../../lib/opportunityScore'
 import { displaySiteName, faviconUrl } from '../../lib/pageMeta'
 import { Badge } from '../ui/Badge'
 
@@ -38,7 +38,7 @@ export default function RecentAuditsPreview({
         <div>
           <h3 className="text-sm font-semibold text-foreground">Recent audits</h3>
           <p className="text-xs text-muted-foreground">
-            Reopen a scan to continue to outreach
+            Reopen an audit to review its findings
           </p>
         </div>
         <button
@@ -51,10 +51,7 @@ export default function RecentAuditsPreview({
       </div>
       <div className="divide-y divide-border">
         {entries.map((entry) => {
-          const opp = computeOpportunityScore(
-            normalizeScores(entry),
-            entry.report?.keyIssues ?? []
-          )
+          
           const name = displaySiteName(entry.url, entry.pageTitle)
 
           return (
@@ -80,17 +77,9 @@ export default function RecentAuditsPreview({
                   {entry.url.replace(/^https?:\/\//, '')}
                 </p>
               </div>
-              <Badge
-                variant={
-                  opp.level === 'HIGH'
-                    ? 'success'
-                    : opp.level === 'MEDIUM'
-                      ? 'warning'
-                      : 'muted'
-                }
-              >
-                {opp.score} opportunity
-              </Badge>
+            <Badge variant="muted">
+  View audit
+</Badge>
             </button>
           )
         })}

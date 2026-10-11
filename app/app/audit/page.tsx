@@ -1,1224 +1,878 @@
 'use client'
 
-import { Suspense, useEffect, useState, useCallback, useMemo } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useSupabaseSession } from '../../../lib/useSupabaseSession'
-import { NextPageProps, useUnwrapNextPageProps } from '../../../lib/nextPageProps'
-import AppPageShell from '../../../components/layout/AppPageShell'
-import PageIntroCard from '../../../components/layout/PageIntroCard'
-import ProfileModal from '../../../components/profile/ProfileModal'
-import AuditForm from '../../../components/AuditForm'
-import AuditReport from '../../../components/AuditReport'
-import FullSiteAuditReport from '../../../components/FullSiteAuditReport'
-import type { FullSiteAuditResult } from '../../../components/FullSiteAuditReport'
-import AuditHistory from '../../../components/AuditHistory'
-import UsageLimitBanner from '../../../components/UsageLimitBanner'
-import { Card, CardContent } from '../../../components/ui/card'
-import ExampleOpportunityCard from '../../../components/audit/ExampleOpportunityCard'
-import OpportunityFoundPanel from '../../../components/audit/OpportunityFoundPanel'
-import OpportunityScoreCard from '../../../components/audit/OpportunityScoreCard'
-import OpportunityScoreFactors from '../../../components/audit/OpportunityScoreFactors'
-import TechnologyAdvisor from '../../../components/audit/TechnologyAdvisor'
-import AuditProgressJourney from '../../../components/audit/AuditProgressJourney'
-import AuditReveal from '../../../components/audit/AuditReveal'
-import CollapsibleAuditReport from '../../../components/audit/CollapsibleAuditReport'
-import FirstAuditEmptyState from '../../../components/audit/FirstAuditEmptyState'
-import OpportunitySummaryCard from '../../../components/audit/OpportunitySummaryCard'
-import RecentAuditsPreview from '../../../components/audit/RecentAuditsPreview'
-import WhyThisMatters from '../../../components/audit/WhyThisMatters'
-import WorkflowJourney from '../../../components/audit/WorkflowJourney'
-import { SectionDivider } from '../../../components/ui/SectionDivider'
-import { computeOpportunityScore } from '../../../lib/opportunityScore'
 import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
+import type { CSSProperties, FormEvent } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+
+import { useSupabaseSession } from '../../../lib/useSupabaseSession'
+import { AUTH_REQUIRED } from '../../../lib/authGuestMode'
+import {
+  DEFAULT_PROFILE,
   getStoredProfile,
   saveStoredProfile,
-  DEFAULT_PROFILE,
 } from '../../../lib/profileStorage'
 import type { UserProfile } from '../../../lib/profileStorage'
 import type { TechStack } from '../../../lib/techStack'
-import { getScoreStyles } from '../../../lib/scoreColors'
-import { AUTH_REQUIRED } from '../../../lib/authGuestMode'
 
-interface AuditScores {
-  mobile: {
-    performance: number
-    seo: number
-    accessibility: number
-    bestPractices: number
-  }
-  desktop: {
-    performance: number
-    seo: number
-    accessibility: number
-    bestPractices: number
-  }
-  details: Record<string, unknown>
-  overallScore: number
-}
+import ReportWorkspace from '../../../components/ReportWorkspace'
+import FullSiteAuditReport from '../../../components/FullSiteAuditReport'
+import type { FullSiteAuditResult } from '../../../components/FullSiteAuditReport'
+import ProfileModal from '../../../components/profile/ProfileModal'
+import './sitebrief.css'
 
-interface AuditRecord {
-  id: string
-  url: string
-  date: string
-  pageTitle?: string | null
-  scores: AuditScores
-  techStack?: TechStack
-  aiReport: {
-    executiveSummary: string
-    keyIssues: string[]
-    businessImpact: string[]
-    recommendations: string[]
-  }
-}
+type View = 'new' | 'reports' | 'report'
+type ScanMode = 'quick' | 'full-site'
+type Device = 'mobile' | 'desktop'
 
-interface HistoryEntry {
-  id: string
-  url: string
-  savedAt: string
-  pageTitle?: string | null
-  overallScore: number
+interface DeviceScores {
   performance: number
   seo: number
   accessibility: number
   bestPractices: number
-  mobilePerformance: number
-  desktopPerformance: number
+}
+
+interface AuditScores {
+  mobile: DeviceScores
+  desktop: DeviceScores
+  overallScore: number
+  details: Record<string, unknown>
+}
+
+interface ReportContent {
+  executiveSummary: string
+  keyIssues: string[]
+  businessImpact: string[]
+  recommendations: string[]
+}
+
+interface SavedAudit {
+  id: string
+  url: string
+  savedAt: string
+  pageTitle?: string | null
   scores?: AuditScores | null
   techStack?: TechStack | null
-  report: {
-    executiveSummary?: string
-    keyIssues?: string[]
-    businessImpact?: string[]
-    recommendations?: string[]
-  } | null
+  report?: Partial<ReportContent> | null
+  overallScore?: number
+  performance?: number
+  mobilePerformance?: number
+  desktopPerformance?: number
+  seo?: number
+  accessibility?: number
+  bestPractices?: number
   status?: string
   notes?: string
 }
 
-interface PlanInfo {
-  plan: string
-  auditCount: number
-  auditLimit: number | null
-  searchCount: number
-  searchLimit: number | null
+interface LegacyAudit extends SavedAudit {
+  date?: string
+  aiReport?: Partial<ReportContent>
 }
 
+const HISTORY_KEY = 'siteSignalAuditHistory'
 
+const theme = {
+  '--background': '#faf9f7',
+  '--foreground': '#271436',
+  '--card': '#ffffff',
+  '--card-foreground': '#271436',
+  '--popover': '#ffffff',
+  '--popover-foreground': '#271436',
+  '--primary': '#6135ad',
+  '--primary-foreground': '#ffffff',
+  '--secondary': '#f1edf5',
+  '--secondary-foreground': '#493955',
+  '--muted': '#f3f0f5',
+  '--muted-foreground': '#756b80',
+  '--accent': '#eee7f8',
+  '--accent-foreground': '#6135ad',
+  '--border': '#e5dfe9',
+  '--input': '#e5dfe9',
+  '--ring': '#6135ad',
+  colorScheme: 'light',
+} as CSSProperties
 
-interface WorkspaceLead {
-  title?: string
-  url?: string
-  domain?: string
-  leadTemp?: string
-  opportunityScore?: number
-  estimatedValue?: string
-  problems?: string[]
-  scores?: {
-    overall?: number
-    mobile?: {
-      performance?: number
-      seo?: number
-      accessibility?: number
-      bestPractices?: number
-    }
-    desktop?: {
-      performance?: number
-    }
-  }
-}
+const primaryButton =
+  'inline-flex items-center justify-center gap-2 rounded-lg bg-[#6135ad] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#50258f] disabled:cursor-not-allowed disabled:opacity-50'
 
-type AuditMode = 'mobile' | 'desktop'
-type ScanMode = 'quick' | 'full-site'
-
-const FALLBACK_TECH_STACK: TechStack = {
-  cms: 'Unknown CMS',
-  pageBuilder: null,
-  hosting: 'Unknown hosting',
-  confidence: 'low',
-  analytics: [],
-  tagManagers: [],
-  marketing: [],
-  forms: [],
-  consent: [],
-  integrations: [],
-  signals: [],
-}
+const secondaryButton =
+  'inline-flex items-center justify-center rounded-lg border border-[#ded6e5] bg-white px-4 py-2 text-sm font-medium text-[#6135ad] transition hover:bg-[#f1ebf8]'
 
 function normaliseUrl(value: string) {
   const trimmed = value.trim()
   if (!trimmed) return ''
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
-  return `https://${trimmed}`
+
+  return /^https?:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`
 }
 
-function mapAuditRecordToHistoryEntry(record: AuditRecord): HistoryEntry {
-  return {
-    id: record.id,
-    url: record.url,
-    savedAt: record.date,
-    pageTitle: record.pageTitle,
-    scores: record.scores ?? null,
-    overallScore: record.scores?.overallScore ?? 0,
-    performance: record.scores?.mobile?.performance ?? 0,
-    seo: record.scores?.mobile?.seo ?? 0,
-    accessibility: record.scores?.mobile?.accessibility ?? 0,
-    bestPractices: record.scores?.mobile?.bestPractices ?? 0,
-    mobilePerformance: record.scores?.mobile?.performance ?? 0,
-    desktopPerformance: record.scores?.desktop?.performance ?? 0,
-    techStack: record.techStack ?? null,
-    report: record.aiReport ?? null,
-    status: 'Saved',
-    notes: '',
+function displayUrl(value: string) {
+  try {
+    const url = new URL(normaliseUrl(value))
+    const path = url.pathname === '/' ? '' : url.pathname
+
+    return `${url.hostname.replace(/^www\./, '')}${path}`
+  } catch {
+    return value
   }
 }
 
-function mapHistoryEntryToAuditRecord(entry: HistoryEntry): AuditRecord {
+function reportTitle(entry: SavedAudit) {
+  return entry.pageTitle?.trim() || displayUrl(entry.url)
+}
+
+function displayDate(value: string) {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return 'Date unavailable'
+
+  return date.toLocaleDateString('en-AU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+function normaliseReport(
+  report?: Partial<ReportContent> | null
+): ReportContent {
   return {
-    id: entry.id,
-    url: entry.url,
-    date: entry.savedAt,
-    pageTitle: entry.pageTitle,
-    scores: entry.scores ?? {
-      mobile: {
-        performance: entry.performance ?? entry.mobilePerformance ?? 0,
-        seo: entry.seo ?? 0,
-        accessibility: entry.accessibility ?? 0,
-        bestPractices: entry.bestPractices ?? 0,
-      },
-      desktop: {
-        performance: entry.desktopPerformance ?? 0,
-        seo: 0,
-        accessibility: 0,
-        bestPractices: 0,
-      },
-      details: {},
-      overallScore: entry.overallScore ?? 0,
+    executiveSummary: report?.executiveSummary ?? '',
+    keyIssues: report?.keyIssues ?? [],
+    businessImpact: report?.businessImpact ?? [],
+    recommendations: report?.recommendations ?? [],
+  }
+}
+
+function readHistory(): SavedAudit[] {
+  const parsed: unknown = JSON.parse(
+    localStorage.getItem(HISTORY_KEY) || '[]'
+  )
+
+  if (!Array.isArray(parsed)) return []
+
+  return parsed
+    .filter(
+      (entry): entry is LegacyAudit =>
+        entry !== null &&
+        typeof entry === 'object' &&
+        typeof entry.url === 'string'
+    )
+    .map((entry, index) => ({
+      ...entry,
+      id: entry.id || `legacy-${index}`,
+      savedAt:
+        entry.savedAt || entry.date || new Date().toISOString(),
+      report: entry.report ?? entry.aiReport ?? null,
+    }))
+}
+
+function scoresFor(entry: SavedAudit): AuditScores {
+  if (entry.scores) return entry.scores
+
+  return {
+    mobile: {
+      performance:
+        entry.mobilePerformance ?? entry.performance ?? 0,
+      seo: entry.seo ?? 0,
+      accessibility: entry.accessibility ?? 0,
+      bestPractices: entry.bestPractices ?? 0,
     },
-    techStack: entry.techStack ?? undefined,
-    aiReport: entry.report
-      ? {
-          executiveSummary: entry.report.executiveSummary ?? '',
-          keyIssues: entry.report.keyIssues ?? [],
-          businessImpact: entry.report.businessImpact ?? [],
-          recommendations: entry.report.recommendations ?? [],
-        }
-      : {
-          executiveSummary: '',
-          keyIssues: [],
-          businessImpact: [],
-          recommendations: [],
-        },
+    desktop: {
+      performance: entry.desktopPerformance ?? 0,
+      seo: 0,
+      accessibility: 0,
+      bestPractices: 0,
+    },
+    overallScore: entry.overallScore ?? 0,
+    details: {},
   }
 }
 
-function mapStoredHistoryToHistoryEntry(entry: Partial<HistoryEntry> & Record<string, unknown>): HistoryEntry {
-  const aiReport = entry.aiReport as
-    | { executiveSummary?: string; keyIssues?: string[]; businessImpact?: string[]; recommendations?: string[] }
-    | undefined
-
-  if (entry?.scores && aiReport) {
-    return {
-      id: String(entry.id ?? `audit_${Date.now()}`),
-      url: String(entry.url ?? ''),
-      savedAt: String(entry.date || entry.savedAt || new Date().toISOString()),
-      pageTitle: entry.pageTitle ?? null,
-      scores: entry.scores as AuditScores | null,
-      overallScore: Number((entry.scores as { overallScore?: number } | undefined)?.overallScore ?? 0),
-      performance: Number((entry.scores as { mobile?: { performance?: number } } | undefined)?.mobile?.performance ?? 0),
-      seo: Number((entry.scores as { mobile?: { seo?: number } } | undefined)?.mobile?.seo ?? 0),
-      accessibility: Number((entry.scores as { mobile?: { accessibility?: number } } | undefined)?.mobile?.accessibility ?? 0),
-      bestPractices: Number((entry.scores as { mobile?: { bestPractices?: number } } | undefined)?.mobile?.bestPractices ?? 0),
-      mobilePerformance: Number((entry.scores as { mobile?: { performance?: number } } | undefined)?.mobile?.performance ?? 0),
-      desktopPerformance: Number((entry.scores as { desktop?: { performance?: number } } | undefined)?.desktop?.performance ?? 0),
-      techStack: entry.techStack as TechStack | null,
-      report: aiReport as HistoryEntry['report'],
-      status: entry?.status ?? 'Saved',
-      notes: entry?.notes ?? '',
-    }
-  }
-
-  return {
-    id: String(entry?.id || `audit_${Date.now()}`),
-    url: String(entry?.url || ''),
-    savedAt: String(entry?.savedAt || entry?.date || new Date().toISOString()),
-    pageTitle: entry?.pageTitle ? String(entry.pageTitle) : null,
-    scores: entry?.scores as AuditScores | null,
-    overallScore: Number(entry?.overallScore ?? 0),
-    performance: Number(entry?.performance ?? entry?.mobilePerformance ?? 0),
-    seo: Number(entry?.seo ?? 0),
-    accessibility: Number(entry?.accessibility ?? 0),
-    bestPractices: Number(entry?.bestPractices ?? 0),
-    mobilePerformance: Number(entry?.mobilePerformance ?? entry?.performance ?? 0),
-    desktopPerformance: Number(entry?.desktopPerformance ?? 0),
-    techStack: entry?.techStack as TechStack | null,
-    report: (entry?.report ?? null) as HistoryEntry['report'],
-    status: entry?.status ? String(entry.status) : 'Saved',
-    notes: entry?.notes ? String(entry.notes) : '',
-  }
-}
-
-export default function AuditPage(props: NextPageProps) {
-  useUnwrapNextPageProps(props)
+function DocumentIcon({ className = 'h-5 w-5' }) {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-[60vh] items-center justify-center p-6">
-          <Card className="max-w-md border-border bg-card">
-            <CardContent className="p-6 text-sm text-muted-foreground">Loading audit…</CardContent>
-          </Card>
-        </div>
-      }
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      className={className}
+      aria-hidden="true"
     >
-      <AuditPageInner />
-    </Suspense>
+      <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" />
+      <path d="M14 3v6h6M8 13h8M8 17h5" />
+    </svg>
   )
 }
 
-function AuditPageInner() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { email: sessionEmail, userId: sessionUserId, loading: authLoading } =
-    useSupabaseSession()
-  const authReady = !authLoading
-
-  const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE)
-  const [showProfileModal, setShowProfileModal] = useState(false)
-
-  const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null)
-
-  const [auditResult, setAuditResult] = useState<AuditRecord | null>(null)
-  const [siteDiscoveryResult, setSiteDiscoveryResult] =
-  useState<FullSiteAuditResult | null>(null)
-  const [auditHistory, setAuditHistory] = useState<HistoryEntry[]>([])
-  const [activeView, setActiveView] = useState<'tool' | 'history'>('tool')
-  const [auditMode, setAuditMode] = useState<AuditMode>('mobile')
-  const [scanMode, setScanMode] = useState<ScanMode>('quick')
-  const [isRunning, setIsRunning] = useState(false)
-  const [fullSiteProgress, setFullSiteProgress] = useState('Discovering pages')
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
-
-  const [prefilledUrl, setPrefilledUrl] = useState('')
-  const [selectedLead, setSelectedLead] = useState<WorkspaceLead | null>(null)
-  const [continueToOutreachReady, setContinueToOutreachReady] = useState(false)
-
-  const queryUrl = searchParams.get('url') || ''
-  const queryTitle = searchParams.get('title') || ''
-  const queryDomain = searchParams.get('domain') || ''
-  const queryNext = searchParams.get('next') || ''
-
-  useEffect(() => {
-    if (!authReady) return
-    if (AUTH_REQUIRED && !sessionUserId) {
-      router.push('/signin')
-    }
-  }, [authReady, router, sessionUserId])
-
-  useEffect(() => {
-    if (!authReady) return
-    const stored = getStoredProfile()
-    if (stored) setProfile(stored)
-  }, [authReady])
-
-  const handleSaveProfile = (nextProfile: UserProfile) => {
-    setProfile(nextProfile)
-    saveStoredProfile(nextProfile)
-  }
-
-  useEffect(() => {
-    const nextUrl = normaliseUrl(queryUrl || '')
-    if (nextUrl) setPrefilledUrl(nextUrl)
-
-    const pendingAuditLeadRaw = sessionStorage.getItem('pendingAuditLead')
-    const pendingOutreachLeadRaw = sessionStorage.getItem('pendingOutreachLead')
-
-    let nextLead: WorkspaceLead | null = null
-
-    if (pendingAuditLeadRaw) {
-      try {
-        nextLead = JSON.parse(pendingAuditLeadRaw)
-      } catch {}
-    }
-
-    if (!nextLead && pendingOutreachLeadRaw) {
-      try {
-        nextLead = JSON.parse(pendingOutreachLeadRaw)
-      } catch {}
-    }
-
-    if (!nextLead && (queryTitle || queryDomain || nextUrl)) {
-      nextLead = {
-        title: queryTitle || '',
-        domain: queryDomain || '',
-        url: nextUrl || '',
-      }
-    }
-
-    if (nextLead) {
-      setSelectedLead(nextLead)
-      if (!nextUrl && nextLead.url) setPrefilledUrl(normaliseUrl(nextLead.url))
-    }
-  }, [queryUrl, queryTitle, queryDomain])
-
-  const fetchPlan = useCallback(async () => {
-    try {
-      const headers: Record<string, string> = {}
-      if (sessionUserId) {
-        headers['x-user-id'] = sessionUserId
-      }
-
-      const res = await fetch('/api/user-plan', {
-        headers,
-      })
-      const json = await res.json()
-      if (json.success) setPlanInfo(json.data)
-    } catch {}
-  }, [sessionUserId])
-
-  useEffect(() => {
-    if (authReady) fetchPlan()
-  }, [authReady, fetchPlan])
-
-  useEffect(() => {
-    if (!authReady) return
-    try {
-      const raw = localStorage.getItem('siteSignalAuditHistory')
-      const parsed = raw ? JSON.parse(raw) : []
-      const normalised = Array.isArray(parsed)
-        ? parsed.map((entry) => mapStoredHistoryToHistoryEntry(entry))
-        : []
-      setAuditHistory(normalised)
-      localStorage.setItem('siteSignalAuditHistory', JSON.stringify(normalised))
-    } catch {}
-  }, [authReady])
-
-  const saveToHistory = useCallback((record: AuditRecord) => {
-    try {
-      const raw = localStorage.getItem('siteSignalAuditHistory')
-      const parsed = raw ? JSON.parse(raw) : []
-      const existing: HistoryEntry[] = Array.isArray(parsed)
-        ? parsed.map((entry) => mapStoredHistoryToHistoryEntry(entry))
-        : []
-
-      const nextEntry = mapAuditRecordToHistoryEntry(record)
-      const today = new Date().toDateString()
-
-      const filtered = existing.filter(
-        (r) => !(r.url === nextEntry.url && new Date(r.savedAt).toDateString() === today)
-      )
-
-      const updated = [nextEntry, ...filtered].slice(0, 50)
-      localStorage.setItem('siteSignalAuditHistory', JSON.stringify(updated))
-      setAuditHistory(updated)
-    } catch {}
-  }, [])
-
-  const handleRunAudit = useCallback(
-    async (url: string, mode: ScanMode = scanMode) => {
-      if (isRunning || (!sessionUserId && AUTH_REQUIRED)) return
-
-      const normalisedInputUrl = normaliseUrl(url)
-      if (!normalisedInputUrl) return
-
-      setIsRunning(true)
-      setAuditResult(null)
-      setSiteDiscoveryResult(null)
-      setErrorMsg(null)
-      setFullSiteProgress('Discovering pages')
-      setContinueToOutreachReady(false)
-      setActiveView('tool')
-
-      try {
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-        }
-
-        if (sessionUserId) {
-          headers['x-user-id'] = sessionUserId
-        }
-
-        if (mode === 'full-site') {
-          const progressSteps = [
-            'Discovering pages',
-            'Running site checks',
-            'Deep auditing representative pages',
-            'Creating site report',
-          ]
-
-          const progressTimer = window.setInterval(() => {
-            setFullSiteProgress((current) => {
-              const currentIndex = progressSteps.indexOf(current)
-              const nextIndex = (currentIndex + 1) % progressSteps.length
-              return progressSteps[nextIndex]
-            })
-          }, 1800)
-
-          try {
-            const res = await fetch('/api/site-discovery', {
-              method: 'POST',
-              headers,
-              body: JSON.stringify({ url: normalisedInputUrl }),
-            })
-
-            const json = await res.json()
-
-            if (!json.success) {
-              setErrorMsg(json.error ?? 'Site discovery failed. Please try again.')
-              return
-            }
-
-            const nextLead: WorkspaceLead = {
-              ...(selectedLead || {}),
-              title: selectedLead?.title || undefined,
-              url: normalisedInputUrl,
-              domain:
-                selectedLead?.domain ||
-                (() => {
-                  try {
-                    return new URL(normalisedInputUrl).hostname.replace(/^www\./, '')
-                  } catch {
-                    return normalisedInputUrl
-                      .replace(/^https?:\/\//, '')
-                      .replace(/^www\./, '')
-                      .split('/')[0]
-                  }
-                })(),
-            }
-
-            setSelectedLead(nextLead)
-            setSiteDiscoveryResult(json)
-            setPrefilledUrl(normalisedInputUrl)
-            return
-          } finally {
-            window.clearInterval(progressTimer)
-          }
-        }
-
-        const res = await fetch('/api/audit', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ url: normalisedInputUrl, scanMode: mode }),
-        })
-
-        const json = await res.json()
-
-        if (json.limitReached) {
-          await fetchPlan()
-          setErrorMsg(json.error ?? 'Monthly audit limit reached.')
-          return
-        }
-
-        if (!json.success) {
-          setErrorMsg(json.error ?? 'Audit failed. Please try again.')
-          return
-        }
-
-        const record: AuditRecord = {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-          url: json.url,
-          date: json.scannedAt ?? new Date().toISOString(),
-          pageTitle: json.pageTitle ?? null,
-          scores: json.scores,
-          techStack: json.techStack,
-          aiReport: json.aiReport,
-        }
-
-        const nextLead: WorkspaceLead = {
-          ...(selectedLead || {}),
-          title:
-            selectedLead?.title ||
-            json.pageTitle?.replace(/\s*[|\-–—]\s*.+$/, '').trim() ||
-            undefined,
-          url: json.url,
-          domain:
-            selectedLead?.domain ||
-            (() => {
-              try {
-                return new URL(json.url).hostname.replace(/^www\./, '')
-              } catch {
-                return json.url
-                  .replace(/^https?:\/\//, '')
-                  .replace(/^www\./, '')
-                  .split('/')[0]
-              }
-            })(),
-        }
-
-        setSelectedLead(nextLead)
-
-        sessionStorage.setItem('pendingAuditLead', JSON.stringify(nextLead))
-        sessionStorage.setItem(
-          'pendingAuditResult',
-          JSON.stringify({
-            url: json.url,
-            scores: json.scores,
-            techStack: json.techStack,
-            aiReport: json.aiReport,
-          })
-        )
-
-        setAuditResult(record)
-        setPrefilledUrl(json.url)
-        saveToHistory(record)
-        fetchPlan()
-        setContinueToOutreachReady(true)
-      } catch {
-        setErrorMsg('Something went wrong. Please check your connection and try again.')
-      } finally {
-        setIsRunning(false)
-      }
-    },
-    [sessionUserId, isRunning, fetchPlan, saveToHistory, selectedLead, scanMode]
-  )
-
-  const handleOpenFromHistory = useCallback((entry: HistoryEntry) => {
-    const record = mapHistoryEntryToAuditRecord(entry)
-
-    setAuditResult(record)
-    setPrefilledUrl(entry.url)
-    setActiveView('tool')
-    setContinueToOutreachReady(true)
-
-    sessionStorage.setItem(
-      'pendingAuditResult',
-      JSON.stringify({
-        url: record.url,
-        scores: record.scores,
-        techStack: record.techStack,
-        aiReport: record.aiReport,
-      })
-    )
-
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [])
-
-  const handleContinueToOutreach = () => {
-    const lead: WorkspaceLead = selectedLead || {
-      title: queryTitle || '',
-      url: auditResult?.url || prefilledUrl,
-      domain: queryDomain || '',
-    }
-
-    if (!lead.url && auditResult?.url) lead.url = auditResult.url
-
-    sessionStorage.setItem('pendingOutreachLead', JSON.stringify(lead))
-
-    if (auditResult) {
-      sessionStorage.setItem(
-        'pendingAuditResult',
-        JSON.stringify({
-          url: auditResult.url,
-          scores: auditResult.scores,
-          techStack: auditResult.techStack,
-          aiReport: auditResult.aiReport,
-        })
-      )
-    }
-
-    const params = new URLSearchParams({
-      url: lead.url || '',
-      title: lead.title || '',
-      domain: lead.domain || '',
-      mode: 'audited',
-    })
-
-    router.push(`/app/outreach?${params.toString()}`)
-  }
-
-  const handleOpenManualOutreach = () => {
-    const lead: WorkspaceLead = selectedLead || {
-      title: queryTitle || '',
-      url: auditResult?.url || prefilledUrl,
-      domain: queryDomain || '',
-    }
-
-    sessionStorage.setItem('pendingOutreachLead', JSON.stringify(lead))
-
-    const params = new URLSearchParams({
-      url: lead.url || '',
-      title: lead.title || '',
-      domain: lead.domain || '',
-      mode: 'manual',
-    })
-
-    router.push(`/app/outreach?${params.toString()}`)
-  }
-
-  const handleAddToPipeline = () => {
-    const lead: WorkspaceLead = selectedLead || {
-      title: queryTitle || '',
-      url: auditResult?.url || prefilledUrl,
-      domain: queryDomain || '',
-    }
-
-    if (!lead.url && auditResult?.url) lead.url = auditResult.url
-
-    if (!lead.domain && lead.url) {
-      try {
-        lead.domain = new URL(lead.url).hostname.replace(/^www\./, '')
-      } catch {
-        lead.domain = lead.url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]
-      }
-    }
-
-    if (!lead.title && lead.domain) lead.title = lead.domain
-
-    sessionStorage.setItem('pendingPipelineAdd', JSON.stringify(lead))
-    router.push('/app/pipeline')
-  }
-
-  const auditLimitReached =
-    planInfo?.auditLimit !== null &&
-    planInfo?.auditLimit !== undefined &&
-    (planInfo?.auditCount ?? 0) >= planInfo.auditLimit
-
-  const activeScores = useMemo(() => {
-    if (!auditResult?.scores) return null
-    return auditMode === 'mobile'
-      ? auditResult.scores.mobile
-      : auditResult.scores.desktop
-  }, [auditResult, auditMode])
-
-  const opportunityResult = useMemo(() => {
-    if (!auditResult?.scores) return null
-    return computeOpportunityScore(
-      auditResult.scores,
-      auditResult.aiReport?.keyIssues ?? []
-    )
-  }, [auditResult])
-
-  const arrivedForOutreach = queryNext === 'outreach'
-
-  if (!authReady) {
+function ReportsTable({
+  entries,
+  onOpen,
+}: {
+  entries: SavedAudit[]
+  onOpen: (entry: SavedAudit) => void
+}) {
+  if (entries.length === 0) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center p-6">
-        <Card className="max-w-md border-border bg-card">
-          <CardContent className="flex items-center gap-3 p-6 text-sm text-muted-foreground">
-            <span className="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
-            Loading audit tool…
-          </CardContent>
-        </Card>
+      <div className="rounded-xl border border-dashed border-[#ded6e5] px-6 py-10 text-center">
+        <p className="font-medium text-[#271436]">
+          Your reports will appear here
+        </p>
+        <p className="mt-2 text-sm text-[#756b80]">
+          Run a single-page audit to save your first report.
+        </p>
       </div>
     )
   }
 
   return (
-    <AppPageShell
-      title="Find the reason to start the conversation."
-      description="Scan any website, get an opportunity score, and generate outreach from real evidence."
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[580px] text-left text-sm">
+        <thead>
+          <tr className="border-b border-[#e5dfe9] text-xs uppercase tracking-wider text-[#756b80]">
+            <th className="pb-4 pr-6 font-medium">Website</th>
+            <th className="pb-4 pr-6 font-medium">URL</th>
+            <th className="pb-4 pr-6 font-medium">Audited</th>
+            <th className="pb-4 text-right font-medium">
+              <span className="sr-only">Actions</span>
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {entries.map((entry) => (
+            <tr
+              key={entry.id}
+              className="border-b border-[#e5dfe9] last:border-0"
+            >
+              <td className="max-w-[240px] py-5 pr-6">
+                <p
+                  className="truncate font-medium text-[#271436]"
+                  title={reportTitle(entry)}
+                >
+                  {reportTitle(entry)}
+                </p>
+              </td>
+
+              <td className="max-w-[240px] py-5 pr-6">
+                <p
+                  className="truncate text-[#756b80]"
+                  title={entry.url}
+                >
+                  {displayUrl(entry.url)}
+                </p>
+              </td>
+
+              <td className="whitespace-nowrap py-5 pr-6 text-[#756b80]">
+                {displayDate(entry.savedAt)}
+              </td>
+
+              <td className="py-5 text-right">
+                <button
+                  type="button"
+                  onClick={() => onOpen(entry)}
+                  className="whitespace-nowrap font-medium text-[#6135ad] hover:underline"
+                >
+                  Open report <span aria-hidden="true">→</span>
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+export default function AuditPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#faf9f7] p-10 text-[#756b80]">
+          Loading SiteBrief…
+        </div>
+      }
     >
-        <PageIntroCard
-          title="Stop guessing who needs help."
-          description="Find the reason before you pitch — with real website evidence, not gut feel."
-        />
+      <SiteBriefWorkspace />
+    </Suspense>
+  )
+}
 
-        <WorkflowJourney />
+function SiteBriefWorkspace() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
-        {arrivedForOutreach && !auditResult && !isRunning && (
-          <Card className="border-violet-500/30 bg-violet-500/[0.06]">
-            <CardContent className="flex items-start gap-3 p-4 sm:p-6">
-              <span className="mt-0.5 flex-shrink-0 text-lg text-violet-300">✉️</span>
-              <div>
-                <p className="text-sm font-semibold text-foreground">
-                  Audit first, then continue to outreach
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Run the scan below — once it completes, click{' '}
-                  <span className="font-medium text-violet-300">Generate Outreach →</span> to
-                  prepare your pitch using the real findings.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+  const {
+    userId,
+    email,
+    loading: authLoading,
+  } = useSupabaseSession()
 
-        <UsageLimitBanner userId={sessionUserId} />
+  const [view, setView] = useState<View>('new')
+  const [url, setUrl] = useState('')
+  const [scanMode, setScanMode] = useState<ScanMode>('quick')
+  const [device, setDevice] = useState<Device>('mobile')
+  const [isRunning, setIsRunning] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
 
-        <div className="flex w-fit items-center gap-1 rounded-lg border border-border bg-card p-1 shadow-sm">
-          <button
-            onClick={() => setActiveView('tool')}
-            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-              activeView === 'tool'
-                ? 'bg-secondary text-foreground'
-                : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
-            }`}
-          >
-            Audit Website
-          </button>
-          <button
-            onClick={() => setActiveView('history')}
-            className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition ${
-              activeView === 'history'
-                ? 'bg-secondary text-foreground'
-                : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
-            }`}
-          >
-            Recent Audits
-            {auditHistory.length > 0 && (
-              <span
-                className={`rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
-                  activeView === 'history'
-                    ? 'bg-foreground/15 text-foreground'
-                    : 'bg-foreground/10 text-muted-foreground'
-                }`}
-              >
-                {auditHistory.length}
-              </span>
-            )}
-          </button>
+  const [history, setHistory] = useState<SavedAudit[]>([])
+  const [audit, setAudit] = useState<SavedAudit | null>(null)
+  const [fullSite, setFullSite] =
+    useState<FullSiteAuditResult | null>(null)
+
+  const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE)
+  const [brandingOpen, setBrandingOpen] = useState(false)
+
+  const runningRef = useRef(false)
+  const queryUrl = searchParams.get('url') || ''
+
+  useEffect(() => {
+    if (authLoading) return
+
+    if (AUTH_REQUIRED && !userId) {
+      router.replace('/signin')
+      return
+    }
+
+    const storedProfile = getStoredProfile()
+    if (storedProfile) setProfile(storedProfile)
+
+    try {
+      setHistory(readHistory())
+    } catch {
+      setError('Saved reports could not be read from this browser.')
+    }
+  }, [authLoading, userId, router])
+
+  useEffect(() => {
+    if (queryUrl) setUrl(queryUrl)
+  }, [queryUrl])
+
+  const refreshHistory = useCallback(() => {
+    try {
+      setHistory(readHistory())
+    } catch {
+      setError('Saved reports could not be read from this browser.')
+    }
+  }, [])
+
+  const openReport = (entry: SavedAudit) => {
+    setAudit(entry)
+    setFullSite(null)
+    setDevice('mobile')
+    setError(null)
+    setView('report')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const startNew = () => {
+    if (runningRef.current) return
+
+    setAudit(null)
+    setFullSite(null)
+    setError(null)
+    setUrl('')
+    setView('new')
+    refreshHistory()
+  }
+
+  const showReports = () => {
+    if (runningRef.current) return
+
+    refreshHistory()
+    setError(null)
+    setView('reports')
+  }
+
+  const runAudit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (runningRef.current || (AUTH_REQUIRED && !userId)) return
+
+    const target = normaliseUrl(url)
+
+    try {
+      const parsed = new URL(target)
+
+      if (!['http:', 'https:'].includes(parsed.protocol)) {
+        throw new Error('Unsupported URL')
+      }
+    } catch {
+      setError('Enter a valid website URL, such as example.com.au.')
+      return
+    }
+
+    runningRef.current = true
+    setIsRunning(true)
+    setError(null)
+    setAudit(null)
+    setFullSite(null)
+
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+
+      if (userId) headers['x-user-id'] = userId
+
+      const response = await fetch(
+        scanMode === 'full-site'
+          ? '/api/site-discovery'
+          : '/api/audit',
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            url: target,
+            scanMode,
+          }),
+        }
+      )
+
+      const json = await response.json()
+
+      if (!response.ok || !json.success) {
+        setError(json.error || 'The audit failed. Please try again.')
+        return
+      }
+
+      if (scanMode === 'full-site') {
+        setFullSite(json)
+        setView('report')
+        return
+      }
+
+      const entry: SavedAudit = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        url: json.url || target,
+        savedAt: json.scannedAt || new Date().toISOString(),
+        pageTitle: json.pageTitle || null,
+        scores: json.scores,
+        techStack: json.techStack || null,
+        report: normaliseReport(json.aiReport),
+        overallScore: json.scores.overallScore,
+        performance: json.scores.mobile.performance,
+        mobilePerformance: json.scores.mobile.performance,
+        desktopPerformance: json.scores.desktop.performance,
+        seo: json.scores.mobile.seo,
+        accessibility: json.scores.mobile.accessibility,
+        bestPractices: json.scores.mobile.bestPractices,
+        status: 'Saved',
+        notes: '',
+      }
+
+      setAudit(entry)
+      setDevice('mobile')
+      setView('report')
+
+      try {
+        const existing = readHistory()
+        const today = new Date().toDateString()
+
+        const remaining = existing.filter(
+          (item) =>
+            !(
+              item.url === entry.url &&
+              new Date(item.savedAt).toDateString() === today
+            )
+        )
+
+        const updated = [entry, ...remaining].slice(0, 50)
+
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(updated))
+        setHistory(updated)
+      } catch {
+        setError(
+          'Your report is ready, but could not be saved in this browser. Download a copy before leaving.'
+        )
+      }
+    } catch {
+      setError(
+        'Could not complete the audit. Check your connection and try again.'
+      )
+    } finally {
+      runningRef.current = false
+      setIsRunning(false)
+    }
+  }
+
+  const filteredHistory = history.filter((entry) =>
+    `${entry.pageTitle || ''} ${entry.url}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  )
+
+  if (authLoading || (AUTH_REQUIRED && !userId)) {
+    return (
+      <div className="min-h-screen bg-[#faf9f7] p-10 text-[#756b80]">
+        Loading SiteBrief…
+      </div>
+    )
+  }
+
+  return (
+    <div
+  style={theme}
+  className="sitebrief-workspace min-h-screen bg-[#faf9f7] text-[#271436] md:flex"
+>
+      <aside className="flex flex-col border-b border-[#e5dfe9] bg-[#fcfbfa] p-5 md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:border-b-0 md:border-r md:p-6">
+        <div className="flex items-center gap-3">
+          <DocumentIcon className="h-8 w-8 text-[#6135ad]" />
+
+          <div>
+            <p className="font-serif text-3xl tracking-tight">
+              SiteBrief
+            </p>
+            <p className="mt-1 text-xs text-[#756b80]">
+              by JM Sites
+            </p>
+          </div>
         </div>
 
-        {activeView === 'tool' && (
-          <div className="space-y-8">
-            {auditLimitReached ? (
-              <div className="rounded-[28px] border border-amber-500/30 bg-amber-500/[0.06] p-8 text-center backdrop-blur-sm">
-                <div className="mb-4 text-4xl">🔒</div>
-                <h2 className="mb-2 text-xl font-semibold text-foreground">
-                  Monthly audit limit reached
-                </h2>
-                <p className="mx-auto mb-6 max-w-sm text-sm text-muted-foreground">
-                  You&apos;ve used all{' '}
-                  <span className="font-semibold text-amber-400">
-                    {planInfo?.auditLimit} audit{planInfo?.auditLimit === 1 ? '' : 's'}
-                  </span>{' '}
-                  for this month. Upgrade to run unlimited audits.
-                </p>
-                <a
-                  href="/app/pricing"
-                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
-                >
-                  View plans →
-                </a>
-              </div>
-            ) : (
-              <>
-                <div className="overflow-hidden border-2 border-violet-500/20 ss-panel-elevated shadow-lg shadow-violet-500/10">
-                  <div className="border-b border-border bg-gradient-to-r from-card to-violet-500/5 p-6 sm:p-8">
-                    <div className="mb-1 flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/15 text-lg">
-                        🔍
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-semibold text-foreground sm:text-xl">
-                          Paste a website URL
-                        </h2>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Quick Audit keeps the single-page experience intact, while Full Site Audit discovers the site pages first.
-                        </p>
-                      </div>
-                    </div>
+        <button
+          type="button"
+          onClick={startNew}
+          disabled={isRunning}
+          className={`${primaryButton} mt-7 w-full`}
+        >
+          <span className="text-xl" aria-hidden="true">+</span>
+          New audit
+        </button>
 
-                    {selectedLead?.title && (
-                      <div className="mt-4 inline-flex items-center rounded-full border border-border bg-secondary/50 px-3 py-1 text-xs text-secondary-foreground">
-                        From lead finder:
-                        <span className="ml-1 font-semibold text-foreground">
-                          {selectedLead.title}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+        <nav
+          aria-label="Workspace"
+          className="mt-4 flex gap-2 md:flex-col"
+        >
+          <button
+            type="button"
+            onClick={showReports}
+            disabled={isRunning}
+            className={`flex flex-1 items-center gap-3 rounded-lg px-4 py-3 text-left text-sm transition disabled:opacity-50 ${
+              view === 'reports' || view === 'report'
+                ? 'bg-[#eee7f8] text-[#6135ad]'
+                : 'text-[#493955] hover:bg-[#f1edf5]'
+            }`}
+          >
+            <DocumentIcon />
+            Reports
+          </button>
 
-                  <div className="p-6 sm:p-8">
-                    <AuditForm
-                      onSubmit={handleRunAudit}
-                      isLoading={isRunning}
-                      initialUrl={prefilledUrl}
-                      scanMode={scanMode}
-                      onScanModeChange={setScanMode}
-                    />
-                  </div>
-                </div>
+          <button
+            type="button"
+            onClick={() => setBrandingOpen(true)}
+            className="flex flex-1 items-center gap-3 rounded-lg px-4 py-3 text-left text-sm text-[#493955] transition hover:bg-[#f1edf5]"
+          >
+            <span className="text-lg" aria-hidden="true">✎</span>
+            Branding
+          </button>
+        </nav>
 
-                {!auditResult && !siteDiscoveryResult && !isRunning && <ExampleOpportunityCard />}
+        <div className="mt-auto hidden pt-10 md:block">
+          <p className="text-sm font-medium">Your workspace</p>
+          <p className="mt-1 truncate text-xs text-[#756b80]">
+            {email || 'Reports saved in this browser'}
+          </p>
+        </div>
+      </aside>
 
-                {!auditResult && !siteDiscoveryResult && !isRunning && <WhyThisMatters />}
+      <main className="min-w-0 flex-1">
+        <header className="border-b border-[#e5dfe9] px-6 py-5 text-sm text-[#756b80] sm:px-10">
+          {view === 'new' && 'New audit'}
+          {view === 'reports' && 'Saved reports'}
+          {view === 'report' && (
+            <button
+              type="button"
+              onClick={showReports}
+              className="hover:text-[#6135ad]"
+            >
+              Reports <span className="mx-2">/</span> Website review
+            </button>
+          )}
+        </header>
 
-                {!auditResult && !siteDiscoveryResult && !isRunning && auditHistory.length === 0 && (
-                  <FirstAuditEmptyState />
-                )}
-
-                {auditHistory.length > 0 && !auditResult && !siteDiscoveryResult && !isRunning && (
-                  <RecentAuditsPreview
-                    entries={auditHistory.slice(0, 3)}
-                    onOpen={(entry) => handleOpenFromHistory(entry as HistoryEntry)}
-                    onViewAll={() => setActiveView('history')}
-                  />
-                )}
-              </>
-            )}
-
-            {siteDiscoveryResult &&
-  !isRunning &&
-  !siteDiscoveryResult.siteReport?.roadmap && (
-              <div className="rounded-[28px] border border-violet-500/20 bg-violet-500/[0.06] p-8 backdrop-blur-sm">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-300">
-                      Full Site Audit
-                    </p>
-                    <h3 className="mt-2 text-xl font-semibold text-foreground">
-                      {siteDiscoveryResult.discovery?.discoveredCount ?? 0} pages discovered
-                    </h3>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Source: <span className="font-medium text-foreground">{siteDiscoveryResult.discovery?.source ?? 'discovery'}</span>
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-border bg-card/80 px-4 py-3 text-sm text-muted-foreground">
-                    <p className="font-semibold text-foreground">Representative deep-audit pages</p>
-                    <p className="mt-1">{siteDiscoveryResult.selectedDeepAuditPages?.length ?? 0} selected for deep Lighthouse review.</p>
-                  </div>
-                </div>
-
-                <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-                  <div className="rounded-2xl border border-border bg-secondary/20 p-5">
-                    <p className="text-sm font-semibold text-foreground">Discovered pages</p>
-                    <ul className="mt-3 space-y-2">
-                      {(siteDiscoveryResult.discovery?.discoveredPages ?? []).map((page) => (
-                        <li
-                          key={page}
-                          className="rounded-xl border border-border/60 bg-card/70 px-3 py-2 text-sm text-secondary-foreground"
-                        >
-                          {page}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="rounded-2xl border border-border bg-secondary/20 p-5">
-                      <p className="text-sm font-semibold text-foreground">Representative deep-audit pages</p>
-                      <ul className="mt-3 space-y-2">
-                        {(siteDiscoveryResult.selectedDeepAuditPages ?? []).map((page, index) => (
-                          <li key={page} className="rounded-xl border border-border/60 bg-card/70 px-3 py-2 text-sm text-secondary-foreground">
-                            <span className="mr-2 font-semibold text-foreground">{index + 1}.</span>
-                            {page}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="rounded-2xl border border-border bg-secondary/20 p-5">
-                      <p className="text-sm font-semibold text-foreground">Site-wide issue summary</p>
-                      <ul className="mt-3 space-y-2">
-                        {(siteDiscoveryResult.issueSummary ?? []).map((issue) => (
-                          <li key={issue.label} className="rounded-xl border border-border/60 bg-card/70 px-3 py-2 text-sm text-secondary-foreground">
-                            {issue.label}: {issue.count} pages ({issue.percentage}%)
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                {siteDiscoveryResult.siteReport && (
-                  <div className="mt-6 rounded-2xl border border-border bg-card/70 p-5">
-                    <p className="text-sm font-semibold text-foreground">AI site report</p>
-                    <div className="mt-4 space-y-4">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Executive Summary</p>
-                        <p className="mt-2 text-sm leading-relaxed text-secondary-foreground">{siteDiscoveryResult.siteReport.executiveSummary}</p>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Key Issues</p>
-                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-secondary-foreground">
-                          {siteDiscoveryResult.siteReport.keyIssues.map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Business Impact</p>
-                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-secondary-foreground">
-                          {siteDiscoveryResult.siteReport.businessImpact.map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Recommended Next Steps</p>
-                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-secondary-foreground">
-                          {siteDiscoveryResult.siteReport.recommendations.map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-            {siteDiscoveryResult &&
-  !isRunning &&
-  siteDiscoveryResult.siteReport?.roadmap && (
-    <FullSiteAuditReport
-      result={siteDiscoveryResult}
-      profile={profile}
-    />
-  )}
-
-            {errorMsg && !isRunning && (
-              <div className="flex items-start gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/[0.06] px-5 py-4">
-                <span className="flex-shrink-0 text-lg text-rose-400">⚠️</span>
-                <div>
-                  <p className="text-sm font-medium text-rose-300">{errorMsg}</p>
-                  {errorMsg.includes('limit') && (
-                    <a
-                      href="/app/pricing"
-                      className="mt-1 inline-block text-xs text-secondary-foreground underline underline-offset-2 hover:text-foreground"
-                    >
-                      View upgrade options →
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {isRunning && (
-              <div className="rounded-[28px] border border-blue-500/20 bg-blue-500/[0.04] p-8 text-center backdrop-blur-sm">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="relative h-14 w-14">
-                    <div className="absolute inset-0 animate-spin rounded-full border-2 border-blue-500/20 border-t-blue-400" />
-                    <div className="absolute inset-2 animate-spin rounded-full border-2 border-violet-500/20 border-t-violet-400 [animation-direction:reverse] [animation-duration:1.5s]" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {scanMode === 'quick' ? 'Running quick audit…' : fullSiteProgress}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {scanMode === 'quick'
-                        ? 'Checking mobile performance and surfacing top issues. Usually 10–20 seconds.'
-                        : 'The Full Site Audit is collecting page evidence and representative deep-audit pages.'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {auditResult && !isRunning && opportunityResult && (
-              <div className="space-y-10">
-                <AuditReveal index={0}>
-                  <SectionDivider label="What happens next" />
-                  <div className="mt-8">
-                    <AuditProgressJourney
-                      onGenerateOutreach={handleContinueToOutreach}
-                      onAddToPipeline={handleAddToPipeline}
-                      onViewHistory={() => setActiveView('history')}
-                      outreachReady={continueToOutreachReady}
-                    />
-                  </div>
-                </AuditReveal>
-
-                <AuditReveal index={1}>
-                  <SectionDivider label="Opportunity score" />
-                  <div className="mt-8 space-y-8">
-                    <OpportunityScoreCard
-                      result={opportunityResult}
-                      url={auditResult.url}
-                      pageTitle={auditResult.pageTitle}
-                      scannedAt={auditResult.date}
-                    />
-                    <OpportunityScoreFactors
-                      scores={auditResult.scores}
-                      techStack={auditResult.techStack}
-                    />
-                  </div>
-                </AuditReveal>
-
-                <AuditReveal index={2}>
-                  <SectionDivider label="Opportunity summary" />
-                  <div className="mt-8">
-                    <OpportunitySummaryCard
-                      result={opportunityResult}
-                      stack={auditResult.techStack}
-                      performance={auditResult.scores.mobile.performance}
-                    />
-                  </div>
-                </AuditReveal>
-
-                <AuditReveal index={3}>
-                  <SectionDivider label="Opportunity found" />
-                  <div className="mt-8">
-                    <OpportunityFoundPanel
-                      result={opportunityResult}
-                      onGenerateOutreach={handleContinueToOutreach}
-                      onManualOutreach={handleOpenManualOutreach}
-                      outreachReady={continueToOutreachReady}
-                      arrivedForOutreach={arrivedForOutreach}
-                    />
-                  </div>
-                </AuditReveal>
-
-                <AuditReveal index={4}>
-                  <SectionDivider label="Technology advisor" />
-                  <div className="mt-8">
-                    <TechnologyAdvisor
-                      performance={auditResult.scores.mobile.performance}
-                      stack={auditResult.techStack ?? FALLBACK_TECH_STACK}
-                    />
-                  </div>
-                </AuditReveal>
-
-                <AuditReveal index={5}>
-                  <SectionDivider label="Full audit report" />
-                  <div className="mt-8">
-                    <CollapsibleAuditReport url={auditResult.url}>
-                  <div className="flex flex-wrap items-center justify-end gap-3">
-                    <button
-                      onClick={() => {
-                        setAuditResult(null)
-                        setErrorMsg(null)
-                        setContinueToOutreachReady(false)
-                      }}
-                      className="rounded-xl border border-border bg-secondary/50 px-4 py-2 text-sm font-medium text-secondary-foreground transition-all hover:bg-secondary hover:text-foreground"
-                    >
-                      New scan
-                    </button>
-                    <button
-                      onClick={() => setActiveView('history')}
-                      className="rounded-xl border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:bg-blue-600/30 hover:text-blue-200"
-                    >
-                      View history
-                    </button>
-                  </div>
-
-                  {activeScores && (
-                    <div className="rounded-2xl border border-border bg-secondary/20 p-5 sm:p-6">
-                      <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-                        <div>
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                            Score view
-                          </p>
-                          <p className="mt-1 text-sm text-secondary-foreground">
-                            Both mobile and desktop are included in every audit. Switch views below.
-                          </p>
-                        </div>
-
-                        <div className="inline-flex rounded-xl border border-border bg-secondary/30 p-1">
-                          <button
-                            type="button"
-                            onClick={() => setAuditMode('mobile')}
-                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                              auditMode === 'mobile'
-                                ? 'bg-blue-600 text-white'
-                                : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                          >
-                            Mobile
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setAuditMode('desktop')}
-                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                              auditMode === 'desktop'
-                                ? 'bg-blue-600 text-white'
-                                : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                          >
-                            Desktop
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                        {[
-                          { label: 'Performance', value: activeScores.performance },
-                          { label: 'SEO', value: activeScores.seo },
-                          { label: 'Accessibility', value: activeScores.accessibility },
-                          { label: 'Best Practices', value: activeScores.bestPractices },
-                        ].map((item) => {
-                          const styles = getScoreStyles(item.value || 0)
-                          return (
-                            <div
-                              key={item.label}
-                              className={`rounded-2xl border p-4 ${styles.panel}`}
-                            >
-                              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                                {item.label}
-                              </p>
-                              <p className={`mt-2 text-3xl font-bold ${styles.text}`}>
-                                {item.value ?? 0}
-                              </p>
-                              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-border/60">
-                                <div
-                                  className={`h-1.5 rounded-full ${styles.bar}`}
-                                  style={{ width: `${item.value ?? 0}%` }}
-                                />
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  <AuditReport
-                    url={auditResult.url}
-                    scores={auditResult.scores}
-                    report={auditResult.aiReport}
-                    profile={profile}
-                    auditMode={auditMode}
-                  />
-                </CollapsibleAuditReport>
-                  </div>
-                </AuditReveal>
-              </div>
-            )}
-
-            {!auditResult && !siteDiscoveryResult && !isRunning && !auditLimitReached && !errorMsg && (
-              <p className="text-center text-xs text-muted-foreground">
-                Tip: paste any business URL above to see their opportunity score in seconds.
-              </p>
-            )}
-          </div>
-        )}
-
-        {activeView === 'history' && (
-          <div>
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">Recent audits</h2>
-                <p className="text-sm text-muted-foreground">
-                  {auditHistory.length} saved opportunit{auditHistory.length !== 1 ? 'ies' : 'y'}
-                </p>
-              </div>
-              <button
-                onClick={() => setActiveView('tool')}
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 transition-colors hover:bg-blue-500"
-              >
-                + New audit
-              </button>
+        <div className="mx-auto max-w-6xl px-6 py-10 sm:px-10 sm:py-14">
+          {error && (
+            <div
+              role="alert"
+              className="mb-6 rounded-lg border border-[#efc7c7] bg-[#fff3f1] p-4 text-sm text-[#8b3030]"
+            >
+              {error}
             </div>
+          )}
 
-            <AuditHistory onReopen={handleOpenFromHistory} />
+          {view === 'new' && (
+            <>
+              <div className="mb-9">
+                <h1 className="font-serif text-4xl tracking-tight sm:text-5xl lg:text-6xl">
+                  Start with a website
+                </h1>
 
-            {auditHistory.length === 0 && (
-              <div className="rounded-[28px] border border-dashed border-border bg-gradient-to-br from-card to-violet-500/[0.04] p-16 text-center backdrop-blur-sm">
-                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-violet-500/20 bg-violet-500/10 text-3xl">
-                  📂
-                </div>
-                <h3 className="mb-2 text-lg font-semibold text-foreground">
-                  Run your first audit to discover opportunities
-                </h3>
-                <p className="mx-auto mb-6 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                  Paste any business URL, get an opportunity score, and generate outreach from real
-                  evidence — it saves here automatically.
+                <p className="mt-4 text-base leading-relaxed text-[#756b80] sm:text-lg">
+                  Turn website findings into a clear, client-ready report.
                 </p>
-                <button
-                  onClick={() => setActiveView('tool')}
-                  className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
+              </div>
+
+             <form
+  onSubmit={runAudit}
+  className="sitebrief-scan-panel rounded-xl border border-[#ded6e5] bg-white p-6 sm:p-8"
+>
+                <label
+                  htmlFor="website-url"
+                  className="block text-sm font-medium"
                 >
-                  Run your first audit →
+                  Website URL
+                </label>
+
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                  <input
+                    id="website-url"
+                    type="text"
+                    inputMode="url"
+                    autoComplete="url"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    value={url}
+                    onChange={(event) => setUrl(event.target.value)}
+                    disabled={isRunning}
+                    required
+                    placeholder="https://example.com.au"
+                    className="min-w-0 flex-1 rounded-lg border border-[#ded6e5] bg-white px-4 py-3.5 text-base text-[#271436] outline-none placeholder:text-[#aaa1b2] focus:border-[#6135ad] focus:ring-2 focus:ring-[#eee7f8]"
+                  />
+
+                  <button
+                    type="submit"
+                    disabled={isRunning || !url.trim()}
+                    className={primaryButton}
+                  >
+                    <DocumentIcon />
+                    {isRunning ? 'Running audit…' : 'Run audit'}
+                  </button>
+                </div>
+
+                <fieldset
+                  disabled={isRunning}
+                  className="mt-6 grid gap-5 sm:grid-cols-2"
+                >
+                  <legend className="sr-only">Audit scope</legend>
+
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <input
+                      type="radio"
+                      name="scan-mode"
+                      value="quick"
+                      checked={scanMode === 'quick'}
+                      onChange={() => setScanMode('quick')}
+                      className="mt-1 h-4 w-4 accent-[#6135ad]"
+                    />
+
+                    <span>
+                      <span className="block font-medium">
+                        Single page
+                      </span>
+                      <span className="mt-1 block text-sm text-[#756b80]">
+                        Mobile and desktop checks
+                      </span>
+                    </span>
+                  </label>
+
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <input
+                      type="radio"
+                      name="scan-mode"
+                      value="full-site"
+                      checked={scanMode === 'full-site'}
+                      onChange={() => setScanMode('full-site')}
+                      className="mt-1 h-4 w-4 accent-[#6135ad]"
+                    />
+
+                    <span>
+                      <span className="block font-medium">
+                        Full website
+                      </span>
+                      <span className="mt-1 block text-sm text-[#756b80]">
+                        Discover pages and review representative pages
+                      </span>
+                    </span>
+                  </label>
+                </fieldset>
+
+                <p className="mt-7 border-t border-[#e5dfe9] pt-5 text-sm leading-relaxed text-[#756b80]">
+                  Review the findings before exporting your report.
+                </p>
+
+                {isRunning && (
+                  <div
+                    role="status"
+                    className="mt-5 flex items-center gap-3 text-sm text-[#6135ad]"
+                  >
+                    <span className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-[#ded6e5] border-t-[#6135ad]" />
+                    {scanMode === 'quick'
+                      ? 'Checking mobile and desktop results…'
+                      : 'Discovering pages and preparing your site review…'}
+                  </div>
+                )}
+              </form>
+
+              <section className="mt-12">
+                <div className="mb-6 flex items-center justify-between gap-4">
+                  <h2 className="font-serif text-2xl sm:text-3xl">
+                    Recent reports
+                  </h2>
+
+                  <button
+                    type="button"
+                    onClick={showReports}
+                    disabled={isRunning}
+                    className="text-sm font-medium text-[#6135ad] hover:underline disabled:opacity-50"
+                  >
+                    View all reports →
+                  </button>
+                </div>
+
+                {isRunning ? (
+                  <p className="text-sm text-[#756b80]">
+                    Your saved reports will be available when the scan finishes.
+                  </p>
+                ) : (
+                  <ReportsTable
+                    entries={history.slice(0, 3)}
+                    onOpen={openReport}
+                  />
+                )}
+              </section>
+            </>
+          )}
+
+          {view === 'reports' && (
+            <section>
+              <div className="flex flex-wrap items-center justify-between gap-5">
+                <div>
+                  <h1 className="font-serif text-4xl sm:text-5xl">
+                    Your reports
+                  </h1>
+
+                  <p className="mt-3 text-sm text-[#756b80]">
+                    Reopen a saved audit to review or download it.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={startNew}
+                  className={primaryButton}
+                >
+                  + New audit
                 </button>
               </div>
-            )}
-          </div>
-        )}
+
+              <label className="mt-8 block">
+                <span className="sr-only">Search saved reports</span>
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search by website or URL"
+                  className="w-full rounded-lg border border-[#ded6e5] bg-white px-4 py-3 text-sm outline-none focus:border-[#6135ad] focus:ring-2 focus:ring-[#eee7f8]"
+                />
+              </label>
+
+              <div className="mt-7">
+                {history.length > 0 && filteredHistory.length === 0 ? (
+                  <p className="py-6 text-sm text-[#756b80]">
+                    No reports match your search.
+                  </p>
+                ) : (
+                  <ReportsTable
+                    entries={filteredHistory}
+                    onOpen={openReport}
+                  />
+                )}
+              </div>
+            </section>
+          )}
+
+          {view === 'report' && audit && (
+  <ReportWorkspace
+    key={audit.id}
+    url={audit.url}
+    pageTitle={audit.pageTitle}
+    auditedAt={audit.savedAt}
+    scores={scoresFor(audit)}
+    report={normaliseReport(audit.report)}
+    profile={profile}
+    onNewAudit={startNew}
+    onEditBranding={() => setBrandingOpen(true)}
+    onSave={(report) => {
+      const updatedAudit = {
+        ...audit,
+        report,
+      }
+
+      const existing = readHistory()
+      const found = existing.some((entry) => entry.id === audit.id)
+
+      const updatedHistory = found
+        ? existing.map((entry) =>
+            entry.id === audit.id ? updatedAudit : entry
+          )
+        : [updatedAudit, ...existing].slice(0, 50)
+
+      // Save first. If storage fails, the editor keeps your draft.
+      localStorage.setItem(
+        HISTORY_KEY,
+        JSON.stringify(updatedHistory)
+      )
+
+      setAudit(updatedAudit)
+      setHistory(updatedHistory)
+    }}
+  />
+)}
+
+{view === 'report' && fullSite && (
+  <section className="space-y-7">
+    <div className="flex items-center justify-between gap-4">
+      <h1 className="font-serif text-3xl">
+        Full website review
+      </h1>
+
+      <button
+        type="button"
+        onClick={startNew}
+        className={secondaryButton}
+      >
+        New audit
+      </button>
+    </div>
+
+    <FullSiteAuditReport
+      result={fullSite}
+      profile={profile}
+    />
+  </section>
+)}
+        </div>
+      </main>
+
       <ProfileModal
-        open={showProfileModal}
+        open={brandingOpen}
         initialProfile={profile}
-        sessionEmail={sessionEmail}
-        onClose={() => setShowProfileModal(false)}
-        onSave={handleSaveProfile}
+        sessionEmail={email}
+        onClose={() => setBrandingOpen(false)}
+        onSave={(nextProfile) => {
+          setProfile(nextProfile)
+          saveStoredProfile(nextProfile)
+          setBrandingOpen(false)
+        }}
       />
-      </AppPageShell>
+    </div>
   )
 }

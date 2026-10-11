@@ -1,0 +1,358 @@
+/* SITEBRIEF — PRISMATIC GLASS */
+
+.sitebrief-workspace {
+  position: relative;
+  isolation: isolate;
+  background: #f5f3fa !important;
+  color: #271436;
+  overflow-x: clip;
+}
+
+/* Slowly moving light beneath the workspace */
+.sitebrief-workspace::before {
+  content: "";
+  position: fixed;
+  inset: -15%;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse at 14% 20%,
+      rgba(163, 112, 255, 0.25),
+      transparent 38%
+    ),
+    radial-gradient(
+      ellipse at 85% 18%,
+      rgba(80, 216, 238, 0.22),
+      transparent 34%
+    ),
+    radial-gradient(
+      ellipse at 65% 82%,
+      rgba(220, 144, 231, 0.2),
+      transparent 38%
+    ),
+    radial-gradient(
+      ellipse at 20% 85%,
+      rgba(135, 150, 244, 0.14),
+      transparent 35%
+    );
+  animation: sitebrief-drift 24s ease-in-out infinite alternate;
+}
+
+/* Quiet technical grid */
+.sitebrief-workspace::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(
+      rgba(91, 61, 145, 0.045) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(91, 61, 145, 0.045) 1px,
+      transparent 1px
+    );
+  background-size: 64px 64px;
+  mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.7),
+    transparent 90%
+  );
+}
+
+/* Modern typography in the app.
+   The document inside the iframe keeps its own typography. */
+.sitebrief-workspace h1,
+.sitebrief-workspace h2,
+.sitebrief-workspace h3,
+.sitebrief-workspace > aside .font-serif,
+.sitebrief-score-strip .font-serif {
+  font-family: var(--font-sans), Arial, sans-serif;
+}
+
+.sitebrief-workspace h1 {
+  font-weight: 650;
+  letter-spacing: -0.055em;
+  line-height: 1.08;
+  color: #29183e;
+  text-wrap: balance;
+}
+
+.sitebrief-workspace h2 {
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.sitebrief-workspace h3 {
+  letter-spacing: -0.02em;
+}
+
+/* Sidebar: frosted pearl */
+.sitebrief-workspace > aside {
+  background: rgba(255, 255, 255, 0.52) !important;
+  border-color: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  box-shadow:
+    1px 0 0 rgba(101, 67, 153, 0.06),
+    12px 0 48px rgba(85, 54, 128, 0.035);
+}
+
+.sitebrief-workspace > aside .font-serif {
+  font-size: 1.7rem;
+  font-weight: 650;
+  letter-spacing: -0.065em;
+}
+
+.sitebrief-workspace > aside svg {
+  filter: drop-shadow(0 3px 8px rgba(111, 58, 178, 0.15));
+}
+
+/* Transparent workspace toolbar */
+.sitebrief-workspace > main > header {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(122, 99, 154, 0.1) !important;
+}
+
+/* Shared glass surface */
+.sitebrief-scan-panel,
+.sitebrief-score-strip,
+.sitebrief-preview {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.88),
+      rgba(255, 255, 255, 0.52)
+    ) !important;
+  border: 1px solid rgba(255, 255, 255, 0.95) !important;
+  border-radius: 24px !important;
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 0 1px rgba(102, 70, 145, 0.06),
+    0 20px 65px -30px rgba(82, 48, 135, 0.23);
+}
+
+/* The URL entry becomes the main focal point */
+.sitebrief-scan-panel {
+  position: relative;
+  padding: clamp(24px, 4vw, 42px) !important;
+}
+
+/* Thin prismatic edge */
+.sitebrief-scan-panel::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 9%;
+  right: 9%;
+  height: 2px;
+  border-radius: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #b294f5,
+    #9fe4ed,
+    #d4a9ee,
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* Inputs: inset glass */
+.sitebrief-workspace input[type="text"],
+.sitebrief-workspace input[type="search"],
+.sitebrief-workspace textarea {
+  background: rgba(255, 255, 255, 0.68) !important;
+  border-color: rgba(113, 81, 154, 0.15) !important;
+  border-radius: 13px !important;
+  box-shadow: inset 0 2px 5px rgba(70, 38, 108, 0.035);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+.sitebrief-workspace input:focus,
+.sitebrief-workspace textarea:focus {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(127, 84, 202, 0.55) !important;
+  box-shadow:
+    0 0 0 4px rgba(139, 94, 216, 0.09),
+    inset 0 1px 3px rgba(70, 38, 108, 0.03);
+  outline: none;
+}
+
+/* Primary actions: illuminated violet */
+.sitebrief-workspace button[class*="bg-[#6135ad]"] {
+  background: linear-gradient(
+    135deg,
+    #7949c8,
+    #6033aa 58%,
+    #4e2a91
+  ) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 13px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 8px 20px -8px rgba(101, 51, 175, 0.5);
+}
+
+.sitebrief-workspace button {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease,
+    opacity 180ms ease;
+}
+
+.sitebrief-workspace button[class*="bg-[#6135ad]"]:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 12px 28px -9px rgba(101, 51, 175, 0.65);
+}
+
+.sitebrief-workspace button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.sitebrief-workspace button:focus-visible {
+  outline: 2px solid #7951bb;
+  outline-offset: 4px;
+}
+
+/* Secondary actions: smaller glass surfaces */
+.sitebrief-workspace button[class*="bg-white"] {
+  background: rgba(255, 255, 255, 0.66) !important;
+  border-color: rgba(116, 79, 163, 0.16) !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.sitebrief-workspace button[class*="bg-white"]:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Navigation selection */
+.sitebrief-workspace > aside nav button[aria-current="page"],
+.sitebrief-workspace > aside nav button[class*="bg-[#eee7f8]"] {
+  background: linear-gradient(
+    110deg,
+    rgba(161, 115, 225, 0.18),
+    rgba(183, 212, 244, 0.16)
+  ) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+/* Reports table: crisp and quietly interactive */
+.sitebrief-workspace table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.sitebrief-workspace tbody tr {
+  transition: background 180ms ease;
+}
+
+.sitebrief-workspace tbody tr:hover {
+  background: rgba(255, 255, 255, 0.48);
+}
+
+.sitebrief-workspace td,
+.sitebrief-workspace th {
+  border-color: rgba(114, 84, 153, 0.1) !important;
+}
+
+.sitebrief-workspace td:first-child {
+  border-radius: 12px 0 0 12px;
+}
+
+.sitebrief-workspace td:last-child {
+  border-radius: 0 12px 12px 0;
+}
+
+.sitebrief-workspace td {
+  padding-top: 22px;
+  padding-bottom: 22px;
+}
+
+/* Scores: restrained instrument panel */
+.sitebrief-score-strip {
+  border-radius: 18px !important;
+}
+
+.sitebrief-score-strip .font-serif {
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+/* Preview: a document suspended inside a glass frame */
+.sitebrief-preview {
+  padding: 20px !important;
+}
+
+.sitebrief-preview iframe {
+  border: 1px solid rgba(103, 73, 143, 0.12) !important;
+  border-radius: 12px !important;
+  box-shadow:
+    0 15px 35px -18px rgba(57, 32, 92, 0.28),
+    0 2px 6px rgba(57, 32, 92, 0.04);
+}
+
+/* Finding number badges */
+.sitebrief-workspace li > span[class*="bg-[#eee7f8]"] {
+  background: linear-gradient(135deg, #ece1ff, #e7f3fa) !important;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 5px 12px -8px rgba(90, 52, 145, 0.3);
+}
+
+/* Motion stays behind the content */
+@keyframes sitebrief-drift {
+  0% {
+    transform: translate3d(-2%, -1%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2%, 2%, 0) scale(1.04);
+  }
+  100% {
+    transform: translate3d(-1%, 3%, 0) scale(1.02);
+  }
+}
+
+@media (max-width: 767px) {
+  .sitebrief-workspace::before {
+    animation: none;
+  }
+
+  .sitebrief-workspace > aside,
+  .sitebrief-scan-panel,
+  .sitebrief-score-strip,
+  .sitebrief-preview {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.86) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sitebrief-workspace::before {
+    animation: none;
+  }
+
+  .sitebrief-workspace button,
+  .sitebrief-workspace input,
+  .sitebrief-workspace textarea,
+  .sitebrief-workspace tbody tr {
+    transition: none;
+  }
+
+  .sitebrief-workspace button:hover {
+    transform: none !important;
+  }
+}

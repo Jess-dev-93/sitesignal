@@ -93,11 +93,7 @@ function Icon({
 }
 
 const MAIN_LINKS = [
-  { href: '/app', label: 'Dashboard', icon: 'grid' as const },
-  { href: '/app/leads', label: 'Leads', icon: 'users' as const },
-  { href: '/app/audit', label: 'Audit', icon: 'file' as const },
-  
-  { href: '/app/pipeline', label: 'Pipeline', icon: 'branch' as const },
+  { href: '/app/audit', label: 'New audit', icon: 'file' as const },
 ]
 
 export default function AppSidebar() {
@@ -163,7 +159,7 @@ export default function AppSidebar() {
             <div className="min-w-0">
               <p className="truncate text-sm font-bold leading-none text-white">{BRAND_NAME}</p>
               <p className="mt-1 truncate text-[11px] leading-none text-slate-500">
-                Lead Generation + Website Audits
+                Website Audits & Reports
               </p>
             </div>
           )}
